@@ -6,6 +6,10 @@ module Llm
       attr_accessor :next_result
     end
 
+    def available?
+      self.class.next_result.present?
+    end
+
     def call(claim:, evidence_packet:)
       self.class.next_result || Result.new(
         verdict: "needs_more_evidence",

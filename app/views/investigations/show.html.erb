@@ -16,24 +16,7 @@
     <% end %>
   </header>
 
-  <section class="summary-grid">
-    <article class="metric-card">
-      <p class="metric-label">Pipeline status</p>
-      <p class="metric-value"><span class="<%= badge_class_for(@investigation.status) %>"><%= @investigation.status_badge %></span></p>
-    </article>
-    <article class="metric-card">
-      <p class="metric-label">Checkability</p>
-      <p class="metric-value"><span class="<%= badge_class_for(@investigation.checkability_status) %>"><%= @investigation.checkability_status.humanize %></span></p>
-    </article>
-    <article class="metric-card">
-      <p class="metric-label">Headline bait score</p>
-      <p class="metric-value"><%= score_percent(@investigation.headline_bait_score) %></p>
-    </article>
-    <article class="metric-card">
-      <p class="metric-label">Overall confidence</p>
-      <p class="metric-value"><%= score_percent(@investigation.overall_confidence_score * 100) %></p>
-    </article>
-  </section>
+  <%= render "summary_cards", investigation: @investigation %>
 
   <section class="content-grid">
     <article class="panel">
@@ -56,6 +39,14 @@
             <dt>Linked sources found</dt>
             <dd><%= @investigation.root_article.sourced_links.count %></dd>
           </div>
+          <div>
+            <dt>Source kind</dt>
+            <dd><%= @investigation.root_article.source_kind.humanize %></dd>
+          </div>
+          <div>
+            <dt>Authority tier</dt>
+            <dd><%= @investigation.root_article.authority_tier.humanize %> (<%= score_percent(@investigation.root_article.authority_score * 100) %>)</dd>
+          </div>
         </dl>
 
         <% if @investigation.root_article.excerpt.present? %>
@@ -69,15 +60,7 @@
       <% checkable_claims = @investigation.claim_assessments.includes(:claim).where(checkability_status: "checkable").order(confidence_score: :desc) %>
       <% if checkable_claims.any? %>
         <% checkable_claims.each do |assessment| %>
-          <section class="claim-card">
-            <p class="claim-text"><%= assessment.claim.canonical_text %></p>
-            <p class="claim-meta">
-              <span class="<%= badge_class_for(assessment.verdict) %>"><%= assessment.verdict.humanize %></span>
-              <span>Confidence <%= score_percent(assessment.confidence_score * 100) %></span>
-            </p>
-            <p><%= assessment.reason_summary %></p>
-            <p class="muted"><strong>Missing evidence:</strong> <%= assessment.missing_evidence_summary %></p>
-          </section>
+          <%= render "claim_assessment", assessment: %>
         <% end %>
       <% else %>
         <p class="empty-state">No checkable claims have been extracted yet.</p>
@@ -127,7 +110,8 @@
             <li>
               <span>
                 <strong><%= link.anchor_text.presence || link.href %></strong><br>
-                <span class="muted"><%= link.href %></span>
+                <span class="muted"><%= link.href %></span><br>
+                <span class="muted"><%= link.target_article.source_kind.humanize %>, <%= score_percent(link.target_article.authority_score * 100) %> authority</span>
               </span>
               <span class="<%= badge_class_for(link.follow_status) %>"><%= link.follow_status.humanize %></span>
             </li>

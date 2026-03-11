@@ -7,6 +7,8 @@ module Fetchers
 
     DEFAULT_FLAGS = [
       "--headless=new",
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
       "--disable-gpu",
       "--disable-dev-shm-usage",
       "--no-first-run",

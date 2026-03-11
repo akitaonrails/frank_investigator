@@ -36,18 +36,21 @@ module Investigations
     def sync_evidence_items!(assessment)
       existing_urls = []
 
-      assessment.claim.articles.fetched.where.not(id: @investigation.root_article_id).distinct.find_each do |article|
+      Analyzers::EvidencePacketBuilder.call(investigation: @investigation, claim: assessment.claim).each do |entry|
+        article = entry.article
         existing_urls << article.normalized_url
 
         EvidenceItem.find_or_initialize_by(claim_assessment: assessment, source_url: article.normalized_url).tap do |item|
           item.article = article
           item.source_type = :article
-          item.stance = :contextualizes
+          item.source_kind = article.source_kind
+          item.stance = entry.stance
+          item.relevance_score = entry.relevance_score
           item.published_at = article.published_at
           item.excerpt = article.excerpt
           item.citation_locator = article.main_content_path
-          item.authority_score = assessment.authority_score
-          item.independence_group = article.host
+          item.authority_score = article.authority_score
+          item.independence_group = article.independence_group.presence || article.host
           item.save!
         end
       end

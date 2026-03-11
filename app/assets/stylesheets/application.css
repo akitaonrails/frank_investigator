@@ -245,6 +245,39 @@ p {
   border-bottom: 1px solid rgba(205, 191, 174, 0.6);
 }
 
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+  margin: 0.8rem 0 1rem;
+}
+
+.score-grid dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.score-grid dd {
+  margin: 0.15rem 0 0;
+  font-weight: 700;
+}
+
+.evidence-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.evidence-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(205, 191, 174, 0.6);
+}
+
 @media (max-width: 720px) {
   .analysis-header {
     align-items: stretch;

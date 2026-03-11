@@ -1,0 +1,41 @@
+<section class="claim-card">
+  <p class="claim-text"><%= assessment.claim.canonical_text %></p>
+  <p class="claim-meta">
+    <span class="<%= badge_class_for(assessment.verdict) %>"><%= assessment.verdict.humanize %></span>
+    <span>Confidence <%= score_percent(assessment.confidence_score * 100) %></span>
+  </p>
+  <p><%= assessment.reason_summary %></p>
+  <dl class="score-grid">
+    <div>
+      <dt>Authority</dt>
+      <dd><%= score_percent(assessment.authority_score * 100) %></dd>
+    </div>
+    <div>
+      <dt>Independence</dt>
+      <dd><%= score_percent(assessment.independence_score * 100) %></dd>
+    </div>
+    <div>
+      <dt>Timeliness</dt>
+      <dd><%= score_percent(assessment.timeliness_score * 100) %></dd>
+    </div>
+    <div>
+      <dt>Conflict</dt>
+      <dd><%= score_percent(assessment.conflict_score * 100) %></dd>
+    </div>
+  </dl>
+  <p class="muted"><strong>Missing evidence:</strong> <%= assessment.missing_evidence_summary %></p>
+
+  <% if assessment.evidence_items.any? %>
+    <ul class="evidence-list">
+      <% assessment.evidence_items.order(authority_score: :desc, relevance_score: :desc).limit(4).each do |item| %>
+        <li>
+          <span>
+            <strong><%= item.article&.title.presence || item.source_url %></strong><br>
+            <span class="muted"><%= item.source_kind.to_s.humanize %>, relevance <%= score_percent(item.relevance_score * 100) %>, authority <%= score_percent(item.authority_score * 100) %></span>
+          </span>
+          <span class="<%= badge_class_for(item.stance.remove("evidence_item_")) %>"><%= item.stance.humanize %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>

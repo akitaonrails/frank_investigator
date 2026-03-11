@@ -13,6 +13,7 @@ module Articles
 
     def call
       extracted = Parsing::MainContentExtractor.call(html: @html, url: @article.normalized_url)
+      source_metadata = Sources::AuthorityClassifier.call(url: @article.normalized_url, host: @article.host, title: extracted.title || @fetched_title)
 
       ApplicationRecord.transaction do
         @article.update!(
@@ -22,7 +23,11 @@ module Articles
           fetch_status: :fetched,
           fetched_at: Time.current,
           content_fingerprint: Digest::SHA256.hexdigest(extracted.body_text.to_s),
-          main_content_path: extracted.main_content_path
+          main_content_path: extracted.main_content_path,
+          source_kind: source_metadata.source_kind,
+          authority_tier: source_metadata.authority_tier,
+          authority_score: source_metadata.authority_score,
+          independence_group: source_metadata.independence_group
         )
 
         upsert_links!(extracted.links)

@@ -15,7 +15,7 @@ class EvidenceItem < ApplicationRecord
     supports: "supports",
     disputes: "disputes",
     contextualizes: "contextualizes"
-  }, default: :unknown, validate: true
+  }, default: :unknown, validate: true, prefix: true
 
   belongs_to :claim_assessment
   belongs_to :article, optional: true

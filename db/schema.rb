@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_172700) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_180500) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -44,6 +44,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_172700) do
   end
 
   create_table "articles", force: :cascade do |t|
+    t.decimal "authority_score", precision: 5, scale: 2, default: "0.0", null: false
+    t.string "authority_tier", default: "unknown", null: false
     t.text "body_text"
     t.string "content_fingerprint"
     t.datetime "created_at", null: false
@@ -51,15 +53,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_172700) do
     t.string "fetch_status", default: "pending", null: false
     t.datetime "fetched_at"
     t.string "host", null: false
+    t.string "independence_group"
     t.string "main_content_path"
     t.string "normalized_url", null: false
     t.datetime "published_at"
+    t.string "source_kind", default: "unknown", null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.string "url", null: false
+    t.index ["authority_tier"], name: "index_articles_on_authority_tier"
     t.index ["fetch_status"], name: "index_articles_on_fetch_status"
     t.index ["host"], name: "index_articles_on_host"
+    t.index ["independence_group"], name: "index_articles_on_independence_group"
     t.index ["normalized_url"], name: "index_articles_on_normalized_url", unique: true
+    t.index ["source_kind"], name: "index_articles_on_source_kind"
   end
 
   create_table "claim_assessments", force: :cascade do |t|
@@ -108,12 +115,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_172700) do
     t.text "excerpt"
     t.string "independence_group"
     t.datetime "published_at"
+    t.decimal "relevance_score", precision: 5, scale: 2, default: "0.0", null: false
+    t.string "source_kind"
     t.string "source_type", default: "article", null: false
     t.string "source_url", null: false
     t.string "stance", default: "unknown", null: false
     t.datetime "updated_at", null: false
     t.index ["article_id"], name: "index_evidence_items_on_article_id"
     t.index ["claim_assessment_id"], name: "index_evidence_items_on_claim_assessment_id"
+    t.index ["source_kind"], name: "index_evidence_items_on_source_kind"
     t.index ["source_type"], name: "index_evidence_items_on_source_type"
   end
 
