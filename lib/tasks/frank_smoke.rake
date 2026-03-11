@@ -76,6 +76,28 @@ namespace :frank do
     end
   end
 
+  desc "Seed media ownership groups from config/media_ownership_groups.yml"
+  task seed_ownership_groups: :environment do
+    raw = YAML.load_file(Rails.root.join("config/media_ownership_groups.yml"))
+    count = 0
+
+    raw.each do |_region, groups|
+      groups.each do |_key, attrs|
+        MediaOwnershipGroup.find_or_initialize_by(name: attrs.fetch("name")).tap do |group|
+          group.parent_company = attrs["parent_company"]
+          group.owned_hosts = attrs.fetch("owned_hosts", [])
+          group.owned_independence_groups = attrs.fetch("owned_independence_groups", [])
+          group.country = attrs["country"]
+          group.notes = attrs["notes"]
+          group.save!
+          count += 1
+        end
+      end
+    end
+
+    puts "Seeded #{count} media ownership groups."
+  end
+
   desc "Show authority classification for a URL"
   task :classify_url, [:url] => :environment do |_, args|
     url = args[:url].presence || abort("Provide a URL")

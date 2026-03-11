@@ -1,0 +1,111 @@
+brazil:
+  grupo_globo:
+    name: "Grupo Globo"
+    parent_company: "Grupo Globo"
+    owned_hosts:
+      - "globo.com"
+      - "g1.globo.com"
+      - "oglobo.globo.com"
+      - "extra.globo.com"
+      - "epoca.globo.com"
+      - "valor.globo.com"
+      - "cbn.globo.com"
+    owned_independence_groups:
+      - "globo.com"
+    country: "BR"
+    notes: "Largest media conglomerate in Brazil. Owns TV Globo, g1, O Globo, Valor Economico, CBN."
+  grupo_folha:
+    name: "Grupo Folha"
+    parent_company: "Grupo Folha"
+    owned_hosts:
+      - "folha.uol.com.br"
+      - "uol.com.br"
+      - "noticias.uol.com.br"
+      - "datafolha.folha.uol.com.br"
+    owned_independence_groups:
+      - "folha.uol.com.br"
+      - "uol.com.br"
+    country: "BR"
+    notes: "Owns Folha de S.Paulo, UOL, Datafolha. UOL and Folha share ownership."
+  grupo_estado:
+    name: "Grupo Estado"
+    parent_company: "Grupo Estado"
+    owned_hosts:
+      - "estadao.com.br"
+      - "broadcast.com.br"
+    owned_independence_groups:
+      - "estadao.com.br"
+    country: "BR"
+    notes: "Owns O Estado de S. Paulo and Broadcast."
+  grupo_abril:
+    name: "Grupo Abril"
+    parent_company: "Grupo Abril"
+    owned_hosts:
+      - "veja.abril.com.br"
+      - "abril.com.br"
+      - "exame.com"
+    owned_independence_groups:
+      - "abril.com.br"
+      - "exame.com"
+    country: "BR"
+    notes: "Owns VEJA and Exame. Smaller than historically due to restructuring."
+  ebc:
+    name: "EBC"
+    parent_company: "Empresa Brasil de Comunicacao"
+    owned_hosts:
+      - "agenciabrasil.ebc.com.br"
+      - "ebc.com.br"
+      - "tvbrasil.ebc.com.br"
+      - "radioagencianacional.ebc.com.br"
+    owned_independence_groups:
+      - "ebc.com.br"
+    country: "BR"
+    notes: "State-owned media. Agencia Brasil, TV Brasil, Radio Nacional."
+
+us:
+  news_corp:
+    name: "News Corp"
+    parent_company: "News Corp"
+    owned_hosts:
+      - "wsj.com"
+      - "barrons.com"
+      - "marketwatch.com"
+      - "nypost.com"
+      - "foxnews.com"
+      - "foxbusiness.com"
+    owned_independence_groups:
+      - "wsj.com"
+      - "nypost.com"
+      - "foxnews.com"
+    country: "US"
+    notes: "Rupert Murdoch family holdings. Wall Street Journal, NY Post, Fox News."
+  nyt_company:
+    name: "The New York Times Company"
+    parent_company: "The New York Times Company"
+    owned_hosts:
+      - "nytimes.com"
+      - "theathletic.com"
+      - "wirecutter.com"
+    owned_independence_groups:
+      - "nytimes.com"
+    country: "US"
+    notes: "New York Times, The Athletic, Wirecutter."
+  washington_post:
+    name: "Nash Holdings"
+    parent_company: "Nash Holdings (Jeff Bezos)"
+    owned_hosts:
+      - "washingtonpost.com"
+    owned_independence_groups:
+      - "washingtonpost.com"
+    country: "US"
+    notes: "Washington Post. Owned by Jeff Bezos through Nash Holdings."
+  cnn_warner:
+    name: "Warner Bros. Discovery"
+    parent_company: "Warner Bros. Discovery"
+    owned_hosts:
+      - "cnn.com"
+      - "edition.cnn.com"
+    owned_independence_groups:
+      - "cnn.com"
+    country: "US"
+    notes: "CNN."

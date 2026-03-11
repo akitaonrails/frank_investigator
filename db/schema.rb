@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_191000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_192000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -186,6 +186,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_191000) do
     t.index ["interaction_type"], name: "index_llm_interactions_on_interaction_type"
     t.index ["investigation_id"], name: "index_llm_interactions_on_investigation_id"
     t.index ["model_id"], name: "index_llm_interactions_on_model_id"
+  end
+
+  create_table "media_ownership_groups", force: :cascade do |t|
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.text "notes"
+    t.json "owned_hosts", default: [], null: false
+    t.json "owned_independence_groups", default: [], null: false
+    t.string "parent_company"
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_media_ownership_groups_on_name", unique: true
   end
 
   create_table "pipeline_steps", force: :cascade do |t|
