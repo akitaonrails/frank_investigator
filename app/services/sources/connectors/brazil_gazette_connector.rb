@@ -1,6 +1,8 @@
 module Sources
   module Connectors
     class BrazilGazetteConnector < BaseConnector
+      PAGE_TEXT_LIMIT = 8000
+
       # DOU section patterns
       SECTION_REGEX = /\b(Se[cç][aã]o\s*[123]|Edi[cç][aã]o\s+(?:Extra|Suplementar))\b/i
 
@@ -34,8 +36,7 @@ module Sources
       end
 
       def act_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(ACT_REGEX)&.to_s&.squish
+        extract_from_text(ACT_REGEX)
       end
 
       def gazette_scope
@@ -62,9 +63,6 @@ module Sources
         Time.zone.local(year, month, day) rescue nil
       end
 
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 8000].to_s
-      end
     end
   end
 end

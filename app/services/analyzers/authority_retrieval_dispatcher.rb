@@ -53,6 +53,8 @@ module Analyzers
           ac.stance = :cites
           ac.importance_score = 0.6
         end
+      rescue ActiveRecord::RecordNotUnique
+        next
       end
     end
 

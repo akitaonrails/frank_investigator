@@ -80,17 +80,13 @@ module Sources
       end
 
       def resolution_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(RESOLUTION_REGEX)&.to_s&.squish
+        extract_from_text(RESOLUTION_REGEX)
       end
 
       def cnpj
         page_text_sample.match(CNPJ_REGEX)&.to_s
       end
 
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
-      end
     end
   end
 end

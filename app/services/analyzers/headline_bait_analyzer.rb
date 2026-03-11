@@ -24,7 +24,7 @@ module Analyzers
     end
 
     def self.tokenize(text)
-      text.to_s.downcase.scan(/[a-z0-9]+/)
+      TextAnalysis.simple_tokens(text)
     end
     private_class_method :tokenize
 

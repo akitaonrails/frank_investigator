@@ -23,17 +23,11 @@ module Sources
       private
 
       def case_number
-        text = [@title, page_text_sample].join("\n")
-        text.match(CASE_NUMBER_REGEX)&.to_s&.squish
+        extract_from_text(CASE_NUMBER_REGEX)
       end
 
       def docket_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(DOCKET_REGEX)&.to_s&.squish
-      end
-
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
+        extract_from_text(DOCKET_REGEX)
       end
     end
   end

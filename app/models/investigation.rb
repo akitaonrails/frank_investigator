@@ -24,6 +24,7 @@ class Investigation < ApplicationRecord
   has_many :claims, through: :claim_assessments
 
   validates :submitted_url, :normalized_url, presence: true
+  validates :normalized_url, uniqueness: true
 
   def status_badge
     status.tr("_", " ")

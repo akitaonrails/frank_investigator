@@ -15,7 +15,7 @@ module Pipeline
     end
 
     def call
-      step = @investigation.pipeline_steps.find_or_create_by!(name: @name)
+      step = find_or_create_step!
 
       step.with_lock do
         step.reload
@@ -46,6 +46,12 @@ module Pipeline
     end
 
     private
+
+    def find_or_create_step!
+      @investigation.pipeline_steps.find_or_create_by!(name: @name)
+    rescue ActiveRecord::RecordNotUnique
+      @investigation.pipeline_steps.find_by!(name: @name)
+    end
 
     def stale?(step)
       step.started_at.blank? || step.started_at < STALE_AFTER.ago

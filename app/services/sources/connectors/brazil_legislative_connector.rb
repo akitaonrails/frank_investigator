@@ -38,27 +38,21 @@ module Sources
       end
 
       def bill_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(BILL_REGEX)&.to_s&.squish
+        extract_from_text(BILL_REGEX)
       end
 
       def law_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(LAW_REGEX)&.to_s&.squish
+        extract_from_text(LAW_REGEX)
       end
 
       def commission
-        text = [@title, page_text_sample].join("\n")
-        text.match(COMMISSION_REGEX)&.to_s&.squish
+        extract_from_text(COMMISSION_REGEX)
       end
 
       def vote_status
         page_text_sample.match(VOTE_REGEX)&.to_s&.squish
       end
 
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
-      end
     end
   end
 end

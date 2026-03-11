@@ -39,9 +39,6 @@ module Sources
         text.match(ACCESSION_REGEX)&.to_s
       end
 
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
-      end
     end
   end
 end

@@ -131,14 +131,11 @@ module Analyzers
     end
 
     def tokenize(text)
-      text.to_s.downcase.gsub(/[^a-z0-9\s]/, " ").squish.split(/\s+/).reject { |t| t.length < 3 }.to_set
+      TextAnalysis.tokenize(text)
     end
 
     def jaccard_similarity(set_a, set_b)
-      intersection = (set_a & set_b).size
-      union = (set_a | set_b).size
-      return 0.0 if union.zero?
-      intersection.to_f / union
+      TextAnalysis.jaccard_similarity(set_a, set_b)
     end
   end
 end

@@ -1,7 +1,7 @@
 module Analyzers
   class ClaimFingerprint
     def self.call(text)
-      text.to_s.downcase.gsub(/[^a-z0-9\s]/, " ").squish
+      TextAnalysis.normalize(text)
     end
   end
 end

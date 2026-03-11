@@ -3,6 +3,8 @@ module Sources
     class BaseConnector
       Result = Struct.new(:published_at, :metadata_json, :source_kind, :authority_tier, :authority_score, keyword_init: true)
 
+      PAGE_TEXT_LIMIT = 5000
+
       def initialize(url:, host:, title:, html:)
         @url = url.to_s
         @host = host.to_s
@@ -11,6 +13,15 @@ module Sources
       end
 
       private
+
+      def page_text_sample
+        @page_text_sample ||= @document.text[0, self.class::PAGE_TEXT_LIMIT].to_s
+      end
+
+      def extract_from_text(regex)
+        text = [@title, page_text_sample].join("\n")
+        text.match(regex)&.to_s&.squish
+      end
 
       def meta_value(*selectors)
         selectors.each do |selector|

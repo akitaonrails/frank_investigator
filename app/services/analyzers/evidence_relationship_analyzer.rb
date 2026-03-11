@@ -55,11 +55,7 @@ module Analyzers
     end
 
     def normalized_tokens(text)
-      text.to_s.downcase.scan(/[a-z0-9]+/).reject { |token| stop_words.include?(token) }.uniq
-    end
-
-    def stop_words
-      @stop_words ||= %w[the a an and or but if then this that those these is are was were be been being to for of in on at by from as with said says say]
+      TextAnalysis.simple_tokens(text).reject { |token| TextAnalysis::STOP_WORDS.include?(token) }.uniq
     end
   end
 end

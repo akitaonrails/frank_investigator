@@ -19,4 +19,5 @@ class Claim < ApplicationRecord
   has_many :claim_assessments, dependent: :destroy
 
   validates :canonical_text, :canonical_fingerprint, presence: true
+  validates :canonical_fingerprint, uniqueness: true
 end

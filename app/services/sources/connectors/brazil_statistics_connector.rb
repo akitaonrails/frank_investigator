@@ -47,18 +47,13 @@ module Sources
       end
 
       def indicator
-        text = [@title, page_text_sample].join("\n")
-        text.match(INDICATOR_REGEX)&.to_s
+        extract_from_text(INDICATOR_REGEX)
       end
 
       def survey_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(SURVEY_REGEX)&.to_s&.squish
+        extract_from_text(SURVEY_REGEX)
       end
 
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
-      end
     end
   end
 end

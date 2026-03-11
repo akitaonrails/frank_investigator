@@ -42,12 +42,7 @@ module Sources
       end
 
       def release_name
-        text = [@title, page_text_sample].join("\n")
-        text.match(RELEASE_REGEX)&.to_s
-      end
-
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
+        extract_from_text(RELEASE_REGEX)
       end
 
       def bls_host?

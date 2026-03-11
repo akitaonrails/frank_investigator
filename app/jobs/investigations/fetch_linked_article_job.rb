@@ -7,6 +7,7 @@ module Investigations
       article_link = ArticleLink.includes(:target_article).find(article_link_id)
 
       Pipeline::StepRunner.call(investigation:, name: "fetch_linked_article:#{article_link.id}") do
+        article_link.reload
         return { skipped: true } if article_link.crawled? && article_link.target_article.fetched?
 
         article = article_link.target_article

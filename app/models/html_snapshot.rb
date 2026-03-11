@@ -2,6 +2,7 @@ class HtmlSnapshot < ApplicationRecord
   belongs_to :article
 
   validates :compressed_html, :content_fingerprint, :original_size, :fetch_url, :captured_at, presence: true
+  validates :content_fingerprint, uniqueness: true
 
   def html
     Zlib::Inflate.inflate(compressed_html)
@@ -17,5 +18,7 @@ class HtmlSnapshot < ApplicationRecord
       snapshot.fetch_url = url
       snapshot.captured_at = Time.current
     end
+  rescue ActiveRecord::RecordNotUnique
+    find_by!(content_fingerprint: fingerprint)
   end
 end

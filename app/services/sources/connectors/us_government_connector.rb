@@ -43,17 +43,11 @@ module Sources
       end
 
       def document_reference
-        text = [@title, page_text_sample].join("\n")
-        text.match(DOCUMENT_REGEX)&.to_s&.squish
+        extract_from_text(DOCUMENT_REGEX)
       end
 
       def fr_citation
-        text = [@title, page_text_sample].join("\n")
-        text.match(FR_CITATION_REGEX)&.to_s&.squish
-      end
-
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 5000].to_s
+        extract_from_text(FR_CITATION_REGEX)
       end
 
       def govinfo_host?

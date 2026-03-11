@@ -15,15 +15,8 @@ module Articles
 
         decomposed_claims.each do |decomposed|
           claim = find_or_create_claim(decomposed, result)
-
-          ArticleClaim.find_or_initialize_by(article: @article, claim:, role: result.role).tap do |record|
-            record.surface_text = result.surface_text
-            record.importance_score = result.importance_score
-            record.title_related = result.role.to_s == "headline"
-            record.save!
-          end
-
-          ClaimAssessment.find_or_initialize_by(investigation: @investigation, claim:).save!
+          upsert_article_claim!(claim, result)
+          upsert_claim_assessment!(claim)
         end
       end
     end
@@ -33,14 +26,12 @@ module Articles
     def find_or_create_claim(decomposed, result)
       fingerprint = Analyzers::ClaimFingerprint.call(decomposed.canonical_text)
 
-      # Check for existing exact fingerprint match
       existing = Claim.find_by(canonical_fingerprint: fingerprint)
       if existing
         existing.update!(last_seen_at: Time.current)
         return existing
       end
 
-      # Check for similar existing claims (paraphrase matching)
       matches = Analyzers::ClaimSimilarityMatcher.call(
         text: decomposed.canonical_text,
         candidates: Claim.where(checkability_status: decomposed.checkability_status)
@@ -52,7 +43,6 @@ module Articles
         return matched_claim
       end
 
-      # Create new claim with enriched metadata
       Claim.create!(
         canonical_text: decomposed.canonical_text,
         canonical_fingerprint: fingerprint,
@@ -63,6 +53,24 @@ module Articles
         first_seen_at: Time.current,
         last_seen_at: Time.current
       )
+    rescue ActiveRecord::RecordNotUnique
+      Claim.find_by!(canonical_fingerprint: Analyzers::ClaimFingerprint.call(decomposed.canonical_text))
+    end
+
+    def upsert_article_claim!(claim, result)
+      ArticleClaim.find_or_create_by!(article: @article, claim:, role: result.role) do |record|
+        record.surface_text = result.surface_text
+        record.importance_score = result.importance_score
+        record.title_related = result.role.to_s == "headline"
+      end
+    rescue ActiveRecord::RecordNotUnique
+      ArticleClaim.find_by!(article: @article, claim:, role: result.role)
+    end
+
+    def upsert_claim_assessment!(claim)
+      ClaimAssessment.find_or_create_by!(investigation: @investigation, claim:)
+    rescue ActiveRecord::RecordNotUnique
+      ClaimAssessment.find_by!(investigation: @investigation, claim:)
     end
   end
 end

@@ -45,6 +45,7 @@ class Article < ApplicationRecord
   scope :authoritative_first, -> { order(authority_score: :desc, fetched_at: :desc) }
 
   validates :url, :normalized_url, :host, presence: true
+  validates :normalized_url, uniqueness: true
 
   def primary_source?
     authority_tier_primary?

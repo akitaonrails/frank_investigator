@@ -1,6 +1,8 @@
 module Sources
   module Connectors
     class BrazilCourtConnector < BaseConnector
+      PAGE_TEXT_LIMIT = 8000
+
       # CNJ unified numbering: NNNNNNN-DD.AAAA.J.TR.OOOO
       CASE_REGEX = /\b\d{4,7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}\b/
       MINISTER_REGEX = /\b(ministro|ministra|relator|relatora|desembargador|desembargadora)\s+[A-ZÀ-Ý][A-Za-zÀ-ÿ\s]{2,40}/i
@@ -62,18 +64,15 @@ module Sources
       end
 
       def case_number
-        text = [@title, page_text_sample].join("\n")
-        text.match(CASE_REGEX)&.to_s
+        extract_from_text(CASE_REGEX)
       end
 
       def action_type
-        text = [@title, page_text_sample].join("\n")
-        text.match(ACTION_TYPE_REGEX)&.to_s&.squish
+        extract_from_text(ACTION_TYPE_REGEX)
       end
 
       def rapporteur
-        text = [@title, page_text_sample].join("\n")
-        text.match(MINISTER_REGEX)&.to_s&.squish
+        extract_from_text(MINISTER_REGEX)
       end
 
       def ruling_type
@@ -91,9 +90,6 @@ module Sources
         parsed_time(match[2])
       end
 
-      def page_text_sample
-        @page_text_sample ||= @document.text[0, 8000].to_s
-      end
     end
   end
 end

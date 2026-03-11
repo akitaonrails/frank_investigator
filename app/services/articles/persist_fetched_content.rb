@@ -59,26 +59,36 @@ module Articles
 
     def upsert_links!(links)
       links.each do |link|
-        target_article = Article.find_or_create_by!(normalized_url: link[:href]) do |record|
-          target_source = Sources::AuthorityClassifier.call(url: link[:href], host: URI.parse(link[:href]).host)
-          record.url = link[:href]
-          record.host = URI.parse(link[:href]).host
-          record.source_kind = target_source.source_kind
-          record.authority_tier = target_source.authority_tier
-          record.authority_score = target_source.authority_score
-          record.independence_group = target_source.independence_group
-          record.source_role = target_source.source_role || :unknown
-        end
-
-        ArticleLink.find_or_initialize_by(source_article: @article, href: link[:href]).tap do |record|
-          record.target_article = target_article
-          record.anchor_text = link[:anchor_text]
-          record.context_excerpt = link[:context_excerpt]
-          record.position = link[:position]
-          record.depth = @current_depth + 1
-          record.save!
-        end
+        target_article = find_or_create_target_article!(link)
+        upsert_article_link!(link, target_article)
       end
+    end
+
+    def find_or_create_target_article!(link)
+      Article.find_or_create_by!(normalized_url: link[:href]) do |record|
+        target_source = Sources::AuthorityClassifier.call(url: link[:href], host: URI.parse(link[:href]).host)
+        record.url = link[:href]
+        record.host = URI.parse(link[:href]).host
+        record.source_kind = target_source.source_kind
+        record.authority_tier = target_source.authority_tier
+        record.authority_score = target_source.authority_score
+        record.independence_group = target_source.independence_group
+        record.source_role = target_source.source_role || :unknown
+      end
+    rescue ActiveRecord::RecordNotUnique
+      Article.find_by!(normalized_url: link[:href])
+    end
+
+    def upsert_article_link!(link, target_article)
+      ArticleLink.find_or_create_by!(source_article: @article, href: link[:href]) do |record|
+        record.target_article = target_article
+        record.anchor_text = link[:anchor_text]
+        record.context_excerpt = link[:context_excerpt]
+        record.position = link[:position]
+        record.depth = @current_depth + 1
+      end
+    rescue ActiveRecord::RecordNotUnique
+      ArticleLink.find_by!(source_article: @article, href: link[:href])
     end
   end
 end
