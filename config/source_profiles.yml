@@ -202,6 +202,150 @@ us:
     notes: "Strong economics working papers. Below official statistical agencies for raw numbers."
 
 brazil:
+  dou:
+    name: "Diario Oficial da Uniao"
+    homepage_url: "https://www.in.gov.br/servicos/diario-oficial-da-uniao"
+    host_patterns:
+      - "in.gov.br"
+      - "www.in.gov.br"
+      - "imprensanacional.gov.br"
+    source_kind: "government_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.99
+    independence_group: "in.gov.br"
+    audience_country: "BR"
+    notes: "Official federal gazette. Authenticated legal text for laws, decrees, portarias, and regulatory acts."
+  ibge:
+    name: "IBGE"
+    homepage_url: "https://www.ibge.gov.br/"
+    host_patterns:
+      - "ibge.gov.br"
+      - "www.ibge.gov.br"
+      - "sidra.ibge.gov.br"
+      - "mapas.ibge.gov.br"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "ibge.gov.br"
+    audience_country: "BR"
+    notes: "Brazilian national statistics institute. Primary source for demographic, economic, and geographic data."
+  ipea:
+    name: "Ipea"
+    homepage_url: "https://www.ipea.gov.br/"
+    host_patterns:
+      - "ipea.gov.br"
+      - "www.ipea.gov.br"
+      - "ipeadata.gov.br"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.93
+    independence_group: "ipea.gov.br"
+    audience_country: "BR"
+    notes: "Institute for Applied Economic Research. Strong for economic analysis and time series."
+  bcb:
+    name: "Banco Central do Brasil"
+    homepage_url: "https://www.bcb.gov.br/"
+    host_patterns:
+      - "bcb.gov.br"
+      - "www.bcb.gov.br"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "bcb.gov.br"
+    audience_country: "BR"
+    notes: "Central bank. Primary source for Selic, monetary policy, banking supervision, and financial data."
+  tcu:
+    name: "TCU"
+    homepage_url: "https://portal.tcu.gov.br/"
+    host_patterns:
+      - "tcu.gov.br"
+      - "portal.tcu.gov.br"
+    source_kind: "government_record"
+    source_role: "oversight"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "tcu.gov.br"
+    audience_country: "BR"
+    notes: "Federal Court of Accounts. Top source for public expenditure audits and oversight."
+  cgu:
+    name: "CGU"
+    homepage_url: "https://www.gov.br/cgu/"
+    host_patterns:
+      - "cgu.gov.br"
+      - "www.cgu.gov.br"
+    source_kind: "government_record"
+    source_role: "oversight"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "cgu.gov.br"
+    audience_country: "BR"
+    notes: "Comptroller General. Transparency, anti-corruption, and internal control."
+  anvisa:
+    name: "Anvisa"
+    homepage_url: "https://www.gov.br/anvisa/"
+    host_patterns:
+      - "anvisa.gov.br"
+      - "www.anvisa.gov.br"
+    source_kind: "government_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.95
+    independence_group: "anvisa.gov.br"
+    audience_country: "BR"
+    notes: "Health regulatory agency. Primary source for drug approvals, health product regulations."
+  inep:
+    name: "Inep"
+    homepage_url: "https://www.gov.br/inep/"
+    host_patterns:
+      - "inep.gov.br"
+      - "www.inep.gov.br"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.95
+    independence_group: "inep.gov.br"
+    audience_country: "BR"
+    notes: "National education research institute. Primary source for ENEM, Censo Escolar, IDEB."
+  datasus:
+    name: "DataSUS"
+    homepage_url: "https://datasus.saude.gov.br/"
+    host_patterns:
+      - "datasus.saude.gov.br"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.95
+    independence_group: "datasus.saude.gov.br"
+    audience_country: "BR"
+    notes: "Health data platform. Primary source for SUS statistics, mortality, morbidity, hospital data."
+  receita_federal:
+    name: "Receita Federal"
+    homepage_url: "https://www.gov.br/receitafederal/"
+    host_patterns:
+      - "receita.fazenda.gov.br"
+    source_kind: "government_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.95
+    independence_group: "receita.fazenda.gov.br"
+    audience_country: "BR"
+    notes: "Federal Revenue Service. Tax regulations, fiscal data, CNPJ registry."
+  dados_abertos:
+    name: "Portal de Dados Abertos"
+    homepage_url: "https://dados.gov.br/"
+    host_patterns:
+      - "dados.gov.br"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.92
+    independence_group: "dados.gov.br"
+    audience_country: "BR"
+    notes: "Federal open data portal. Aggregated datasets from multiple government agencies."
   agencia_brasil:
     name: "Agencia Brasil"
     homepage_url: "https://agenciabrasil.ebc.com.br/"

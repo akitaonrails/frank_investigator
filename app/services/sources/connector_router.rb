@@ -25,6 +25,9 @@ module Sources
       when :brazil_legislative then Connectors::BrazilLegislativeConnector.new(url: @url, host: @host, title: @title, html: @html)
       when :brazil_court then Connectors::BrazilCourtConnector.new(url: @url, host: @host, title: @title, html: @html)
       when :brazil_market_filing then Connectors::BrazilMarketFilingConnector.new(url: @url, host: @host, title: @title, html: @html)
+      when :brazil_gazette then Connectors::BrazilGazetteConnector.new(url: @url, host: @host, title: @title, html: @html)
+      when :brazil_regulator then Connectors::BrazilRegulatorConnector.new(url: @url, host: @host, title: @title, html: @html)
+      when :brazil_statistics then Connectors::BrazilStatisticsConnector.new(url: @url, host: @host, title: @title, html: @html)
       when :us_government then Connectors::UsGovernmentConnector.new(url: @url, host: @host, title: @title, html: @html)
       when :us_court then Connectors::UsCourtConnector.new(url: @url, host: @host, title: @title, html: @html)
       when :us_sec_filing then Connectors::UsSecFilingConnector.new(url: @url, host: @host, title: @title, html: @html)
@@ -51,6 +54,9 @@ module Sources
       return :brazil_legislative if @source_kind == :legislative_record && brazil_legislative_host?
       return :brazil_court if @source_kind == :court_record && brazil_court_host?
       return :brazil_market_filing if brazil_market_filing?
+      return :brazil_gazette if brazil_gazette_host?
+      return :brazil_statistics if brazil_statistics_host?
+      return :brazil_regulator if brazil_regulator_host?
 
       # U.S.-specific routing
       return :us_sec_filing if us_sec_host?
@@ -71,6 +77,18 @@ module Sources
 
     def brazil_market_filing?
       @source_kind == :company_filing && (@host.match?(/\b(cvm\.gov\.br|b3\.com\.br)\z/i) || @url.match?(/fato-relevante|formulario-de-referencia|comunicado-ao-mercado|central-de-resultados/i))
+    end
+
+    def brazil_gazette_host?
+      @host.match?(/\b(imprensanacional|in)\.gov\.br\z/i) || @host.match?(/diariooficial|doe\.\w+\.gov\.br|ioerj|imesp|diariomunicipal/i)
+    end
+
+    def brazil_statistics_host?
+      @host.match?(/\b(ibge|sidra\.ibge|ipea|ipeadata|inep|dados)\.gov\.br\z/i) || @host.match?(/datasus/i)
+    end
+
+    def brazil_regulator_host?
+      @host.match?(/\b(bcb|anvisa|tcu|cgu|anatel|aneel|ans|anp|antaq|antt|anac|ana|ancine|cade|susep|previc)\.gov\.br\z/i) || @host.match?(/receita\.fazenda\.gov\.br\z/i)
     end
 
     def us_sec_host?

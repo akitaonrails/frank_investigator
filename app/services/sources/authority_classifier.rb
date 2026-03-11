@@ -6,6 +6,10 @@ module Sources
     BRAZIL_LEGISLATIVE_HOST_PATTERNS = [/\bcamara\.leg\.br\z/i, /\bsenado\.leg\.br\z/i, /\bcongressoemfoco\.uol\.com\.br\z/i].freeze
     BRAZIL_COURT_HOST_PATTERNS = [/\bjus\.br\z/i, /\bstf\.jus\.br\z/i, /\bstj\.jus\.br\z/i, /\btse\.jus\.br\z/i, /\btrf\d?\.jus\.br\z/i, /\btj[a-z]{2}\.jus\.br\z/i].freeze
     BRAZIL_MARKET_FILING_HOST_PATTERNS = [/\bcvm\.gov\.br\z/i, /\bb3\.com\.br\z/i, /\bri\./i, /\binvestidores\./i, /\bresultados\./i].freeze
+    BRAZIL_GAZETTE_HOST_PATTERNS = [/\bimprensanacional\.gov\.br\z/i, /\bin\.gov\.br\z/i, /\bdiariooficial\b/i, /\bdoe\.\w+\.gov\.br\z/i, /\bioerj\b/i, /\bimesp\b/i, /\bdiariomunicipal\b/i].freeze
+    BRAZIL_REGULATOR_HOST_PATTERNS = [/\bbcb\.gov\.br\z/i, /\banvisa\.gov\.br\z/i, /\btcu\.gov\.br\z/i, /\bcgu\.gov\.br\z/i, /\banatel\.gov\.br\z/i, /\baneel\.gov\.br\z/i, /\bans\.gov\.br\z/i, /\banp\.gov\.br\z/i, /\bantaq\.gov\.br\z/i, /\bantt\.gov\.br\z/i, /\banac\.gov\.br\z/i, /\bana\.gov\.br\z/i, /\bancine\.gov\.br\z/i, /\bcade\.gov\.br\z/i, /\bsusep\.gov\.br\z/i, /\bprevic\.gov\.br\z/i].freeze
+    BRAZIL_STATISTICS_HOST_PATTERNS = [/\bibge\.gov\.br\z/i, /\bsidra\.ibge\.gov\.br\z/i, /\bipea\.gov\.br\z/i, /\bipeadata\.gov\.br\z/i, /\binep\.gov\.br\z/i, /\bdatasus\b/i, /\bdados\.gov\.br\z/i].freeze
+    BRAZIL_RECEITA_HOST_PATTERNS = [/\breceita\.fazenda\.gov\.br\z/i, /\bgov\.br\/receitafederal/i].freeze
 
     # U.S. authority patterns — Tier A: authenticated primary
     US_GOVINFO_HOST_PATTERNS = [/\bgovinfo\.gov\z/i].freeze
@@ -61,6 +65,10 @@ module Sources
       return Result.new(source_kind: :legislative_record, authority_tier: :primary, authority_score: 0.97, independence_group:, source_role: :authenticated_legal_text) if matches?(BRAZIL_LEGISLATIVE_HOST_PATTERNS)
       return Result.new(source_kind: :court_record, authority_tier: :primary, authority_score: 0.97, independence_group:, source_role: :authenticated_legal_text) if matches?(BRAZIL_COURT_HOST_PATTERNS)
       return Result.new(source_kind: :company_filing, authority_tier: :primary, authority_score: 0.92, independence_group:, source_role: :authenticated_legal_text) if brazil_market_filing?
+      return Result.new(source_kind: :government_record, authority_tier: :primary, authority_score: 0.99, independence_group: "in.gov.br", source_role: :authenticated_legal_text) if matches?(BRAZIL_GAZETTE_HOST_PATTERNS)
+      return Result.new(source_kind: :government_record, authority_tier: :primary, authority_score: 0.97, independence_group:, source_role: :neutral_statistics) if matches?(BRAZIL_STATISTICS_HOST_PATTERNS)
+      return Result.new(source_kind: :government_record, authority_tier: :primary, authority_score: 0.95, independence_group:, source_role: :authenticated_legal_text) if matches?(BRAZIL_RECEITA_HOST_PATTERNS)
+      return Result.new(source_kind: :government_record, authority_tier: :primary, authority_score: brazil_regulator_score, independence_group:, source_role: brazil_regulator_role) if matches?(BRAZIL_REGULATOR_HOST_PATTERNS)
 
       # U.S. Tier A: authenticated primary sources
       return Result.new(source_kind: :government_record, authority_tier: :primary, authority_score: 0.99, independence_group: "govinfo.gov", source_role: :authenticated_legal_text) if matches?(US_GOVINFO_HOST_PATTERNS)
@@ -106,6 +114,17 @@ module Sources
 
     def brazil_market_filing?
       matches?(BRAZIL_MARKET_FILING_HOST_PATTERNS) || @url.match?(/fato-relevante|formulario-de-referencia|central-de-resultados|comunicado-ao-mercado/i)
+    end
+
+    def brazil_regulator_score
+      return 0.97 if @host.match?(/\b(tcu|cgu|bcb)\.gov\.br\z/i)
+      0.95
+    end
+
+    def brazil_regulator_role
+      return :oversight if @host.match?(/\b(tcu|cgu)\.gov\.br\z/i)
+      return :neutral_statistics if @host.match?(/\bbcb\.gov\.br\z/i)
+      :authenticated_legal_text
     end
 
     def independence_group
