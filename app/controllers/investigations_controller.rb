@@ -26,7 +26,7 @@ class InvestigationsController < ApplicationController
     @investigation = Investigation.find(params[:id])
     @root_article = @investigation.root_article
     @checkable_claims = @investigation.claim_assessments
-      .includes(claim: {}, evidence_items: :article)
+      .includes(claim: {}, evidence_items: :article, llm_interactions: {})
       .where(checkability_status: "checkable")
       .order(confidence_score: :desc)
     @uncheckable_claims = @investigation.claim_assessments
