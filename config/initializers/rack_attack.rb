@@ -1,4 +1,8 @@
-Rack::Attack.throttle("submissions/ip", limit: 10, period: 60.seconds) do |req|
+Rack::Attack.throttle("submissions/ip/minute", limit: 5, period: 60.seconds) do |req|
+  req.ip if req.path == "/" && req.get? && req.params["url"].present?
+end
+
+Rack::Attack.throttle("submissions/ip/hour", limit: 30, period: 1.hour) do |req|
   req.ip if req.path == "/" && req.get? && req.params["url"].present?
 end
 
