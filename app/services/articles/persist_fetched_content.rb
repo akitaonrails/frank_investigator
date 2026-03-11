@@ -43,12 +43,19 @@ module Articles
         )
 
         upsert_links!(extracted.links)
+        store_html_snapshot!
       end
 
       extracted
     end
 
     private
+
+    def store_html_snapshot!
+      HtmlSnapshot.store!(article: @article, html: @html, url: @article.normalized_url)
+    rescue => e
+      Rails.logger.warn("Failed to store HTML snapshot for #{@article.normalized_url}: #{e.message}")
+    end
 
     def upsert_links!(links)
       links.each do |link|

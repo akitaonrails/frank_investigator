@@ -13,11 +13,18 @@ module Llm
       @models = Array(models)
     end
 
-    def call(claim:, evidence_packet:)
+    def call(claim:, evidence_packet:, investigation: nil, claim_assessment: nil)
       return nil unless available?
 
+      prompt_text = build_prompt(claim:, evidence_packet:)
+      packet_fingerprint = Digest::SHA256.hexdigest(prompt_text)
+
       results = @models.filter_map do |model|
-        ask_model(model:, claim:, evidence_packet:)
+        ask_model(
+          model:, claim:, evidence_packet:,
+          prompt_text:, packet_fingerprint:,
+          investigation:, claim_assessment:
+        )
       rescue StandardError
         nil
       end
@@ -41,17 +48,81 @@ module Llm
 
     private
 
-    def ask_model(model:, claim:, evidence_packet:)
+    def ask_model(model:, claim:, evidence_packet:, prompt_text:, packet_fingerprint:, investigation:, claim_assessment:)
+      if investigation && (cached = LlmInteraction.find_cached(evidence_packet_fingerprint: packet_fingerprint, model_id: model))
+        return parse_response(cached.response_json)
+      end
+
+      interaction = create_interaction(
+        investigation:, claim_assessment:, model:, prompt_text:, packet_fingerprint:
+      )
+
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       response = RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
         .with_instructions(SYSTEM_PROMPT)
         .with_schema(response_schema)
-        .ask(build_prompt(claim:, evidence_packet:))
+        .ask(prompt_text)
+      elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
 
       payload = response.content.is_a?(Hash) ? response.content : JSON.parse(response.content.to_s)
+
+      complete_interaction(interaction, response:, payload:, elapsed_ms:) if interaction
+
       Result.new(
         verdict: payload.fetch("verdict"),
         confidence_score: payload.fetch("confidence_score").to_f,
         reason_summary: payload.fetch("reason_summary")
+      )
+    rescue StandardError => e
+      fail_interaction(interaction, e) if interaction
+      raise
+    end
+
+    def create_interaction(investigation:, claim_assessment:, model:, prompt_text:, packet_fingerprint:)
+      return nil unless investigation
+
+      LlmInteraction.create!(
+        investigation:,
+        claim_assessment:,
+        interaction_type: :assessment,
+        model_id: model,
+        prompt_text:,
+        evidence_packet_fingerprint: packet_fingerprint,
+        status: :pending
+      )
+    rescue StandardError => e
+      Rails.logger.warn("Failed to create LLM interaction record: #{e.message}")
+      nil
+    end
+
+    def complete_interaction(interaction, response:, payload:, elapsed_ms:)
+      interaction.update!(
+        response_text: response.content.to_s,
+        response_json: payload,
+        status: :completed,
+        latency_ms: elapsed_ms,
+        prompt_tokens: response.respond_to?(:input_tokens) ? response.input_tokens : nil,
+        completion_tokens: response.respond_to?(:output_tokens) ? response.output_tokens : nil
+      )
+    rescue StandardError => e
+      Rails.logger.warn("Failed to update LLM interaction record: #{e.message}")
+    end
+
+    def fail_interaction(interaction, error)
+      interaction.update!(
+        status: :failed,
+        error_class: error.class.name,
+        error_message: error.message.truncate(500)
+      )
+    rescue StandardError
+      nil
+    end
+
+    def parse_response(json)
+      Result.new(
+        verdict: json.fetch("verdict"),
+        confidence_score: json.fetch("confidence_score").to_f,
+        reason_summary: json.fetch("reason_summary")
       )
     end
 

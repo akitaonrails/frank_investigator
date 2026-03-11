@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_191000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -114,6 +114,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_190000) do
     t.decimal "authority_score", precision: 5, scale: 2, default: "0.0", null: false
     t.string "citation_locator"
     t.integer "claim_assessment_id", null: false
+    t.string "content_fingerprint"
     t.datetime "created_at", null: false
     t.text "excerpt"
     t.string "independence_group"
@@ -126,8 +127,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_190000) do
     t.datetime "updated_at", null: false
     t.index ["article_id"], name: "index_evidence_items_on_article_id"
     t.index ["claim_assessment_id"], name: "index_evidence_items_on_claim_assessment_id"
+    t.index ["content_fingerprint"], name: "index_evidence_items_on_content_fingerprint"
     t.index ["source_kind"], name: "index_evidence_items_on_source_kind"
     t.index ["source_type"], name: "index_evidence_items_on_source_type"
+  end
+
+  create_table "html_snapshots", force: :cascade do |t|
+    t.integer "article_id", null: false
+    t.datetime "captured_at", null: false
+    t.binary "compressed_html", null: false
+    t.string "content_fingerprint", null: false
+    t.datetime "created_at", null: false
+    t.string "fetch_url", null: false
+    t.integer "original_size", null: false
+    t.datetime "updated_at", null: false
+    t.index ["article_id"], name: "index_html_snapshots_on_article_id"
+    t.index ["content_fingerprint"], name: "index_html_snapshots_on_content_fingerprint", unique: true
   end
 
   create_table "investigations", force: :cascade do |t|
@@ -146,6 +161,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_190000) do
     t.index ["normalized_url"], name: "index_investigations_on_normalized_url", unique: true
     t.index ["root_article_id"], name: "index_investigations_on_root_article_id"
     t.index ["status"], name: "index_investigations_on_status"
+  end
+
+  create_table "llm_interactions", force: :cascade do |t|
+    t.integer "claim_assessment_id"
+    t.integer "completion_tokens"
+    t.decimal "cost_usd", precision: 8, scale: 6
+    t.datetime "created_at", null: false
+    t.string "error_class"
+    t.text "error_message"
+    t.string "evidence_packet_fingerprint"
+    t.string "interaction_type", default: "assessment", null: false
+    t.integer "investigation_id", null: false
+    t.integer "latency_ms"
+    t.string "model_id", null: false
+    t.text "prompt_text", null: false
+    t.integer "prompt_tokens"
+    t.json "response_json", default: {}
+    t.text "response_text"
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["claim_assessment_id"], name: "index_llm_interactions_on_claim_assessment_id"
+    t.index ["evidence_packet_fingerprint", "model_id"], name: "idx_llm_interactions_cache_key"
+    t.index ["interaction_type"], name: "index_llm_interactions_on_interaction_type"
+    t.index ["investigation_id"], name: "index_llm_interactions_on_investigation_id"
+    t.index ["model_id"], name: "index_llm_interactions_on_model_id"
   end
 
   create_table "pipeline_steps", force: :cascade do |t|
@@ -174,6 +214,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_190000) do
   add_foreign_key "claim_assessments", "investigations"
   add_foreign_key "evidence_items", "articles"
   add_foreign_key "evidence_items", "claim_assessments"
+  add_foreign_key "html_snapshots", "articles"
   add_foreign_key "investigations", "articles", column: "root_article_id"
+  add_foreign_key "llm_interactions", "claim_assessments"
+  add_foreign_key "llm_interactions", "investigations"
   add_foreign_key "pipeline_steps", "investigations"
 end

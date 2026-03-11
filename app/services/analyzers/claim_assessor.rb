@@ -53,7 +53,7 @@ module Analyzers
         weighted_support:,
         weighted_dispute:
       )
-      llm_result = llm_client.call(claim: @claim, evidence_packet: structured_evidence_packet(entries)) if llm_client_available? && entries.any?
+      llm_result = llm_client.call(claim: @claim, evidence_packet: structured_evidence_packet(entries), investigation: @investigation) if llm_client_available? && entries.any?
       final_verdict, final_confidence = merge_with_llm(heuristic_verdict:, heuristic_confidence:, llm_result:)
 
       Result.new(
