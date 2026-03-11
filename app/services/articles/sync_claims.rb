@@ -11,24 +11,58 @@ module Articles
 
     def call
       Analyzers::ClaimExtractor.call(@article).each do |result|
-        fingerprint = Analyzers::ClaimFingerprint.call(result.canonical_text)
-        claim = Claim.find_or_initialize_by(canonical_fingerprint: fingerprint)
-        claim.update!(
-          canonical_text: result.canonical_text,
-          checkability_status: result.checkability_status,
-          first_seen_at: claim.first_seen_at || Time.current,
-          last_seen_at: Time.current
-        )
+        decomposed_claims = Analyzers::ClaimDecomposer.call(text: result.canonical_text, investigation: @investigation)
 
-        ArticleClaim.find_or_initialize_by(article: @article, claim:, role: result.role).tap do |record|
-          record.surface_text = result.surface_text
-          record.importance_score = result.importance_score
-          record.title_related = result.role.to_s == "headline"
-          record.save!
+        decomposed_claims.each do |decomposed|
+          claim = find_or_create_claim(decomposed, result)
+
+          ArticleClaim.find_or_initialize_by(article: @article, claim:, role: result.role).tap do |record|
+            record.surface_text = result.surface_text
+            record.importance_score = result.importance_score
+            record.title_related = result.role.to_s == "headline"
+            record.save!
+          end
+
+          ClaimAssessment.find_or_initialize_by(investigation: @investigation, claim:).save!
         end
-
-        ClaimAssessment.find_or_initialize_by(investigation: @investigation, claim:).save!
       end
+    end
+
+    private
+
+    def find_or_create_claim(decomposed, result)
+      fingerprint = Analyzers::ClaimFingerprint.call(decomposed.canonical_text)
+
+      # Check for existing exact fingerprint match
+      existing = Claim.find_by(canonical_fingerprint: fingerprint)
+      if existing
+        existing.update!(last_seen_at: Time.current)
+        return existing
+      end
+
+      # Check for similar existing claims (paraphrase matching)
+      matches = Analyzers::ClaimSimilarityMatcher.call(
+        text: decomposed.canonical_text,
+        candidates: Claim.where(checkability_status: decomposed.checkability_status)
+      )
+
+      if matches.any? && matches.first.similarity_score >= 0.7
+        matched_claim = matches.first.claim
+        matched_claim.update!(last_seen_at: Time.current)
+        return matched_claim
+      end
+
+      # Create new claim with enriched metadata
+      Claim.create!(
+        canonical_text: decomposed.canonical_text,
+        canonical_fingerprint: fingerprint,
+        checkability_status: decomposed.checkability_status || result.checkability_status,
+        claim_kind: decomposed.claim_kind || :statement,
+        entities_json: decomposed.entities || {},
+        time_scope: decomposed.time_scope,
+        first_seen_at: Time.current,
+        last_seen_at: Time.current
+      )
     end
   end
 end
