@@ -105,6 +105,8 @@ module Llm
       end
     end
 
+    LLM_TIMEOUT_SECONDS = ENV.fetch("LLM_TIMEOUT_SECONDS", 120).to_i
+
     def ask_model(model:, claim:, evidence_packet:, prompt_text:, packet_fingerprint:, investigation:, claim_assessment:)
       if investigation && (cached = LlmInteraction.find_cached(evidence_packet_fingerprint: packet_fingerprint, model_id: model))
         return parse_response(cached.response_json)
@@ -115,10 +117,12 @@ module Llm
       )
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      response = RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
-        .with_instructions(SYSTEM_PROMPT)
-        .with_schema(response_schema)
-        .ask(prompt_text)
+      response = Timeout.timeout(LLM_TIMEOUT_SECONDS) do
+        RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+          .with_instructions(SYSTEM_PROMPT)
+          .with_schema(response_schema)
+          .ask(prompt_text)
+      end
       elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
 
       payload = response.content.is_a?(Hash) ? response.content : JSON.parse(response.content.to_s)
