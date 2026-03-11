@@ -141,9 +141,24 @@ module Analyzers
     end
 
     def normalized_timeliness_score(entries)
-      dated_entries = entries.count { |entry| entry.article.fetched_at.present? }
-      return 0.1 if dated_entries.zero?
-      [0.25 + (dated_entries * 0.15), 1.0].min
+      claim_range = claim_time_range
+      if claim_range
+        scores = entries.map do |entry|
+          evidence_date = entry.article.published_at || entry.article.fetched_at
+          TemporalScoring.score(evidence_date, claim_range)
+        end
+        return 0.1 if scores.empty?
+        scores.sum / scores.size
+      else
+        dated_entries = entries.count { |entry| entry.article.fetched_at.present? }
+        return 0.1 if dated_entries.zero?
+        [0.25 + (dated_entries * 0.15), 1.0].min
+      end
+    end
+
+    def claim_time_range
+      return nil unless @claim.claim_timestamp_start.present? && @claim.claim_timestamp_end.present?
+      @claim.claim_timestamp_start..@claim.claim_timestamp_end
     end
 
     def normalized_sufficiency_score(entries)

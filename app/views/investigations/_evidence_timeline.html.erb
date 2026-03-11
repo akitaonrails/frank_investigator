@@ -20,6 +20,10 @@
             <p class="timeline-meta">
               <span class="<%= badge_class_for(item.stance) %>"><%= item.stance.humanize %></span>
               <span class="muted"><%= item.source_kind.to_s.humanize %></span>
+              <% claim = item.claim_assessment.claim if item.claim_assessment %>
+              <% if claim&.claim_timestamp_end.present? && date.present? && date.to_date > claim.claim_timestamp_end %>
+                <span class="badge badge--amber">Post-dates claim</span>
+              <% end %>
               <% if item.article.authority_tier != "unknown" %>
                 <span class="muted">
                   <span class="has-popover">

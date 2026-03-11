@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_192000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_193000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -98,6 +98,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_192000) do
     t.text "canonical_text", null: false
     t.string "checkability_status", default: "pending", null: false
     t.string "claim_kind", default: "statement", null: false
+    t.date "claim_timestamp_end"
+    t.date "claim_timestamp_start"
     t.datetime "created_at", null: false
     t.json "entities_json", default: {}, null: false
     t.datetime "first_seen_at"

@@ -50,6 +50,8 @@ module Articles
         claim_kind: decomposed.claim_kind || :statement,
         entities_json: decomposed.entities || {},
         time_scope: decomposed.time_scope,
+        claim_timestamp_start: decomposed.claim_timestamp_start,
+        claim_timestamp_end: decomposed.claim_timestamp_end,
         first_seen_at: Time.current,
         last_seen_at: Time.current
       )
