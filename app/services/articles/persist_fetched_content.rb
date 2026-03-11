@@ -38,6 +38,7 @@ module Articles
           authority_tier: connector_result.authority_tier || source_metadata.authority_tier,
           authority_score: connector_result.authority_score || source_metadata.authority_score,
           independence_group: source_metadata.independence_group,
+          source_role: source_metadata.source_role || :unknown,
           metadata_json: connector_result.metadata_json || {}
         )
 
@@ -59,6 +60,7 @@ module Articles
           record.authority_tier = target_source.authority_tier
           record.authority_score = target_source.authority_score
           record.independence_group = target_source.independence_group
+          record.source_role = target_source.source_role || :unknown
         end
 
         ArticleLink.find_or_initialize_by(source_article: @article, href: link[:href]).tap do |record|

@@ -37,6 +37,6 @@ class Articles::PersistFetchedContentTest < ActiveSupport::TestCase
     assert_equal "government_record", article.metadata_json["connector"]
     assert_equal "gov.br", article.independence_group
     assert_equal 1, article.sourced_links.count
-    assert_equal "government_record", article.sourced_links.first.target_article.source_kind
+    assert_equal "legislative_record", article.sourced_links.first.target_article.source_kind
   end
 end

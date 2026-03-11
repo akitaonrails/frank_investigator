@@ -20,6 +20,7 @@ module Investigations
           record.authority_tier = source_metadata.authority_tier
           record.authority_score = source_metadata.authority_score
           record.independence_group = source_metadata.independence_group
+          record.source_role = source_metadata.source_role || :unknown
         end
 
         Investigation.find_or_create_by!(normalized_url:) do |record|

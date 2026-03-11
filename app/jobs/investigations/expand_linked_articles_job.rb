@@ -28,8 +28,18 @@ module Investigations
 
     def prioritized_links(source_article, max_depth)
       source_article.sourced_links.includes(:target_article).where(depth: ..max_depth, follow_status: "pending").to_a
-        .sort_by { |link| [-link.target_article.authority_score.to_f, link.depth, link.position] }
+        .sort_by { |link| [source_priority(link.target_article), -link.target_article.authority_score.to_f, link.depth, link.position] }
         .first(10)
+    end
+
+    def source_priority(article)
+      case article.source_kind
+      when "government_record", "legislative_record", "court_record", "scientific_paper", "company_filing" then 0
+      when "press_release" then 1
+      when "news_article" then 2
+      else
+        3
+      end
     end
   end
 end

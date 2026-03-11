@@ -15,6 +15,8 @@ Project docs:
 
 - [Research summary](docs/research.md)
 - [Technical architecture](docs/architecture.md)
+- [U.S. authority map](docs/us_authorities.md)
+- [Implementation TODO](docs/todo.md)
 
 Initial audience focus:
 

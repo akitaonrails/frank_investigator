@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_184500) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_190000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -59,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_184500) do
     t.string "normalized_url", null: false
     t.datetime "published_at"
     t.string "source_kind", default: "unknown", null: false
+    t.string "source_role", default: "unknown", null: false
     t.string "title"
     t.datetime "updated_at", null: false
     t.string "url", null: false
@@ -68,6 +69,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_184500) do
     t.index ["independence_group"], name: "index_articles_on_independence_group"
     t.index ["normalized_url"], name: "index_articles_on_normalized_url", unique: true
     t.index ["source_kind"], name: "index_articles_on_source_kind"
+    t.index ["source_role"], name: "index_articles_on_source_role"
   end
 
   create_table "claim_assessments", force: :cascade do |t|

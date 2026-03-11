@@ -9,6 +9,8 @@ class Article < ApplicationRecord
     unknown: "unknown",
     news_article: "news_article",
     government_record: "government_record",
+    legislative_record: "legislative_record",
+    court_record: "court_record",
     scientific_paper: "scientific_paper",
     company_filing: "company_filing",
     press_release: "press_release",
@@ -21,6 +23,16 @@ class Article < ApplicationRecord
     low: "low",
     secondary: "secondary",
     primary: "primary"
+  }, default: :unknown, validate: true, prefix: true
+
+  enum :source_role, {
+    unknown: "unknown",
+    official_position: "official_position",
+    authenticated_legal_text: "authenticated_legal_text",
+    neutral_statistics: "neutral_statistics",
+    oversight: "oversight",
+    research_discovery: "research_discovery",
+    news_reporting: "news_reporting"
   }, default: :unknown, validate: true, prefix: true
 
   has_many :article_claims, dependent: :destroy
@@ -41,6 +53,8 @@ class Article < ApplicationRecord
   def evidence_source_type
     case source_kind
     when "government_record" then :government_record
+    when "legislative_record" then :government_record
+    when "court_record" then :court_record
     when "scientific_paper" then :scientific_paper
     when "company_filing" then :company_filing
     when "press_release" then :press_release

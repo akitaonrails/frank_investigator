@@ -50,4 +50,40 @@ class Sources::AuthorityClassifierTest < ActiveSupport::TestCase
     assert_equal :primary, result.authority_tier
     assert_operator result.authority_score, :>=, 0.9
   end
+
+  test "classifies camara hosts as legislative records" do
+    result = Sources::AuthorityClassifier.call(
+      url: "https://www.camara.leg.br/noticias/1234-projeto-de-lei-avanca/",
+      host: "www.camara.leg.br",
+      title: "Projeto de lei avanca"
+    )
+
+    assert_equal :legislative_record, result.source_kind
+    assert_equal :primary, result.authority_tier
+    assert_equal "leg.br", result.independence_group
+  end
+
+  test "classifies brazilian courts as court records" do
+    result = Sources::AuthorityClassifier.call(
+      url: "https://portal.stf.jus.br/noticias/verNoticiaDetalhe.asp?idConteudo=123",
+      host: "portal.stf.jus.br",
+      title: "STF julga acao"
+    )
+
+    assert_equal :court_record, result.source_kind
+    assert_equal :primary, result.authority_tier
+    assert_equal "jus.br", result.independence_group
+  end
+
+  test "classifies cvm and b3 style market pages as company filings" do
+    result = Sources::AuthorityClassifier.call(
+      url: "https://www.rad.cvm.gov.br/ENET/frmExibirArquivoIPEExterno.aspx?numSequencia=1",
+      host: "www.rad.cvm.gov.br",
+      title: "Fato relevante PETR4"
+    )
+
+    assert_equal :company_filing, result.source_kind
+    assert_equal :primary, result.authority_tier
+    assert_operator result.authority_score, :>=, 0.9
+  end
 end

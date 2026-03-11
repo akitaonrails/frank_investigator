@@ -1,3 +1,206 @@
+us:
+  govinfo:
+    name: "GovInfo"
+    homepage_url: "https://www.govinfo.gov/"
+    host_patterns:
+      - "govinfo.gov"
+      - "www.govinfo.gov"
+    source_kind: "government_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.99
+    independence_group: "govinfo.gov"
+    audience_country: "US"
+    notes: "Authenticated federal documents from all three branches. Top-tier source for official legal text."
+  congress_gov:
+    name: "Congress.gov"
+    homepage_url: "https://www.congress.gov/"
+    host_patterns:
+      - "congress.gov"
+      - "www.congress.gov"
+    source_kind: "legislative_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.98
+    independence_group: "congress.gov"
+    audience_country: "US"
+    notes: "Official federal legislative information maintained by the Library of Congress."
+  federal_register:
+    name: "Federal Register"
+    homepage_url: "https://www.federalregister.gov/"
+    host_patterns:
+      - "federalregister.gov"
+      - "www.federalregister.gov"
+    source_kind: "government_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "federalregister.gov"
+    audience_country: "US"
+    notes: "Discovery layer for regulations. Pair with govinfo for final authoritative copy."
+  federal_reserve:
+    name: "Federal Reserve Board"
+    homepage_url: "https://www.federalreserve.gov/"
+    host_patterns:
+      - "federalreserve.gov"
+      - "www.federalreserve.gov"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "federalreserve.gov"
+    audience_country: "US"
+    notes: "Primary source for monetary policy, interest rate, and banking claims."
+  fred:
+    name: "FRED"
+    homepage_url: "https://fred.stlouisfed.org/"
+    host_patterns:
+      - "fred.stlouisfed.org"
+      - "stlouisfed.org"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.96
+    independence_group: "stlouisfed.org"
+    audience_country: "US"
+    notes: "Macro and regional economic time series aggregated from government agencies."
+  bls:
+    name: "Bureau of Labor Statistics"
+    homepage_url: "https://www.bls.gov/"
+    host_patterns:
+      - "bls.gov"
+      - "www.bls.gov"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "bls.gov"
+    audience_country: "US"
+    notes: "Principal fact-finding agency for labor economics and statistics."
+  census:
+    name: "U.S. Census Bureau"
+    homepage_url: "https://www.census.gov/"
+    host_patterns:
+      - "census.gov"
+      - "www.census.gov"
+      - "data.census.gov"
+    source_kind: "government_record"
+    source_role: "neutral_statistics"
+    authority_tier: "primary"
+    authority_score: 0.96
+    independence_group: "census.gov"
+    audience_country: "US"
+    notes: "Primary source for demographic, housing, household, and business survey claims."
+  sec_edgar:
+    name: "SEC EDGAR"
+    homepage_url: "https://www.sec.gov/cgi-bin/browse-edgar"
+    host_patterns:
+      - "sec.gov"
+      - "www.sec.gov"
+      - "efts.sec.gov"
+    source_kind: "company_filing"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.98
+    independence_group: "sec.gov"
+    audience_country: "US"
+    notes: "Primary system for company filings under federal securities laws."
+  us_courts:
+    name: "U.S. Courts"
+    homepage_url: "https://www.uscourts.gov/"
+    host_patterns:
+      - "uscourts.gov"
+      - "www.uscourts.gov"
+      - "pacer.gov"
+      - "www.pacer.gov"
+      - "courtlistener.com"
+      - "www.courtlistener.com"
+    source_kind: "court_record"
+    source_role: "authenticated_legal_text"
+    authority_tier: "primary"
+    authority_score: 0.97
+    independence_group: "uscourts.gov"
+    audience_country: "US"
+    notes: "Federal judiciary structure and case records. For specific cases prefer docket or order."
+  whitehouse:
+    name: "White House"
+    homepage_url: "https://www.whitehouse.gov/"
+    host_patterns:
+      - "whitehouse.gov"
+      - "www.whitehouse.gov"
+    source_kind: "government_record"
+    source_role: "official_position"
+    authority_tier: "secondary"
+    authority_score: 0.72
+    independence_group: "whitehouse.gov"
+    audience_country: "US"
+    notes: "Reflects sitting administration messaging. Good for official statements, not neutral truth. Confidence capped unless corroborated."
+  gao:
+    name: "GAO"
+    homepage_url: "https://www.gao.gov/"
+    host_patterns:
+      - "gao.gov"
+      - "www.gao.gov"
+    source_kind: "government_record"
+    source_role: "oversight"
+    authority_tier: "primary"
+    authority_score: 0.96
+    independence_group: "gao.gov"
+    audience_country: "US"
+    notes: "Independent non-partisan agency. Best for audits, implementation gaps, and program performance."
+  cbo:
+    name: "CBO"
+    homepage_url: "https://www.cbo.gov/"
+    host_patterns:
+      - "cbo.gov"
+      - "www.cbo.gov"
+    source_kind: "government_record"
+    source_role: "oversight"
+    authority_tier: "primary"
+    authority_score: 0.96
+    independence_group: "cbo.gov"
+    audience_country: "US"
+    notes: "Objective nonpartisan budget and fiscal analysis. Top-tier for budget and cost claims."
+  pubmed:
+    name: "PubMed"
+    homepage_url: "https://pubmed.ncbi.nlm.nih.gov/"
+    host_patterns:
+      - "pubmed.ncbi.nlm.nih.gov"
+      - "ncbi.nlm.nih.gov"
+    source_kind: "scientific_paper"
+    source_role: "research_discovery"
+    authority_tier: "primary"
+    authority_score: 0.93
+    independence_group: "nih.gov"
+    audience_country: "US"
+    notes: "Biomedical literature discovery and metadata. Read linked full text before scoring strongly."
+  arxiv:
+    name: "arXiv"
+    homepage_url: "https://arxiv.org/"
+    host_patterns:
+      - "arxiv.org"
+      - "www.arxiv.org"
+    source_kind: "scientific_paper"
+    source_role: "research_discovery"
+    authority_tier: "secondary"
+    authority_score: 0.73
+    independence_group: "arxiv.org"
+    audience_country: "US"
+    notes: "Preprint server. Never treat alone as settled evidence for high-stakes claims. Confidence capped unless corroborated."
+  nber:
+    name: "NBER"
+    homepage_url: "https://www.nber.org/"
+    host_patterns:
+      - "nber.org"
+      - "www.nber.org"
+    source_kind: "scientific_paper"
+    source_role: "research_discovery"
+    authority_tier: "secondary"
+    authority_score: 0.78
+    independence_group: "nber.org"
+    audience_country: "US"
+    notes: "Strong economics working papers. Below official statistical agencies for raw numbers."
+
 brazil:
   agencia_brasil:
     name: "Agencia Brasil"

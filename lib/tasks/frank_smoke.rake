@@ -75,4 +75,20 @@ namespace :frank do
       puts "#{profile.name}: #{investigation.normalized_url}"
     end
   end
+
+  desc "Show authority classification for a URL"
+  task :classify_url, [:url] => :environment do |_, args|
+    url = args[:url].presence || abort("Provide a URL")
+    normalized = Investigations::UrlNormalizer.call(url)
+    uri = URI.parse(normalized)
+    result = Sources::AuthorityClassifier.call(url: normalized, host: uri.host)
+
+    puts JSON.pretty_generate(
+      url: normalized,
+      source_kind: result.source_kind,
+      authority_tier: result.authority_tier,
+      authority_score: result.authority_score,
+      independence_group: result.independence_group
+    )
+  end
 end
