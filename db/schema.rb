@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_195000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_196000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -97,7 +97,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_195000) do
 
   create_table "claims", force: :cascade do |t|
     t.string "canonical_fingerprint", null: false
+    t.text "canonical_form"
     t.text "canonical_text", null: false
+    t.integer "canonicalization_version", default: 0, null: false
     t.string "checkability_status", default: "pending", null: false
     t.string "claim_kind", default: "statement", null: false
     t.date "claim_timestamp_end"
@@ -106,11 +108,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_195000) do
     t.json "entities_json", default: {}, null: false
     t.datetime "first_seen_at"
     t.datetime "last_seen_at"
+    t.string "semantic_key"
     t.string "time_scope"
     t.string "topic"
     t.datetime "updated_at", null: false
     t.index ["canonical_fingerprint"], name: "index_claims_on_canonical_fingerprint", unique: true
     t.index ["checkability_status"], name: "index_claims_on_checkability_status"
+    t.index ["semantic_key"], name: "index_claims_on_semantic_key"
   end
 
   create_table "error_reports", force: :cascade do |t|

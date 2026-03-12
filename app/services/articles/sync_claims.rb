@@ -24,16 +24,30 @@ module Articles
     private
 
     def find_or_create_claim(decomposed, result)
-      fingerprint = Analyzers::ClaimFingerprint.call(decomposed.canonical_text)
+      # Canonicalize: use LLM-provided canonical_form if available, else call canonicalizer
+      canon = resolve_canonical(decomposed, result)
+      fingerprint = Analyzers::ClaimFingerprint.call(decomposed.canonical_text, canonical_form: canon.canonical_form)
 
+      # Stage 1: exact fingerprint match
       existing = Claim.find_by(canonical_fingerprint: fingerprint)
       if existing
         existing.update!(last_seen_at: Time.current)
+        backfill_canonical!(existing, canon)
         return existing
       end
 
+      # Stage 2: exact semantic_key match
+      if canon.semantic_key.present?
+        key_match = Claim.find_by(semantic_key: canon.semantic_key)
+        if key_match
+          key_match.update!(last_seen_at: Time.current)
+          return key_match
+        end
+      end
+
+      # Stage 3: similarity-based match (Jaccard on canonical_form)
       matches = Analyzers::ClaimSimilarityMatcher.call(
-        text: decomposed.canonical_text,
+        text: canon.canonical_form,
         candidates: Claim.where(checkability_status: decomposed.checkability_status)
       )
 
@@ -43,9 +57,13 @@ module Articles
         return matched_claim
       end
 
+      # Stage 4: create new claim
       Claim.create!(
         canonical_text: decomposed.canonical_text,
         canonical_fingerprint: fingerprint,
+        canonical_form: canon.canonical_form,
+        semantic_key: canon.semantic_key,
+        canonicalization_version: Analyzers::ClaimCanonicalizer::CANONICALIZATION_VERSION,
         checkability_status: decomposed.checkability_status || result.checkability_status,
         claim_kind: decomposed.claim_kind || :statement,
         entities_json: decomposed.entities || {},
@@ -56,7 +74,34 @@ module Articles
         last_seen_at: Time.current
       )
     rescue ActiveRecord::RecordNotUnique
-      Claim.find_by!(canonical_fingerprint: Analyzers::ClaimFingerprint.call(decomposed.canonical_text))
+      Claim.find_by!(canonical_fingerprint: fingerprint)
+    end
+
+    def resolve_canonical(decomposed, result)
+      # Prefer LLM-provided values from the extraction step (no extra LLM call)
+      if result.respond_to?(:canonical_form) && result.canonical_form.present? && result.semantic_key.present?
+        Analyzers::ClaimCanonicalizer::Result.new(
+          canonical_form: result.canonical_form,
+          semantic_key: result.semantic_key
+        )
+      else
+        # Fallback: call canonicalizer (for heuristic-extracted claims)
+        Analyzers::ClaimCanonicalizer.call(
+          text: decomposed.canonical_text,
+          entities: decomposed.entities,
+          time_scope: decomposed.time_scope
+        )
+      end
+    end
+
+    def backfill_canonical!(claim, canon)
+      return if claim.canonical_form.present?
+
+      claim.update!(
+        canonical_form: canon.canonical_form,
+        semantic_key: canon.semantic_key,
+        canonicalization_version: Analyzers::ClaimCanonicalizer::CANONICALIZATION_VERSION
+      )
     end
 
     def upsert_article_claim!(claim, result)

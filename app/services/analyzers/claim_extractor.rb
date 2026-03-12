@@ -1,6 +1,6 @@
 module Analyzers
   class ClaimExtractor
-    Result = Struct.new(:canonical_text, :surface_text, :role, :checkability_status, :importance_score, keyword_init: true)
+    Result = Struct.new(:canonical_text, :surface_text, :role, :checkability_status, :importance_score, :canonical_form, :semantic_key, keyword_init: true)
 
     MAX_LLM_INPUT_LENGTH = 3000
 
@@ -73,7 +73,10 @@ module Analyzers
       You are a fact-checking claim extractor. Given a news article, identify the distinct factual claims.
       Focus on verifiable statements, not opinions or rhetoric.
       For each claim, provide:
-      - text: the claim as stated
+      - text: the claim as stated in the article
+      - canonical_form: the claim rewritten as a clear Subject-Verb-Object sentence with proper nouns,
+        ISO dates (2025-Q1, 2025-03), percentages as "X%", no hedging or attribution
+      - semantic_key: a lowercase hyphenated key like "brazil-gdp-growth-3.1pct-2025-q1" (max 80 chars)
       - importance: high, medium, or low
       - checkability: checkable, not_checkable, or ambiguous
       Return only strict JSON matching the schema.
@@ -101,10 +104,12 @@ module Analyzers
                 additionalProperties: false,
                 properties: {
                   text: { type: "string" },
+                  canonical_form: { type: "string" },
+                  semantic_key: { type: "string" },
                   importance: { type: "string", enum: %w[high medium low] },
                   checkability: { type: "string", enum: %w[checkable not_checkable ambiguous] }
                 },
-                required: %w[text importance checkability]
+                required: %w[text canonical_form semantic_key importance checkability]
               }
             }
           },
@@ -132,7 +137,9 @@ module Analyzers
           surface_text: text,
           role: :body,
           checkability_status: checkability.to_sym,
-          importance_score: importance
+          importance_score: importance,
+          canonical_form: claim_data["canonical_form"].to_s.squish.presence,
+          semantic_key: claim_data["semantic_key"].to_s.downcase.gsub(/[^a-z0-9\-]/, "-").squeeze("-").truncate(80, omission: "").presence
         )
       end
     end
