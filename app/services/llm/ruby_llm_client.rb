@@ -54,7 +54,9 @@ module Llm
 
     def aggregate_results(results)
       verdict_groups = results.group_by(&:verdict)
-      majority_verdict = verdict_groups.max_by { |_, votes| votes.length }&.first || "needs_more_evidence"
+      # Weighted vote: sum confidence scores per verdict, not head count.
+      # A single model at 0.95 outweighs two models at 0.40.
+      majority_verdict = verdict_groups.max_by { |_, votes| votes.sum { |r| r.confidence_score.to_f } }&.first || "needs_more_evidence"
       mean_confidence = results.sum { |r| r.confidence_score.to_f } / results.size
 
       # Graduated disagreement penalty based on verdict distance

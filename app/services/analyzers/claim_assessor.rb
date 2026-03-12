@@ -49,6 +49,7 @@ module Analyzers
       heuristic_confidence = confidence_for(**scores)
       llm_result = run_llm_assessment(entries)
       final_verdict, final_confidence = merge_with_llm(heuristic_verdict:, heuristic_confidence:, llm_result:)
+      final_verdict, final_confidence = apply_primary_veto(final_verdict, final_confidence, entries)
 
       Result.new(
         verdict: final_verdict,
@@ -157,10 +158,23 @@ module Analyzers
       end
     end
 
+    # Cap the total contribution of non-primary sources so that sheer volume
+    # of secondary/tertiary articles can never outweigh a single primary source.
+    # A million articles repeating a falsehood must not drown out one authoritative correction.
+    SECONDARY_WEIGHT_CAP = 0.8
+
     def weight_for(entries, stance)
-      entries.select { |entry| entry.stance == stance }.sum do |entry|
-        entry.relevance_score.to_f * entry.authority_score.to_f
-      end
+      stance_entries = entries.select { |entry| entry.stance == stance }
+
+      primary_weight = stance_entries
+        .select { |e| e.authority_tier == "primary" }
+        .sum { |e| e.relevance_score.to_f * e.authority_score.to_f }
+
+      secondary_weight = stance_entries
+        .reject { |e| e.authority_tier == "primary" }
+        .sum { |e| e.relevance_score.to_f * e.authority_score.to_f }
+
+      primary_weight + [secondary_weight, SECONDARY_WEIGHT_CAP].min
     end
 
     def normalized_authority_score(entries)
@@ -208,6 +222,28 @@ module Analyzers
       primary_entries = entries.count { |entry| entry.authority_tier == "primary" }
       weighted_count = entries.sum { |entry| entry.relevance_score.to_f }
       [(weighted_count * 0.25) + (primary_entries * 0.2), 1.0].min
+    end
+
+    # If any primary-tier source disputes the claim, cap confidence and force
+    # the verdict to at least :mixed — a single authoritative correction
+    # outweighs any volume of secondary sources repeating the original claim.
+    PRIMARY_VETO_CONFIDENCE_CAP = 0.60
+
+    def apply_primary_veto(verdict, confidence, entries)
+      primary_supporting = entries.select { |e| e.authority_tier == "primary" && e.stance == :supports }
+      primary_disputing  = entries.select { |e| e.authority_tier == "primary" && e.stance == :disputes }
+
+      # Veto: primary disputes exist but no primary supports
+      if primary_disputing.any? && primary_supporting.empty? && verdict == :supported
+        return [ :mixed, [confidence, PRIMARY_VETO_CONFIDENCE_CAP].min ]
+      end
+
+      # Opposing primaries: force mixed, cap confidence hard
+      if primary_disputing.any? && primary_supporting.any?
+        return [ :mixed, [confidence, PRIMARY_VETO_CONFIDENCE_CAP - 0.10].min ]
+      end
+
+      [ verdict, confidence ]
     end
 
     def verdict_for(weighted_support:, weighted_dispute:, sufficiency_score:, **)
