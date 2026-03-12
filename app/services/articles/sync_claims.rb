@@ -45,10 +45,12 @@ module Articles
         end
       end
 
-      # Stage 3: similarity-based match (Jaccard on canonical_form)
+      # Stage 3: similarity-based match with entity overlap + optional LLM equivalence
       matches = Analyzers::ClaimSimilarityMatcher.call(
         text: canon.canonical_form,
-        candidates: Claim.where(checkability_status: decomposed.checkability_status)
+        candidates: Claim.where(checkability_status: decomposed.checkability_status),
+        use_llm: true,
+        investigation: @investigation
       )
 
       if matches.any? && matches.first.similarity_score >= 0.7
