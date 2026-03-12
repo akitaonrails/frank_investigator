@@ -64,3 +64,14 @@ All tests must pass before committing. Current count: 338+.
 - Services use `.call` class method pattern delegating to `#call` instance method.
 - Models use Rails enums with string backing and prefix option.
 - Tests use Minitest, not RSpec. No mocking of database — integration tests hit real SQLite.
+
+## i18n
+
+All user-presentable text must use `t()` lookups — never hardcode strings in views, controllers, or helpers. Locale files live in `config/locales/` (`en.yml`, `pt-BR.yml`). When adding or changing any user-facing text:
+
+1. Add the key to `config/locales/en.yml` under the appropriate namespace.
+2. Add the corresponding pt-BR translation to `config/locales/pt-BR.yml` with proper Portuguese accents (á, ã, ç, é, ê, í, ó, õ, ú).
+3. Use `t(".key")` shorthand in views (Rails resolves via template path) and `t("full.key.path")` in controllers/helpers.
+4. Dates and times must use `l()` with format keys, never `strftime` with hardcoded format strings.
+
+Locale is set via `FRANK_INVESTIGATOR_LOCALE` env var (defaults to `en`). Available: `en`, `pt-BR`.
