@@ -87,11 +87,16 @@
     </details>
   <% end %>
 
-  <% if assessment.verdict_snapshots.verdict_changes.any? %>
+  <% if assessment.verdict_snapshots.count > 1 %>
     <details class="consensus-details">
       <summary>
         Verdict history
-        <span class="badge badge--amber">Changed <%= assessment.verdict_changed_count %>&times;</span>
+        <% changes = assessment.verdict_changed_count %>
+        <% if changes > 0 %>
+          <span class="badge badge--amber">Changed <%= changes %>&times;</span>
+        <% else %>
+          <span class="badge badge--slate"><%= assessment.verdict_snapshots.count %> snapshots</span>
+        <% end %>
       </summary>
       <ul class="llm-verdicts-list">
         <% assessment.verdict_snapshots.chronological.each do |snapshot| %>
@@ -102,7 +107,11 @@
               &rarr;
             <% end %>
             <span class="<%= badge_class_for(snapshot.verdict) %>"><%= snapshot.verdict.humanize %></span>
-            <span class="muted"><%= snapshot.trigger.humanize %></span>
+            <span class="muted"><%= score_percent(snapshot.confidence_score.to_f * 100) %></span>
+            <% if snapshot.previous_confidence_score.present? && snapshot.previous_confidence_score != snapshot.confidence_score %>
+              <span class="muted">(was <%= score_percent(snapshot.previous_confidence_score.to_f * 100) %>)</span>
+            <% end %>
+            <span class="muted">&middot; <%= snapshot.evidence_count %> sources &middot; <%= snapshot.trigger.humanize %></span>
           </li>
         <% end %>
       </ul>

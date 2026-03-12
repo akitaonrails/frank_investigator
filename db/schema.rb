@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_198000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_199000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -255,6 +255,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_198000) do
     t.integer "claim_assessment_id", null: false
     t.decimal "confidence_score", precision: 5, scale: 2
     t.datetime "created_at", null: false
+    t.integer "evidence_count", default: 0, null: false
+    t.json "evidence_snapshot", default: [], null: false
+    t.decimal "previous_confidence_score", precision: 5, scale: 2
     t.string "previous_verdict"
     t.text "reason_summary"
     t.string "trigger", null: false
