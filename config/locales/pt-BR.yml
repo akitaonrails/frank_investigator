@@ -127,6 +127,14 @@ pt-BR:
       assess_claims: "A avaliação das alegações falhou. Isso geralmente significa que a recuperação de evidências ou a análise por LLM encontrou um erro. Tente novamente mais tarde."
       generic: "Ocorreu um erro durante a etapa %{step_name}. Tente novamente."
 
+    url_rejected:
+      social_media: "Isso parece ser um link de rede social. Envie a URL de um artigo de notícia."
+      ecommerce: "Isso parece ser uma página de e-commerce ou produto. Envie a URL de um artigo de notícia."
+      search_engine: "Isso parece ser uma página de buscador. Envie a URL direta do artigo."
+      non_content: "Este tipo de arquivo não é suportado. Envie a URL de um artigo de notícia."
+      index_page: "Isso parece ser a página inicial de um site. Envie o link direto para um artigo específico."
+      section_page: "Isso parece ser uma página de seção ou categoria. Envie o link direto para um artigo específico."
+
     errors:
       url_too_long: "A URL é muito longa (máximo de %{max} caracteres)"
 

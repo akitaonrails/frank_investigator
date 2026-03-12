@@ -123,6 +123,14 @@ en:
       assess_claims: "Claim assessment failed. This usually means the evidence retrieval or LLM analysis encountered an error. Try again later."
       generic: "An error occurred during the %{step_name} step. Please try again."
 
+    url_rejected:
+      social_media: "This looks like a social media link. Please submit a news article URL instead."
+      ecommerce: "This looks like an e-commerce or product page. Please submit a news article URL instead."
+      search_engine: "This looks like a search engine page. Please submit a direct article URL instead."
+      non_content: "This file type is not supported. Please submit a news article URL."
+      index_page: "This looks like a website homepage. Please submit a direct link to a specific article."
+      section_page: "This looks like a section or category page. Please submit a direct link to a specific article."
+
     errors:
       url_too_long: "URL is too long (maximum %{max} characters)"
 

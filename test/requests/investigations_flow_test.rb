@@ -17,11 +17,11 @@ class InvestigationsFlowTest < ActionDispatch::IntegrationTest
 
   test "creates an investigation and redirects to its permalink" do
     assert_enqueued_with(job: Investigations::KickoffJob) do
-      get root_path, params: { url: "https://example.com/news" }
+      get root_path, params: { url: "https://example.com/news/2025/03/breaking-story" }
     end
 
     investigation = Investigation.last
-    assert_equal "https://example.com/news", investigation.normalized_url
+    assert_equal "https://example.com/news/2025/03/breaking-story", investigation.normalized_url
     assert_redirected_to investigation_path(investigation)
 
     follow_redirect!

@@ -15,9 +15,14 @@ class InvestigationsController < ApplicationController
     @normalized_url = Investigations::UrlNormalizer.call(@submitted_url)
     return redirect_to(root_path(url: @normalized_url), status: :see_other) if @submitted_url != @normalized_url
 
+    Investigations::UrlClassifier.call(@normalized_url)
+
     investigation = Investigations::EnsureStarted.call(submitted_url: @normalized_url)
     redirect_to investigation_path(investigation), status: :see_other
   rescue Investigations::UrlNormalizer::InvalidUrlError => error
+    @error_message = error.message
+    render :home, status: :unprocessable_entity
+  rescue Investigations::UrlClassifier::RejectedUrlError => error
     @error_message = error.message
     render :home, status: :unprocessable_entity
   end
