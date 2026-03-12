@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_199000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_200000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -52,6 +52,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_199000) do
     t.text "excerpt"
     t.string "fetch_status", default: "pending", null: false
     t.datetime "fetched_at"
+    t.decimal "headline_divergence_score", precision: 5, scale: 2
     t.string "host", null: false
     t.string "independence_group"
     t.string "main_content_path"

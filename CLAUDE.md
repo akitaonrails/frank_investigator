@@ -26,6 +26,10 @@ This is the foundational design constraint of the entire system. Every scoring, 
 
 8. **Citation grounding required.** An article is only "grounded" if it links to substantive external sources outside the evidence set. Articles with no outbound citations or that only cite other articles in the same evidence set are treated as ungrounded, reducing the overall citation depth score.
 
+9. **Headline-body divergence penalty.** Articles whose headlines make definitive claims ("accused of", "caught", "confirmed") while their body text hedges ("allegedly", "no police report filed", "sources say", "could not be verified") have their authority score discounted. A baiting article is unreliable evidence regardless of the outlet's general reputation.
+
+10. **Headline citation amplification detection.** When Article B quotes Article A's sensational headline but not its qualifying body content, this is flagged as "headline amplification". This is a key mechanism in smear campaigns: one outlet writes a baiting headline, others cite it as established fact. The `HeadlineCitationDetector` catches this pattern and penalizes the evidence set's citation depth score.
+
 When in doubt, prefer `needs_more_evidence` over a weakly supported verdict. Conservative assessment protects users better than false confidence.
 
 ## Running the App

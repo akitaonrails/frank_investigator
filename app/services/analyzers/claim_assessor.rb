@@ -155,7 +155,8 @@ module Analyzers
           source_kind: entry.source_kind,
           independence_group: entry.independence_group,
           fetched_at: entry.article.fetched_at,
-          published_at: entry.article.published_at
+          published_at: entry.article.published_at,
+          headline_divergence: entry.headline_divergence
         }
       end
     end
@@ -248,14 +249,19 @@ module Analyzers
       [ verdict, confidence ]
     end
 
-    # ── Circular citation & unsubstantiated viral detection ──
+    # ── Circular citation, headline amplification & unsubstantiated viral detection ──
 
     def citation_depth_score(entries)
       articles = entries.filter_map(&:article).uniq
       return 1.0 if articles.size < 2
 
-      result = CircularCitationDetector.call(articles: articles)
-      result.citation_depth_score
+      circular_result = CircularCitationDetector.call(articles: articles)
+      headline_result = HeadlineCitationDetector.call(articles: articles)
+
+      # Combine: both circular citations and headline amplification erode evidence quality
+      base = circular_result.citation_depth_score
+      headline_penalty = headline_result.amplification_score * 0.2
+      [base - headline_penalty, 0.0].max.round(2)
     end
 
     # A claim is "unsubstantiated viral" when many secondary outlets support it
@@ -393,6 +399,9 @@ module Analyzers
       supporting = entries.count { |e| e.stance == :supports }
       gaps << "contradiction checks (all evidence currently #{supporting > 0 ? 'supports' : 'contextualizes'})" if disputing.zero? && supporting > 0
       gaps << "primary authoritative confirmation (multiple secondary sources repeat the claim but none provide original evidence — possible viral/smear pattern)" if unsubstantiated_viral?(entries) && primary_count.zero?
+
+      baiting_count = entries.count { |e| e.headline_divergence.to_f >= 0.4 }
+      gaps << "non-baiting sources (#{baiting_count} source(s) have headlines significantly stronger than their body text — their authority has been discounted)" if baiting_count > 0
 
       if gaps.any?
         "Still needed: #{gaps.join('; ')}."

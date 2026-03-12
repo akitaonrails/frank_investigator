@@ -141,6 +141,9 @@
                 <% end %>
                 &middot; relevance <%= score_percent(item.relevance_score * 100) %>
                 &middot; authority <%= score_percent(item.authority_score * 100) %>
+                <% if item.article&.headline_divergence_score.to_f >= 0.4 %>
+                  &middot; <span class="badge badge--red">Headline bait <%= score_percent(item.article.headline_divergence_score * 100) %></span>
+                <% end %>
               </span>
               <% if item.excerpt.present? %>
                 <br><span class="evidence-excerpt"><%= item.excerpt.truncate(200) %></span>
