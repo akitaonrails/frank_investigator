@@ -2,7 +2,7 @@ module Llm
   class RubyLlmClient
     Result = Struct.new(:verdict, :confidence_score, :reason_summary, :model_results, :disagreement_details, :unanimous, keyword_init: true)
 
-    SYSTEM_PROMPT = <<~PROMPT.freeze
+    SYSTEM_PROMPT_TEMPLATE = <<~PROMPT.freeze
       You are part of a news fact-checking pipeline. Your task is to assess a claim based on retrieved evidence.
 
       Rules:
@@ -16,6 +16,9 @@ module Llm
       Use verdict values: supported, disputed, mixed, needs_more_evidence, not_checkable.
       confidence_score must be between 0.0 and 0.97.
       reason_summary must reference specific evidence sources.
+
+      IMPORTANT: The verdict field must always use one of the English enum values above.
+      However, write the reason_summary text in %{locale_name}.
     PROMPT
 
     VERDICT_ORDER = %w[supported mixed disputed needs_more_evidence not_checkable].freeze
@@ -121,7 +124,7 @@ module Llm
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       response = Timeout.timeout(LLM_TIMEOUT_SECONDS) do
         RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
-          .with_instructions(SYSTEM_PROMPT)
+          .with_instructions(system_prompt)
           .with_schema(response_schema)
           .ask(prompt_text)
       end
@@ -199,6 +202,15 @@ module Llm
         evidence_count: evidence_packet.size,
         evidence: evidence_packet
       }.to_json
+    end
+
+    LOCALE_NAMES = {
+      en: "English",
+      "pt-BR": "Brazilian Portuguese"
+    }.freeze
+
+    def system_prompt
+      SYSTEM_PROMPT_TEMPLATE % { locale_name: LOCALE_NAMES.fetch(I18n.locale, "English") }
     end
 
     def response_schema

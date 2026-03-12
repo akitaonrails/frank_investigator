@@ -27,6 +27,6 @@ class Investigation < ApplicationRecord
   validates :normalized_url, uniqueness: true
 
   def status_badge
-    status.tr("_", " ")
+    I18n.t("enums.pipeline_status.#{status}", default: status.tr("_", " "))
   end
 end

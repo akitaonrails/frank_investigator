@@ -18,8 +18,8 @@
           <div class="timeline-content">
             <p class="timeline-title"><%= item.article.title.presence || item.article.host %></p>
             <p class="timeline-meta">
-              <span class="<%= badge_class_for(item.stance) %>"><%= item.stance.humanize %></span>
-              <span class="muted"><%= item.source_kind.to_s.humanize %></span>
+              <span class="<%= badge_class_for(item.stance) %>"><%= te(:stance, item.stance) %></span>
+              <span class="muted"><%= te(:source_kind, item.source_kind) %></span>
               <% claim = item.claim_assessment.claim if item.claim_assessment %>
               <% if claim&.claim_timestamp_end.present? && date.present? && date.to_date > claim.claim_timestamp_end %>
                 <span class="badge badge--amber"><%= t("investigations.evidence_timeline.post_dates_claim") %></span>
@@ -27,7 +27,7 @@
               <% if item.article.authority_tier != "unknown" %>
                 <span class="muted">
                   <span class="has-popover">
-                    <%= item.article.authority_tier.humanize %> <%= t("investigations.evidence_timeline.authority_suffix") %>
+                    <%= te(:authority_tier, item.article.authority_tier) %> <%= t("investigations.evidence_timeline.authority_suffix") %>
                     <span class="popover-content"><%= authority_tier_description(item.article.authority_tier) %></span>
                   </span>
                 </span>

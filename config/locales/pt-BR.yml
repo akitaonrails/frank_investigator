@@ -167,6 +167,89 @@ pt-BR:
       moderate: "Embelezamento moderado da manchete. Algumas alegações no título podem não ser totalmente sustentadas pelo artigo."
       low: "Baixo sensacionalismo. O título parece razoavelmente alinhado com o conteúdo do artigo."
       none: "Ainda não analisado."
+  enums:
+    verdict:
+      pending: "Pendente"
+      supported: "Sustentado"
+      disputed: "Contestado"
+      mixed: "Misto"
+      needs_more_evidence: "Precisa de mais evidência"
+      not_checkable: "Não verificável"
+    checkability_status:
+      pending: "Pendente"
+      checkable: "Verificável"
+      partially_checkable: "Parcialmente verificável"
+      ambiguous: "Ambíguo"
+      not_checkable: "Não verificável"
+    fetch_status:
+      pending: "Pendente"
+      fetched: "Obtido"
+      failed: "Falhou"
+    source_kind:
+      unknown: "Desconhecido"
+      news_article: "Artigo de notícia"
+      government_record: "Registro governamental"
+      legislative_record: "Registro legislativo"
+      court_record: "Registro judicial"
+      scientific_paper: "Artigo científico"
+      company_filing: "Documento empresarial"
+      press_release: "Comunicado de imprensa"
+      reference: "Referência"
+      social_post: "Publicação em rede social"
+    authority_tier:
+      unknown: "Desconhecido"
+      low: "Baixo"
+      secondary: "Secundário"
+      primary: "Primário"
+    source_role:
+      unknown: "Desconhecido"
+      official_position: "Posição oficial"
+      authenticated_legal_text: "Texto legal"
+      neutral_statistics: "Estatísticas"
+      oversight: "Fiscalização"
+      research_discovery: "Pesquisa"
+      news_reporting: "Reportagem"
+    claim_kind:
+      statement: "Declaração"
+      prediction: "Previsão"
+      causal: "Causal"
+      comparative: "Comparativo"
+      quantitative: "Quantitativo"
+      attribution: "Atribuição"
+    stance:
+      supports: "Sustenta"
+      disputes: "Contesta"
+      neutral: "Neutro"
+    follow_status:
+      pending: "Pendente"
+      crawled: "Rastreado"
+      skipped: "Ignorado"
+      failed: "Falhou"
+    pipeline_status:
+      queued: "Na fila"
+      processing: "Processando"
+      completed: "Concluído"
+      failed: "Falhou"
+      running: "Executando"
+    pipeline_steps:
+      kickoff: "Início"
+      fetch_root_article: "Buscar artigo raiz"
+      extract_claims: "Extrair alegações"
+      analyze_headline: "Analisar manchete"
+      assess_claims: "Avaliar alegações"
+      expand_linked_articles_root: "Expandir artigos vinculados"
+    severity:
+      error: "Erro"
+      warning: "Aviso"
+
+  heuristic_fallbacks:
+    bait_and_pivot_explanation: "O artigo apresenta dados e então faz uma mudança com uma conjunção para miná-los."
+    appeal_to_authority_explanation: "O autor invoca credenciais pessoais para se sobrepor aos dados factuais."
+    heuristic_summary: "A análise heurística detectou %{count} possível(is) problema(s) retórico(s)."
+    no_issues: "Nenhum problema retórico detectado pela análise heurística."
+    no_analysis: "Nenhuma análise retórica realizada."
+    no_evidence: "Nenhuma evidência vinculada foi relevante o suficiente para avaliar esta alegação ainda."
+
     fallacy_types:
       bait_and_pivot: "Isca e desvio"
       appeal_to_authority: "Apelo à autoridade"

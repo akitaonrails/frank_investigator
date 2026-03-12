@@ -8,17 +8,17 @@
       </div>
       <div>
         <dt><%= t("investigations.root_article_panel.fetch_status") %></dt>
-        <dd><span class="<%= badge_class_for(root_article.fetch_status) %>"><%= root_article.fetch_status.humanize %></span></dd>
+        <dd><span class="<%= badge_class_for(root_article.fetch_status) %>"><%= te(:fetch_status, root_article.fetch_status) %></span></dd>
       </div>
       <div>
         <dt><%= t("investigations.root_article_panel.source_kind") %></dt>
-        <dd><%= root_article.source_kind.humanize %></dd>
+        <dd><%= te(:source_kind, root_article.source_kind) %></dd>
       </div>
       <div>
         <dt><%= t("investigations.root_article_panel.authority_tier") %></dt>
         <dd>
           <span class="has-popover">
-            <%= root_article.authority_tier.humanize %> (<%= score_percent(root_article.authority_score * 100) %>)
+            <%= te(:authority_tier, root_article.authority_tier) %> (<%= score_percent(root_article.authority_score * 100) %>)
             <span class="popover-content"><%= authority_tier_description(root_article.authority_tier) %></span>
           </span>
         </dd>
@@ -28,7 +28,7 @@
           <dt><%= t("investigations.root_article_panel.source_role") %></dt>
           <dd>
             <span class="has-popover">
-              <%= root_article.source_role.humanize %>
+              <%= te(:source_role, root_article.source_role) %>
               <span class="popover-content"><%= source_role_description(root_article.source_role) %></span>
             </span>
           </dd>

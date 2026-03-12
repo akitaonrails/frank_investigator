@@ -1,11 +1,11 @@
 <section class="summary-grid" id="summary_cards">
   <article class="metric-card">
     <p class="metric-label"><%= t("investigations.summary_cards.pipeline_status") %></p>
-    <p class="metric-value"><span class="<%= badge_class_for(investigation.status) %>"><%= investigation.status_badge %></span></p>
+    <p class="metric-value"><span class="<%= badge_class_for(investigation.status) %>"><%= te(:pipeline_status, investigation.status) %></span></p>
   </article>
   <article class="metric-card">
     <p class="metric-label"><%= t("investigations.summary_cards.checkability") %></p>
-    <p class="metric-value"><span class="<%= badge_class_for(investigation.checkability_status) %>"><%= investigation.checkability_status.humanize %></span></p>
+    <p class="metric-value"><span class="<%= badge_class_for(investigation.checkability_status) %>"><%= te(:checkability_status, investigation.checkability_status) %></span></p>
   </article>
   <article class="metric-card">
     <p class="metric-label"><%= t("investigations.summary_cards.headline_bait") %></p>

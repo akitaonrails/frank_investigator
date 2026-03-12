@@ -20,10 +20,10 @@
                 <strong><%= link.anchor_text.presence || target.host %></strong>
                 <br><span class="muted"><%= link.href.truncate(80) %></span>
               </td>
-              <td><%= target.source_kind.humanize %></td>
+              <td><%= te(:source_kind, target.source_kind) %></td>
               <td>
                 <span class="has-popover">
-                  <%= target.authority_tier.humanize %>
+                  <%= te(:authority_tier, target.authority_tier) %>
                   (<%= score_percent(target.authority_score * 100) %>)
                   <span class="popover-content"><%= authority_tier_description(target.authority_tier) %></span>
                 </span>
@@ -31,14 +31,14 @@
               <td>
                 <% if target.source_role != "unknown" %>
                   <span class="has-popover">
-                    <%= target.source_role.humanize %>
+                    <%= te(:source_role, target.source_role) %>
                     <span class="popover-content"><%= source_role_description(target.source_role) %></span>
                   </span>
                 <% else %>
                   <span class="muted"><%= t("investigations.source_graph.unknown_role") %></span>
                 <% end %>
               </td>
-              <td><span class="<%= badge_class_for(link.follow_status) %>"><%= link.follow_status.humanize %></span></td>
+              <td><span class="<%= badge_class_for(link.follow_status) %>"><%= te(:follow_status, link.follow_status) %></span></td>
             </tr>
           <% end %>
         </tbody>

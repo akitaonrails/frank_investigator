@@ -78,7 +78,7 @@ class InvestigationsController < ApplicationController
 
     step = failed_steps.first
     {
-      step_name: step.name.humanize,
+      step_name: t("enums.pipeline_steps.#{step.name.split(':').first}", default: step.name.humanize),
       error_class: step.error_class,
       error_message: step.error_message,
       user_message: failure_user_message(step)
@@ -102,7 +102,7 @@ class InvestigationsController < ApplicationController
     when "assess_claims"
       t("investigations.failures.assess_claims")
     else
-      t("investigations.failures.generic", step_name: step.name.humanize.downcase)
+      t("investigations.failures.generic", step_name: t("enums.pipeline_steps.#{step.name.split(':').first}", default: step.name.humanize).downcase)
     end
   end
 

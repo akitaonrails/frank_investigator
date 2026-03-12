@@ -1,4 +1,14 @@
 module InvestigationsHelper
+  def te(enum_name, value)
+    t("enums.#{enum_name}.#{value}", default: value.to_s.humanize)
+  end
+
+  def pipeline_step_name(name)
+    # Strip dynamic suffixes like "fetch_linked_article:123"
+    base = name.to_s.split(":").first
+    t("enums.pipeline_steps.#{base}", default: name.to_s.humanize)
+  end
+
   def score_percent(value)
     number_to_percentage(value.to_f, precision: 0)
   end

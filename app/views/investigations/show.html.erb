@@ -69,9 +69,9 @@
           <section class="claim-card">
             <p class="claim-text"><%= assessment.claim.canonical_text %></p>
             <p class="claim-meta">
-              <span class="<%= badge_class_for(assessment.checkability_status) %>"><%= assessment.checkability_status.humanize %></span>
+              <span class="<%= badge_class_for(assessment.checkability_status) %>"><%= te(:checkability_status, assessment.checkability_status) %></span>
               <% if assessment.claim.claim_kind != "statement" %>
-                <span class="badge badge--slate"><%= assessment.claim.claim_kind.humanize %></span>
+                <span class="badge badge--slate"><%= te(:claim_kind, assessment.claim.claim_kind) %></span>
               <% end %>
             </p>
             <p class="muted"><%= assessment.reason_summary.presence || t(".default_uncheckable_reason") %></p>

@@ -4,10 +4,10 @@
     <p class="claim-text"><%= assessment.claim.canonical_text %></p>
   </div>
   <p class="claim-meta">
-    <span class="<%= badge_class_for(assessment.verdict) %>"><%= assessment.verdict.humanize %></span>
+    <span class="<%= badge_class_for(assessment.verdict) %>"><%= te(:verdict, assessment.verdict) %></span>
     <span><%= t("investigations.claim_assessment.confidence") %> <%= score_percent(assessment.confidence_score * 100) %></span>
     <% if assessment.claim.claim_kind != "statement" %>
-      <span class="badge badge--slate"><%= assessment.claim.claim_kind.humanize %></span>
+      <span class="badge badge--slate"><%= te(:claim_kind, assessment.claim.claim_kind) %></span>
     <% end %>
     <% if assessment.claim.time_scope.present? %>
       <span class="muted"><%= assessment.claim.time_scope %></span>
@@ -83,7 +83,7 @@
             <li>
               <strong><%= interaction.model_id %></strong>:
               <% if interaction.response_json.present? %>
-                <span class="<%= badge_class_for(interaction.response_json['verdict'] || 'pending') %>"><%= (interaction.response_json['verdict'] || 'unknown').humanize %></span>
+                <span class="<%= badge_class_for(interaction.response_json['verdict'] || 'pending') %>"><%= te(:verdict, interaction.response_json['verdict'] || 'pending') %></span>
                 <span class="muted"><%= score_percent((interaction.response_json['confidence_score'].to_f * 100)) %> <%= t("investigations.claim_assessment.confidence_suffix") %></span>
               <% end %>
             </li>
@@ -109,10 +109,10 @@
           <li>
             <span class="muted"><%= snapshot.created_at.strftime("%Y-%m-%d %H:%M") %></span>
             <% if snapshot.previous_verdict.present? %>
-              <span class="<%= badge_class_for(snapshot.previous_verdict) %>"><%= snapshot.previous_verdict.humanize %></span>
+              <span class="<%= badge_class_for(snapshot.previous_verdict) %>"><%= te(:verdict, snapshot.previous_verdict) %></span>
               &rarr;
             <% end %>
-            <span class="<%= badge_class_for(snapshot.verdict) %>"><%= snapshot.verdict.humanize %></span>
+            <span class="<%= badge_class_for(snapshot.verdict) %>"><%= te(:verdict, snapshot.verdict) %></span>
             <span class="muted"><%= score_percent(snapshot.confidence_score.to_f * 100) %></span>
             <% if snapshot.previous_confidence_score.present? && snapshot.previous_confidence_score != snapshot.confidence_score %>
               <span class="muted">(was <%= score_percent(snapshot.previous_confidence_score.to_f * 100) %>)</span>
@@ -137,11 +137,11 @@
             <span>
               <strong><%= item.article&.title.presence || item.source_url %></strong><br>
               <span class="muted">
-                <%= item.source_kind.to_s.humanize %>
+                <%= te(:source_kind, item.source_kind) %>
                 <% if item.article&.source_role.present? && item.article.source_role != "unknown" %>
                   &middot;
                   <span class="has-popover">
-                    <%= item.article.source_role.humanize %>
+                    <%= te(:source_role, item.article.source_role) %>
                     <span class="popover-content"><%= source_role_description(item.article.source_role) %></span>
                   </span>
                 <% end %>
@@ -155,7 +155,7 @@
                 <br><span class="evidence-excerpt"><%= item.excerpt.truncate(200) %></span>
               <% end %>
             </span>
-            <span class="<%= badge_class_for(item.stance) %>"><%= item.stance.humanize %></span>
+            <span class="<%= badge_class_for(item.stance) %>"><%= te(:stance, item.stance) %></span>
           </li>
         <% end %>
       </ul>

@@ -1,9 +1,9 @@
 <li id="<%= dom_id(step) %>">
   <span>
-    <%= step.name.humanize %>
+    <%= pipeline_step_name(step.name) %>
     <% if (duration = pipeline_step_duration(step)) %>
       <span class="muted"> &middot; <%= duration %></span>
     <% end %>
   </span>
-  <span class="<%= badge_class_for(step.status) %>"><%= step.status.humanize %></span>
+  <span class="<%= badge_class_for(step.status) %>"><%= te(:pipeline_status, step.status) %></span>
 </li>

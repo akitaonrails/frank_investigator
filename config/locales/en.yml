@@ -163,6 +163,89 @@ en:
       moderate: "Moderate headline embellishment. Some claims in the title may not be fully supported by the article."
       low: "Low headline bait. The title appears reasonably aligned with the article content."
       none: "Not yet analyzed."
+  enums:
+    verdict:
+      pending: "Pending"
+      supported: "Supported"
+      disputed: "Disputed"
+      mixed: "Mixed"
+      needs_more_evidence: "Needs more evidence"
+      not_checkable: "Not checkable"
+    checkability_status:
+      pending: "Pending"
+      checkable: "Checkable"
+      partially_checkable: "Partially checkable"
+      ambiguous: "Ambiguous"
+      not_checkable: "Not checkable"
+    fetch_status:
+      pending: "Pending"
+      fetched: "Fetched"
+      failed: "Failed"
+    source_kind:
+      unknown: "Unknown"
+      news_article: "News article"
+      government_record: "Government record"
+      legislative_record: "Legislative record"
+      court_record: "Court record"
+      scientific_paper: "Scientific paper"
+      company_filing: "Company filing"
+      press_release: "Press release"
+      reference: "Reference"
+      social_post: "Social post"
+    authority_tier:
+      unknown: "Unknown"
+      low: "Low"
+      secondary: "Secondary"
+      primary: "Primary"
+    source_role:
+      unknown: "Unknown"
+      official_position: "Official position"
+      authenticated_legal_text: "Legal text"
+      neutral_statistics: "Statistics"
+      oversight: "Oversight"
+      research_discovery: "Research"
+      news_reporting: "News reporting"
+    claim_kind:
+      statement: "Statement"
+      prediction: "Prediction"
+      causal: "Causal"
+      comparative: "Comparative"
+      quantitative: "Quantitative"
+      attribution: "Attribution"
+    stance:
+      supports: "Supports"
+      disputes: "Disputes"
+      neutral: "Neutral"
+    follow_status:
+      pending: "Pending"
+      crawled: "Crawled"
+      skipped: "Skipped"
+      failed: "Failed"
+    pipeline_status:
+      queued: "Queued"
+      processing: "Processing"
+      completed: "Completed"
+      failed: "Failed"
+      running: "Running"
+    pipeline_steps:
+      kickoff: "Kickoff"
+      fetch_root_article: "Fetch root article"
+      extract_claims: "Extract claims"
+      analyze_headline: "Analyze headline"
+      assess_claims: "Assess claims"
+      expand_linked_articles_root: "Expand linked articles"
+    severity:
+      error: "Error"
+      warning: "Warning"
+
+  heuristic_fallbacks:
+    bait_and_pivot_explanation: "Article presents data then pivots with a conjunction to undermine it."
+    appeal_to_authority_explanation: "Author invokes personal credentials to override factual data."
+    heuristic_summary: "Heuristic analysis detected %{count} potential rhetorical issue(s)."
+    no_issues: "No rhetorical issues detected by heuristic analysis."
+    no_analysis: "No rhetorical analysis performed."
+    no_evidence: "No linked evidence was relevant enough to assess this claim yet."
+
     fallacy_types:
       bait_and_pivot: "Bait and pivot"
       appeal_to_authority: "Appeal to authority"

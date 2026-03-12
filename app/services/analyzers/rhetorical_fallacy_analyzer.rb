@@ -40,7 +40,7 @@ module Analyzers
       cherry_picking
     ].freeze
 
-    SYSTEM_PROMPT = <<~PROMPT.freeze
+    SYSTEM_PROMPT_TEMPLATE = <<~PROMPT.freeze
       You are a rhetorical structure analyst for a fact-checking system. You analyze
       how an article's writing structure relates to its factual claims.
 
@@ -103,6 +103,9 @@ module Analyzers
         0.0 = straight factual reporting, 1.0 = entirely rhetorical manipulation.
       - Return empty fallacies array if the article is straightforward reporting.
 
+      IMPORTANT: The type and severity fields must always use the English enum values above.
+      However, write the explanation, summary, and excerpt texts in %{locale_name}.
+
       Return strict JSON matching the schema.
     PROMPT
 
@@ -150,7 +153,7 @@ module Analyzers
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       response = Timeout.timeout(llm_timeout) do
         RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
-          .with_instructions(SYSTEM_PROMPT)
+          .with_instructions(system_prompt)
           .with_schema(response_schema)
           .ask(prompt)
       end
@@ -266,7 +269,7 @@ module Analyzers
             type: "bait_and_pivot",
             severity: "medium",
             excerpt: match[0].truncate(200),
-            explanation: "Article presents data then pivots with a conjunction to undermine it."
+            explanation: I18n.t("heuristic_fallbacks.bait_and_pivot_explanation")
           )
           break
         end
@@ -280,7 +283,7 @@ module Analyzers
             type: "appeal_to_authority",
             severity: "low",
             excerpt: match[0].truncate(200),
-            explanation: "Author invokes personal credentials to override factual data."
+            explanation: I18n.t("heuristic_fallbacks.appeal_to_authority_explanation")
           )
           break
         end
@@ -291,12 +294,12 @@ module Analyzers
       Result.new(
         fallacies: fallacies,
         narrative_bias_score: bias_score.round(2),
-        summary: fallacies.any? ? "Heuristic analysis detected #{fallacies.size} potential rhetorical issue(s)." : "No rhetorical issues detected by heuristic analysis."
+        summary: fallacies.any? ? I18n.t("heuristic_fallbacks.heuristic_summary", count: fallacies.size) : I18n.t("heuristic_fallbacks.no_issues")
       )
     end
 
     def empty_result
-      Result.new(fallacies: [], narrative_bias_score: 0.0, summary: "No rhetorical analysis performed.")
+      Result.new(fallacies: [], narrative_bias_score: 0.0, summary: I18n.t("heuristic_fallbacks.no_analysis"))
     end
 
     # ── LLM interaction helpers ──
@@ -334,6 +337,15 @@ module Analyzers
       interaction.update!(status: :failed, error_class: error.class.name, error_message: error.message.truncate(500))
     rescue StandardError
       nil
+    end
+
+    LOCALE_NAMES = {
+      en: "English",
+      "pt-BR": "Brazilian Portuguese"
+    }.freeze
+
+    def system_prompt
+      SYSTEM_PROMPT_TEMPLATE % { locale_name: LOCALE_NAMES.fetch(I18n.locale, "English") }
     end
 
     def llm_available?

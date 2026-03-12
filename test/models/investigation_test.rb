@@ -22,7 +22,7 @@ class InvestigationTest < ActiveSupport::TestCase
 
   test "status_badge formats status" do
     inv = Investigation.new(status: :processing)
-    assert_equal "processing", inv.status_badge
+    assert_equal "Processing", inv.status_badge
   end
 
   test "REQUIRED_STEPS contains expected pipeline steps" do

@@ -355,7 +355,7 @@ module Analyzers
         return ground_reason_with_citations(llm_result.reason_summary, entries)
       end
 
-      return "No linked evidence was relevant enough to assess this claim yet." if entries.empty?
+      return I18n.t("heuristic_fallbacks.no_evidence") if entries.empty?
 
       primary_sources = entries.select { |e| e.authority_tier == "primary" }
       supporting = entries.select { |e| e.stance == :supports }
