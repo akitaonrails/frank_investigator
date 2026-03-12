@@ -39,6 +39,8 @@ module Investigations
           end
         end
 
+        AnalyzeRhetoricalStructureJob.perform_later(@investigation.id)
+
         { assessed_claims_count: @investigation.claim_assessments.count }
       end
     ensure

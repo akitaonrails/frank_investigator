@@ -74,6 +74,18 @@ module InvestigationsHelper
     end
   end
 
+  def fallacy_severity_badge(severity)
+    case severity.to_s
+    when "high" then "badge badge--red"
+    when "medium" then "badge badge--amber"
+    else "badge badge--slate"
+    end
+  end
+
+  def fallacy_type_label(type)
+    type.to_s.tr("_", " ").capitalize
+  end
+
   def pipeline_step_duration(step)
     return nil unless step.started_at
     finish = step.finished_at || Time.current

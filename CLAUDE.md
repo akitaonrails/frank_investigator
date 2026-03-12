@@ -30,6 +30,8 @@ This is the foundational design constraint of the entire system. Every scoring, 
 
 10. **Headline citation amplification detection.** When Article B quotes Article A's sensational headline but not its qualifying body content, this is flagged as "headline amplification". This is a key mechanism in smear campaigns: one outlet writes a baiting headline, others cite it as established fact. The `HeadlineCitationDetector` catches this pattern and penalizes the evidence set's citation depth score.
 
+11. **Rhetorical fallacy detection.** After claims are assessed, the `RhetoricalFallacyAnalyzer` examines the article's written structure against its own factual claims. It detects bait-and-pivot ("data shows X, but [opinion]"), appeal to authority over data ("in my 30 years..."), strawman, false cause, anecdote over data, loaded language, and other fallacies. When an article's rhetoric undermines its own high-confidence factual claims, this is flagged with severity and the specific undermined claim is identified.
+
 When in doubt, prefer `needs_more_evidence` over a weakly supported verdict. Conservative assessment protects users better than false confidence.
 
 ## Running the App

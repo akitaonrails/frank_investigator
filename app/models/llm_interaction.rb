@@ -7,7 +7,8 @@ class LlmInteraction < ApplicationRecord
     claim_decomposition: "claim_decomposition",
     query_generation: "query_generation",
     contradiction_analysis: "contradiction_analysis",
-    headline_analysis: "headline_analysis"
+    headline_analysis: "headline_analysis",
+    rhetorical_analysis: "rhetorical_analysis"
   }, default: :assessment, validate: true
 
   enum :status, {

@@ -1,0 +1,36 @@
+module Investigations
+  class AnalyzeRhetoricalStructureJob < ApplicationJob
+    queue_as :default
+
+    def perform(investigation_id)
+      @investigation = Investigation.includes(:root_article, claim_assessments: :claim).find(investigation_id)
+
+      Pipeline::StepRunner.call(investigation: @investigation, name: "analyze_rhetorical_structure") do
+        result = Analyzers::RhetoricalFallacyAnalyzer.call(investigation: @investigation)
+
+        analysis_data = {
+          fallacies: result.fallacies.map { |f|
+            {
+              type: f.type,
+              severity: f.severity,
+              excerpt: f.excerpt,
+              explanation: f.explanation,
+              undermined_claim: f.undermined_claim
+            }
+          },
+          narrative_bias_score: result.narrative_bias_score,
+          summary: result.summary
+        }
+
+        @investigation.update!(rhetorical_analysis: analysis_data)
+
+        {
+          fallacies_detected: result.fallacies.size,
+          narrative_bias_score: result.narrative_bias_score
+        }
+      end
+    ensure
+      Investigations::RefreshStatus.call(@investigation) if @investigation
+    end
+  end
+end

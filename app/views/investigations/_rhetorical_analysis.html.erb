@@ -1,0 +1,43 @@
+<% analysis = investigation.rhetorical_analysis %>
+<% return unless analysis.present? && analysis["fallacies"].present? %>
+
+<% fallacies = analysis["fallacies"] %>
+<% bias_score = analysis["narrative_bias_score"].to_f %>
+
+<section class="panel panel--callout <%= bias_score >= 0.5 ? 'panel--callout-red' : bias_score >= 0.25 ? 'panel--callout-amber' : 'panel--callout-green' %>">
+  <h3>Rhetorical analysis</h3>
+  <p><%= analysis["summary"] %></p>
+
+  <dl class="score-grid">
+    <div>
+      <dt>Narrative bias</dt>
+      <dd>
+        <span class="score-bar score-bar--sm <%= score_color_class(1.0 - bias_score) %>">
+          <span class="score-bar__fill" style="width: <%= score_bar_width(bias_score) %>%"></span>
+        </span>
+        <span><%= score_percent(bias_score * 100) %></span>
+      </dd>
+    </div>
+  </dl>
+
+  <% if fallacies.any? %>
+    <details class="consensus-details" open>
+      <summary>Detected fallacies (<%= fallacies.size %>)</summary>
+      <ul class="llm-verdicts-list">
+        <% fallacies.each do |fallacy| %>
+          <li>
+            <div>
+              <span class="<%= fallacy_severity_badge(fallacy['severity']) %>"><%= fallacy_type_label(fallacy["type"]) %></span>
+              <span class="<%= fallacy_severity_badge(fallacy['severity']) %>"><%= fallacy["severity"].capitalize %></span>
+            </div>
+            <blockquote class="evidence-excerpt"><%= fallacy["excerpt"] %></blockquote>
+            <p class="muted"><%= fallacy["explanation"] %></p>
+            <% if fallacy["undermined_claim"].present? %>
+              <p class="muted"><strong>Undermines:</strong> <%= fallacy["undermined_claim"].truncate(150) %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </details>
+  <% end %>
+</section>
