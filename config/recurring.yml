@@ -20,3 +20,11 @@ production:
   purge_old_errors:
     command: "ErrorReport.purge_old"
     schedule: at 3am every day
+  detect_stale_claims:
+    class: Claims::DetectStalenessJob
+    queue: default
+    schedule: every 12 hours
+  reassess_stale_claims:
+    class: Claims::ReassessStaleClaimsJob
+    queue: default
+    schedule: at 4am every day

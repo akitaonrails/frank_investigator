@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_197000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_198000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -73,6 +73,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_197000) do
   end
 
   create_table "claim_assessments", force: :cascade do |t|
+    t.datetime "assessed_at"
     t.decimal "authority_score", precision: 5, scale: 2, default: "0.0", null: false
     t.string "checkability_status", default: "pending", null: false
     t.integer "claim_id", null: false
@@ -84,14 +85,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_197000) do
     t.integer "investigation_id", null: false
     t.text "missing_evidence_summary"
     t.text "reason_summary"
+    t.integer "reassessment_count", default: 0, null: false
+    t.datetime "stale_at"
+    t.string "staleness_reason"
     t.decimal "timeliness_score", precision: 5, scale: 2, default: "0.0", null: false
     t.boolean "unanimous", default: false, null: false
     t.datetime "updated_at", null: false
     t.string "verdict", default: "pending", null: false
+    t.index ["assessed_at"], name: "index_claim_assessments_on_assessed_at"
     t.index ["checkability_status"], name: "index_claim_assessments_on_checkability_status"
     t.index ["claim_id"], name: "index_claim_assessments_on_claim_id"
     t.index ["investigation_id", "claim_id"], name: "index_claim_assessments_on_investigation_id_and_claim_id", unique: true
     t.index ["investigation_id"], name: "index_claim_assessments_on_investigation_id"
+    t.index ["stale_at"], name: "index_claim_assessments_on_stale_at"
     t.index ["verdict"], name: "index_claim_assessments_on_verdict"
   end
 
@@ -106,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_197000) do
     t.date "claim_timestamp_start"
     t.datetime "created_at", null: false
     t.json "entities_json", default: {}, null: false
+    t.integer "evidence_article_count", default: 0, null: false
     t.datetime "first_seen_at"
     t.datetime "last_seen_at"
     t.string "semantic_key"

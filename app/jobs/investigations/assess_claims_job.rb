@@ -30,9 +30,11 @@ module Investigations
               independence_score: result.independence_score,
               timeliness_score: result.timeliness_score,
               disagreement_details: result.disagreement_details,
-              unanimous: result.unanimous || false
+              unanimous: result.unanimous || false,
+              assessed_at: Time.current
             )
 
+            assessment.claim.update!(evidence_article_count: assessment.claim.article_claims.count)
             sync_evidence_items!(assessment)
           end
         end

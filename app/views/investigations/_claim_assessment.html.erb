@@ -12,6 +12,12 @@
     <% if assessment.claim.time_scope.present? %>
       <span class="muted"><%= assessment.claim.time_scope %></span>
     <% end %>
+    <% if assessment.stale_at.present? %>
+      <span class="badge badge--amber">Stale</span>
+    <% end %>
+    <% if assessment.reassessment_count.to_i > 0 %>
+      <span class="muted">Reassessed <%= assessment.reassessment_count %>&times;</span>
+    <% end %>
   </p>
   <p><%= assessment.reason_summary %></p>
 

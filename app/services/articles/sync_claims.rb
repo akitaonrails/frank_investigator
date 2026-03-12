@@ -107,10 +107,21 @@ module Articles
     end
 
     def upsert_article_claim!(claim, result)
+      is_new = !ArticleClaim.exists?(article: @article, claim:, role: result.role)
+
       ArticleClaim.find_or_create_by!(article: @article, claim:, role: result.role) do |record|
         record.surface_text = result.surface_text
         record.importance_score = result.importance_score
         record.title_related = result.role.to_s == "headline"
+      end
+
+      # Flag existing assessments as stale when new evidence links appear
+      if is_new
+        claim.claim_assessments
+          .where(stale_at: nil)
+          .where.not(verdict: "pending")
+          .where.not(investigation: @investigation)
+          .update_all(stale_at: Time.current, staleness_reason: "new_evidence")
       end
     rescue ActiveRecord::RecordNotUnique
       ArticleClaim.find_by!(article: @article, claim:, role: result.role)
