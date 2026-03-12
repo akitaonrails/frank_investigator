@@ -77,13 +77,22 @@ module Analyzers
         .order(confidence_score: :desc)
         .first
 
+      # Variant parent match (claim mutation tracking)
+      prior ||= @claim.prior_variant_assessment
+
       # Similarity-based match against claims from completed investigations
       prior ||= find_similar_prior_assessment
 
       return nil unless prior
       return nil if prior.confidence_score.to_f < 0.4
 
-      similarity_note = prior.claim_id == @claim.id ? "exact match" : "similar claim match"
+      similarity_note = if prior.claim_id == @claim.id
+        "exact match"
+      elsif @claim.canonical_parent_id.present? && prior.claim_id == @claim.canonical_parent_id
+        "variant of previously assessed claim"
+      else
+        "similar claim match"
+      end
 
       Result.new(
         verdict: prior.verdict.to_sym,

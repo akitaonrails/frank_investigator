@@ -41,7 +41,8 @@ class ClaimAssessment < ApplicationRecord
         trigger: trigger,
         triggered_by: triggered_by,
         evidence_count: evidence_items.count,
-        evidence_snapshot: build_evidence_snapshot
+        evidence_snapshot: build_evidence_snapshot,
+        evidence_content_hashes: build_evidence_content_hashes
       )
     end
 
@@ -67,6 +68,16 @@ class ClaimAssessment < ApplicationRecord
         authority_score: item.authority_score.to_f,
         published_at: item.published_at&.iso8601
       }
+    end
+  end
+
+  # Lock down the content fingerprint of each evidence article at assessment
+  # time. If an article's body changes later, we can detect the divergence
+  # and flag the assessment as relying on potentially stale/corrected evidence.
+  def build_evidence_content_hashes
+    evidence_items.includes(:article).each_with_object({}) do |item, hashes|
+      next unless item.article&.body_text.present?
+      hashes[item.source_url] = Digest::SHA256.hexdigest(item.article.body_text)
     end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_11_201000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_11_202000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -46,6 +46,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_201000) do
   create_table "articles", force: :cascade do |t|
     t.decimal "authority_score", precision: 5, scale: 2, default: "0.0", null: false
     t.string "authority_tier", default: "unknown", null: false
+    t.boolean "body_changed_since_assessment", default: false, null: false
+    t.string "body_fingerprint"
     t.text "body_text"
     t.string "content_fingerprint"
     t.datetime "created_at", null: false
@@ -105,6 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_201000) do
   create_table "claims", force: :cascade do |t|
     t.string "canonical_fingerprint", null: false
     t.text "canonical_form"
+    t.integer "canonical_parent_id"
     t.text "canonical_text", null: false
     t.integer "canonicalization_version", default: 0, null: false
     t.string "checkability_status", default: "pending", null: false
@@ -120,9 +123,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_201000) do
     t.string "time_scope"
     t.string "topic"
     t.datetime "updated_at", null: false
+    t.string "variant_of_fingerprint"
     t.index ["canonical_fingerprint"], name: "index_claims_on_canonical_fingerprint", unique: true
+    t.index ["canonical_parent_id"], name: "index_claims_on_canonical_parent_id"
     t.index ["checkability_status"], name: "index_claims_on_checkability_status"
     t.index ["semantic_key"], name: "index_claims_on_semantic_key"
+    t.index ["variant_of_fingerprint"], name: "index_claims_on_variant_of_fingerprint"
   end
 
   create_table "error_reports", force: :cascade do |t|
@@ -257,6 +263,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_201000) do
     t.integer "claim_assessment_id", null: false
     t.decimal "confidence_score", precision: 5, scale: 2
     t.datetime "created_at", null: false
+    t.json "evidence_content_hashes", default: {}, null: false
     t.integer "evidence_count", default: 0, null: false
     t.json "evidence_snapshot", default: [], null: false
     t.decimal "previous_confidence_score", precision: 5, scale: 2
@@ -275,6 +282,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_11_201000) do
   add_foreign_key "article_links", "articles", column: "target_article_id"
   add_foreign_key "claim_assessments", "claims"
   add_foreign_key "claim_assessments", "investigations"
+  add_foreign_key "claims", "claims", column: "canonical_parent_id"
   add_foreign_key "evidence_items", "articles"
   add_foreign_key "evidence_items", "claim_assessments"
   add_foreign_key "html_snapshots", "articles"

@@ -38,6 +38,7 @@ module Articles
           published_at: connector_result.published_at || @article.published_at,
           fetched_at: Time.current,
           content_fingerprint: Digest::SHA256.hexdigest(extracted.body_text.to_s),
+          body_fingerprint: Digest::SHA256.hexdigest(extracted.body_text.to_s),
           main_content_path: extracted.main_content_path,
           source_kind: connector_result.source_kind || source_metadata.source_kind,
           authority_tier: connector_result.authority_tier || source_metadata.authority_tier,

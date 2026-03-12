@@ -28,3 +28,7 @@ production:
     class: Claims::ReassessStaleClaimsJob
     queue: default
     schedule: at 4am every day
+  detect_source_corrections:
+    class: Claims::DetectSourceCorrectionsJob
+    queue: default
+    schedule: every 12 hours

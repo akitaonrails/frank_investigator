@@ -59,6 +59,13 @@ module Articles
         return matched_claim
       end
 
+      # Stage 3b: variant detection — moderate similarity (0.5-0.7) means this
+      # is likely a mutation of an existing claim (paraphrase, slight rewording).
+      # Link it as a variant so prior assessment history is inherited as context.
+      variant_parent = if matches.any? && matches.first.similarity_score >= 0.5
+        matches.first.claim
+      end
+
       # Stage 4: create new claim
       Claim.create!(
         canonical_text: decomposed.canonical_text,
@@ -73,7 +80,9 @@ module Articles
         claim_timestamp_start: decomposed.claim_timestamp_start,
         claim_timestamp_end: decomposed.claim_timestamp_end,
         first_seen_at: Time.current,
-        last_seen_at: Time.current
+        last_seen_at: Time.current,
+        canonical_parent: variant_parent,
+        variant_of_fingerprint: variant_parent&.canonical_fingerprint
       )
     rescue ActiveRecord::RecordNotUnique
       Claim.find_by!(canonical_fingerprint: fingerprint)
