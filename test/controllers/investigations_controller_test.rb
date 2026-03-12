@@ -76,6 +76,62 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "show page renders JSON format" do
+    root = Article.create!(url: "https://ct.com/json", normalized_url: "https://ct.com/json", host: "ct.com", fetch_status: :fetched, title: "JSON Test")
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root, status: :completed)
+    claim = Claim.create!(canonical_text: "Test claim", canonical_fingerprint: "json_test_#{SecureRandom.hex(4)}", checkability_status: :checkable)
+    ClaimAssessment.create!(investigation: investigation, claim: claim, verdict: :supported, confidence_score: 0.8, checkability_status: :checkable)
+
+    get investigation_path(investigation, format: :json)
+    assert_response :success
+    assert_equal "application/json", response.media_type
+
+    data = JSON.parse(response.body)
+    assert_equal investigation.id, data["id"]
+    assert_equal "https://ct.com/json", data["url"]
+    assert_equal "completed", data["status"]
+    assert data.key?("root_article")
+    assert data.key?("claims")
+    assert data.key?("pipeline")
+    assert_equal 1, data["claims"].size
+    assert_equal "Test claim", data["claims"][0]["claim"]
+    assert_equal "supported", data["claims"][0]["verdict"]
+  end
+
+  test "show JSON returns 202 with poll_url for in-progress investigation" do
+    root = Article.create!(url: "https://ct.com/pending", normalized_url: "https://ct.com/pending", host: "ct.com", fetch_status: :fetched)
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root, status: :processing)
+    investigation.pipeline_steps.create!(name: "fetch_root_article", status: :completed, started_at: 10.seconds.ago, finished_at: Time.current)
+    investigation.pipeline_steps.create!(name: "extract_claims", status: :running, started_at: Time.current)
+
+    get investigation_path(investigation, format: :json)
+    assert_response :accepted
+    assert_equal "5", response.headers["Retry-After"]
+
+    data = JSON.parse(response.body)
+    assert_equal false, data["ready"]
+    assert data["poll_url"].present?
+    assert_equal 1, data["progress"]["completed_steps"]
+    assert_equal 2, data["progress"]["total_steps"]
+    assert_equal "extract_claims", data["progress"]["current_step"]
+    assert_equal 50, data["progress"]["percent"]
+  end
+
+  test "show JSON returns 404 for missing investigation" do
+    get investigation_path(id: 999999, format: :json)
+    assert_response :not_found
+    data = JSON.parse(response.body)
+    assert_equal "not_found", data["error"]
+  end
+
+  test "home redirects to JSON format when json param is present" do
+    assert_enqueued_with(job: Investigations::KickoffJob) do
+      get root_path, params: { url: "https://example.com/news/2025/03/json-test", json: "true" }
+    end
+    assert_response :redirect
+    assert_match(/\.json/, response.location)
+  end
+
   test "graph_data returns JSON" do
     root = Article.create!(url: "https://ct.com/graph", normalized_url: "https://ct.com/graph", host: "ct.com", fetch_status: :fetched, title: "Root")
     investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root)
