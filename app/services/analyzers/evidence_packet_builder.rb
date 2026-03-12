@@ -26,8 +26,17 @@ module Analyzers
     HEADLINE_DIVERGENCE_AUTHORITY_PENALTY = 0.4
 
     def call
-      supporting_articles.map do |article|
-        relationship = EvidenceRelationshipAnalyzer.call(claim: @claim, article:, investigation: @investigation)
+      articles = supporting_articles.to_a
+      return [] if articles.empty?
+
+      # Batch all evidence relationship analyses in a single LLM call
+      pairs = articles.map { |article| { claim: @claim, article: } }
+      relationship_map = EvidenceRelationshipAnalyzer.call_batch(pairs:, investigation: @investigation)
+
+      articles.map do |article|
+        relationship = relationship_map["#{@claim.id}:#{article.id}"]
+        next unless relationship
+
         divergence = headline_divergence_for(article)
         authority = apply_headline_penalty(article.authority_score.to_f, divergence)
 
@@ -41,7 +50,7 @@ module Analyzers
           independence_group: article.independence_group.presence || article.host,
           headline_divergence: divergence
         )
-      end.select { |entry| entry.relevance_score.positive? }
+      end.compact.select { |entry| entry.relevance_score.positive? }
     end
 
     private

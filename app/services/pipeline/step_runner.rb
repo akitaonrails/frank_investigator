@@ -34,10 +34,12 @@ module Pipeline
       end
 
       result_json = yield(step) || {}
+      step.reload
       step.update!(status: :completed, finished_at: Time.current, result_json:)
 
       Result.new(step:, executed: true)
     rescue StandardError => error
+      step&.reload
       step&.update!(
         status: :failed,
         finished_at: Time.current,

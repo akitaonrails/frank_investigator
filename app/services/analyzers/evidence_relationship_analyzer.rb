@@ -24,8 +24,77 @@ module Analyzers
 
     Result = Struct.new(:stance, :relevance_score, :reasoning, keyword_init: true)
 
+    BATCH_SIZE = 15
+
     def self.call(claim:, article:, investigation: nil)
       new(claim:, article:, investigation:).call
+    end
+
+    # Batch-analyze multiple claim-article pairs in a single LLM call.
+    # Returns a Hash mapping [claim_id, article_id] => Result.
+    def self.call_batch(pairs:, investigation: nil)
+      return {} if pairs.empty?
+
+      results = {}
+
+      # Compute heuristics for all pairs first
+      heuristic_map = pairs.each_with_object({}) do |pair, hash|
+        analyzer = new(claim: pair[:claim], article: pair[:article], investigation:)
+        hash["#{pair[:claim].id}:#{pair[:article].id}"] = {
+          heuristic: analyzer.send(:heuristic_analysis),
+          analyzer:,
+          pair:
+        }
+      end
+
+      # Identify which pairs need LLM analysis
+      llm_eligible = heuristic_map.select do |_key, data|
+        data[:pair][:article].body_text.to_s.length >= 50
+      end
+
+      # Check cache for all eligible pairs
+      uncached = {}
+      if investigation && llm_available_class?
+        llm_eligible.each do |key, data|
+          prompt = data[:analyzer].send(:build_contradiction_prompt)
+          fingerprint = Digest::SHA256.hexdigest(prompt)
+          cached = LlmInteraction.find_cached(
+            evidence_packet_fingerprint: fingerprint,
+            model_id: contradiction_model_class
+          )
+          if cached
+            llm_result = parse_contradiction_response_class(cached.response_json)
+            results[key] = data[:analyzer].send(:merge_analyses, data[:heuristic], llm_result)
+          else
+            uncached[key] = data
+          end
+        end
+      else
+        uncached = llm_eligible
+      end
+
+      # Batch LLM call for uncached pairs
+      if uncached.any? && llm_available_class?
+        uncached.values.each_slice(BATCH_SIZE) do |batch|
+          llm_results = batch_llm_analysis(batch, investigation)
+          batch.each_with_index do |data, idx|
+            key = "#{data[:pair][:claim].id}:#{data[:pair][:article].id}"
+            llm_result = llm_results[idx]
+            if llm_result
+              results[key] = data[:analyzer].send(:merge_analyses, data[:heuristic], llm_result)
+            end
+          end
+        end
+      end
+
+      # Fill in any pairs that didn't get LLM analysis (heuristic-only)
+      heuristic_map.each do |key, data|
+        next if results.key?(key)
+        h = data[:heuristic]
+        results[key] = Result.new(stance: h[:stance], relevance_score: h[:relevance], reasoning: nil)
+      end
+
+      results
     end
 
     def initialize(claim:, article:, investigation: nil)
@@ -216,6 +285,139 @@ module Analyzers
       interaction.update!(status: :failed, error_class: error.class.name, error_message: error.message.truncate(500))
     rescue StandardError
       nil
+    end
+
+    # --- Class-level batch helpers ---
+
+    BATCH_CONTRADICTION_SYSTEM_PROMPT = <<~PROMPT.freeze
+      You are a fact-checking evidence analyst. You will receive MULTIPLE claim-article pairs to analyze.
+
+      For each pair, determine:
+      1. Does the article support, dispute, or merely contextualize the claim?
+      2. How relevant is this article to the claim (0.0 to 1.0)?
+      3. A brief reasoning explaining why.
+
+      Rules:
+      - Base your analysis ONLY on what each article text actually says.
+      - Each analysis is independent — do not let one pair influence another.
+      - Be conservative: if unsure, use "contextualizes" with low relevance.
+
+      Return a JSON object with an "analyses" array. Each element must have:
+        - stance: one of "supports", "disputes", "contextualizes"
+        - relevance_score: between 0.0 and 1.0
+        - reasoning: brief text explaining why
+
+      The analyses array MUST have exactly the same number of elements as the pairs array, in the same order.
+    PROMPT
+
+    def self.batch_llm_analysis(batch_data, investigation)
+      pairs_payload = batch_data.map.with_index do |data, idx|
+        {
+          index: idx,
+          claim: data[:pair][:claim].canonical_text,
+          article_title: data[:pair][:article].title,
+          article_excerpt: data[:pair][:article].body_text.to_s.truncate(2000),
+          article_source_kind: data[:pair][:article].source_kind,
+          article_authority_tier: data[:pair][:article].authority_tier
+        }
+      end
+
+      prompt_text = { pairs: pairs_payload }.to_json
+      fingerprint = Digest::SHA256.hexdigest(prompt_text)
+      model = contradiction_model_class
+
+      # Check batch cache
+      if investigation
+        cached = LlmInteraction.find_cached(evidence_packet_fingerprint: fingerprint, model_id: model)
+        if cached&.response_json.is_a?(Hash) && cached.response_json["analyses"].is_a?(Array)
+          return cached.response_json["analyses"].map { |a| parse_contradiction_response_class(a) }
+        end
+      end
+
+      interaction = if investigation
+        LlmInteraction.create!(
+          investigation:,
+          interaction_type: :contradiction_analysis,
+          model_id: model,
+          prompt_text: prompt_text,
+          evidence_packet_fingerprint: fingerprint,
+          status: :pending
+        )
+      end
+
+      count = batch_data.size
+      schema = {
+        name: "batch_contradiction_analysis",
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            analyses: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  stance: { type: "string", enum: %w[supports disputes contextualizes] },
+                  relevance_score: { type: "number" },
+                  reasoning: { type: "string" }
+                },
+                required: %w[stance relevance_score reasoning]
+              },
+              minItems: count,
+              maxItems: count
+            }
+          },
+          required: %w[analyses]
+        }
+      }
+
+      timeout = ENV.fetch("LLM_TIMEOUT_SECONDS", 120).to_i * 2
+      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+      response = Timeout.timeout(timeout) do
+        RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+          .with_instructions(BATCH_CONTRADICTION_SYSTEM_PROMPT)
+          .with_schema(schema)
+          .ask(prompt_text)
+      end
+
+      elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
+      payload = response.content.is_a?(Hash) ? response.content : JSON.parse(response.content.to_s)
+
+      if interaction
+        interaction.update!(
+          response_text: response.content.to_s.delete("\x00"),
+          response_json: payload,
+          status: :completed,
+          latency_ms: elapsed_ms,
+          prompt_tokens: response.respond_to?(:input_tokens) ? response.input_tokens : nil,
+          completion_tokens: response.respond_to?(:output_tokens) ? response.output_tokens : nil
+        )
+      end
+
+      payload.fetch("analyses").map { |a| parse_contradiction_response_class(a) }
+    rescue StandardError => e
+      Rails.logger.warn("[EvidenceRelationshipAnalyzer] Batch LLM failed: #{e.message}")
+      interaction&.update!(status: :failed, error_class: e.class.name, error_message: e.message.truncate(500)) rescue nil
+      Array.new(batch_data.size) # Return nils so callers fall back to heuristic
+    end
+
+    def self.llm_available_class?
+      defined?(RubyLLM) && ENV["OPENROUTER_API_KEY"].present?
+    end
+
+    def self.contradiction_model_class
+      Array(Rails.application.config.x.frank_investigator.openrouter_models).first || "anthropic/claude-3.7-sonnet"
+    end
+
+    def self.parse_contradiction_response_class(payload)
+      return nil unless payload.is_a?(Hash)
+      {
+        stance: payload["stance"].to_s.to_sym,
+        relevance: payload["relevance_score"].to_f.clamp(0, 1).round(2),
+        reasoning: payload["reasoning"].to_s
+      }
     end
   end
 end
