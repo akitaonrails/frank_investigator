@@ -10,6 +10,8 @@ module Articles
     end
 
     def call
+      return [] if duplicate_content?
+
       Analyzers::ClaimExtractor.call(@article, investigation: @investigation).each do |result|
         decomposed_claims = Analyzers::ClaimDecomposer.call(text: result.canonical_text, investigation: @investigation)
 
@@ -22,6 +24,16 @@ module Articles
     end
 
     private
+
+    def duplicate_content?
+      return false if @article.body_fingerprint.blank?
+
+      Article.where(body_fingerprint: @article.body_fingerprint)
+        .where.not(id: @article.id)
+        .where(fetch_status: :fetched)
+        .joins(:article_claims)
+        .exists?
+    end
 
     def find_or_create_claim(decomposed, result)
       # Canonicalize: use LLM-provided canonical_form if available, else call canonicalizer

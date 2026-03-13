@@ -2,7 +2,8 @@ class Article < ApplicationRecord
   enum :fetch_status, {
     pending: "pending",
     fetched: "fetched",
-    failed: "failed"
+    failed: "failed",
+    rejected: "rejected"
   }, default: :pending, validate: true
 
   enum :source_kind, {

@@ -59,6 +59,7 @@ module Analyzers
         .ask(prompt)
 
       elapsed_ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - start_time) * 1000).to_i
+      raise "Empty LLM response" if response.content.blank?
       payload = response.content.is_a?(Hash) ? response.content : JSON.parse(response.content.to_s)
       complete_interaction(interaction, response, payload, elapsed_ms)
 
@@ -122,6 +123,7 @@ module Analyzers
       Array(payload["claims"]).filter_map do |claim_data|
         text = claim_data["text"].to_s.squish
         next if text.blank? || text.length < 30
+        next if ClaimNoiseFilter.noise?(text)
 
         importance = case claim_data["importance"]
         when "high" then 0.95
@@ -168,6 +170,7 @@ module Analyzers
     def build_result(sentence, role:, importance_score:)
       surface_text = sentence.to_s.squish
       return nil if surface_text.blank? || surface_text.length < 30
+      return nil if ClaimNoiseFilter.noise?(surface_text)
 
       Result.new(
         canonical_text: surface_text,
