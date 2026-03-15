@@ -66,15 +66,19 @@ module Analyzers
       "Advertisement"
     ].freeze
 
+    # Pricing noise: subscription plans, telemarketing, lottery, gift cards.
+    # NOTE: Do NOT add bare R$ patterns here — news articles legitimately discuss prices.
+    # These patterns only match commercial/transactional language, not factual reporting.
     PRICING_PATTERNS = [
-      /R\$\s*\d+[.,]\d{2}/,                            # "R$ 49,90" or "R$1,90"
       /\b\d+[.,]\d{2}\s*\/\s*m[eê]s\b/i,               # "49,90/mês"
       /\btelevendas\b/i,
       /\bSAC\b.*\b\d{4}/,                               # "SAC Capitais: 4003-..."
       /\b0800\s+\d{3}\s+\d{4}\b/,                       # "0800 770 2166"
       /\bsorteio\b/i,                                    # "Detalhes do sorteio"
       /\bcartão\s+presente\b/i,                          # "cartão presente"
-      /\bvoucher\b/i
+      /\bvoucher\b/i,
+      /\bassinar?\s+(?:por|a\s+partir)\b/i,             # "Assinar por R$ 9,90"
+      /\bplano\s+(?:mensal|anual|premium)\b/i           # "Plano mensal"
     ].freeze
 
     NAVIGATION_PATTERNS = [

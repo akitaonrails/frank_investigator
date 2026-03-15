@@ -149,11 +149,18 @@ module Parsing
       text.presence || node.text.squish
     end
 
+    # Pattern for inline attribution stuck to end of paragraph: "...text.Name Name, title"
+    TRAILING_ATTRIBUTION_PATTERN = /[.!?]\p{Lu}\p{Ll}+(?:\s+\p{L}+){1,5},\s+\p{Ll}[\p{L}\s\/]+\z/
+
     def strip_trailing_tags(text)
       lines = text.split("\n\n")
       # Remove trailing short lines that look like tag labels or bylines (no sentence structure)
       while lines.size > 1 && lines.last.length < 60 && lines.last.match?(TAG_LINE_PATTERN)
         lines.pop
+      end
+      # Strip inline attribution concatenated to last paragraph (e.g. "...no varejo.Matheus Dias, economista do FGV/Ibre")
+      if lines.last&.match?(TRAILING_ATTRIBUTION_PATTERN)
+        lines[-1] = lines.last.sub(/(?<=[.!?])\p{Lu}\p{Ll}+(?:\s+\p{L}+){1,5},\s+\p{Ll}[\p{L}\s\/]+\z/, "")
       end
       lines.join("\n\n")
     end
