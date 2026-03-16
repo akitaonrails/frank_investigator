@@ -41,9 +41,14 @@ class Investigations::FetchLinkedArticleJobTest < ActiveJob::TestCase
       linked.normalized_url,
       html: <<~HTML
         <html>
-          <head><title>Budget report confirms a 4 percent tax reduction</title></head>
+          <head>
+            <title>Budget report confirms a 4 percent tax reduction</title>
+            <meta property="og:type" content="article">
+            <script type="application/ld+json">{"@type": "NewsArticle", "headline": "Budget report confirms a 4 percent tax reduction"}</script>
+          </head>
           <body>
             <article>
+              <h1>Budget report confirms a 4 percent tax reduction</h1>
               <p>The budget report confirms a 4 percent tax reduction in 2026.</p>
               <p>According to the treasury, the policy will reduce the federal tax burden by an estimated twelve billion dollars over the next fiscal year.</p>
               <p>Economists at the central bank project a positive impact on consumer spending and employment across all sectors.</p>

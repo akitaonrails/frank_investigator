@@ -41,8 +41,12 @@ class Investigations::ExtractClaimsJobTest < ActiveJob::TestCase
     perform_enqueued_jobs only: Investigations::KickoffJob
 
     Fetchers::FakeFetcher.register(url, html: <<~HTML)
-      <html><head><title>Tax cuts announced for 2026</title></head>
+      <html><head><title>Tax cuts announced for 2026</title>
+      <meta property="og:type" content="article">
+      <script type="application/ld+json">{"@type": "NewsArticle", "headline": "Tax cuts announced for 2026"}</script>
+      </head>
       <body><article>
+        <h1>Tax cuts announced for 2026</h1>
         <p>The government announced a 4 percent tax cut effective January 2026 according to the finance ministry.</p>
         <p>Officials confirmed the measure will affect 50 million taxpayers nationwide.</p>
         <p>The policy is expected to boost consumer spending and stimulate economic growth across all regions of the country.</p>

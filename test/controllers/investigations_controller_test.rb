@@ -18,10 +18,9 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     assert_includes response.body, I18n.t("investigations.url_rejected.index_page")
   end
 
-  test "rejects section page URLs" do
+  test "accepts section page URLs (post-fetch filtering handles these)" do
     get root_path, params: { url: "https://g1.globo.com/economia" }
-    assert_response :unprocessable_entity
-    assert_includes response.body, I18n.t("investigations.url_rejected.section_page")
+    assert_response :redirect
   end
 
   test "rejects ecommerce URLs" do

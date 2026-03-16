@@ -39,23 +39,6 @@ module Investigations
       /(?:product|produto|item|dp|gp/product|shop|cart|checkout|basket|wishlist|buy|order)/
     }ix
 
-    # Paths that look like index/category pages rather than articles
-    INDEX_PATH_PATTERN = %r{\A/(?:[a-z0-9_-]+/?)?(?:\?.*)?(?:#.*)?\z}i
-
-    # Paths that contain an article-like identifier (slug, numeric ID, date components)
-    ARTICLE_SIGNALS = [
-      /\d{4}\/\d{2}/,                    # date component: 2025/03
-      /\/\d{4}-\d{2}-\d{2}\b/,           # ISO date: /2025-03-11
-      /\/[a-z0-9-]{15,}\b/i,             # long slug: /article-title-goes-here
-      /\.\w{3,5}\z/,                     # file extension: .ghtml, .html, .shtml, .asp
-      /\/\d{3,}\b/,                      # numeric ID >= 3 digits: /12345
-      /[?&]id=\d+/,                      # query param ID: ?id=123
-      /[?&](?:noticia|materia|artigo)=/i, # Portuguese article params
-      /[?&](?:article|story|post)=/i,     # English article params
-      /\/(?:noticias?|materias?|artigos?)\//i,  # Portuguese article path segments
-      /\/(?:articles?|stories|story|posts?|news)\//i # English article path segments
-    ].freeze
-
     def self.call(url)
       new(url).call
     end
@@ -68,11 +51,6 @@ module Investigations
       @query = @uri.query.to_s
     end
 
-    LISTING_PATH_PATTERNS = %r{
-      /(?:tag|tags|autor|author|authors|category|categories|
-         arquivo|archive|archives|page/\d+|label|topic|topics)/
-    }ix
-
     NON_ARTICLE_HOSTS = %w[
       falabr.cgu.gov.br acesso.gov.br
       api.whatsapp.com web.whatsapp.com wa.me
@@ -84,7 +62,8 @@ module Investigations
       /\Astatic\./i,
       /\Aofertas\./i,
       /\Aassinatura\./i,
-      /\Aassine\./i
+      /\Aassine\./i,
+      /\An?\.?comentarios?\./i
     ].freeze
 
     def call
@@ -92,9 +71,8 @@ module Investigations
       reject_ecommerce!
       reject_search_engine!
       reject_non_content!
-      reject_listing_page!
       reject_non_article_host!
-      reject_index_page!
+      reject_bare_homepage!
       true
     end
 
@@ -126,12 +104,6 @@ module Investigations
       end
     end
 
-    def reject_listing_page!
-      return unless @path.match?(LISTING_PATH_PATTERNS)
-
-      raise RejectedUrlError.new(:listing_page, I18n.t("investigations.url_rejected.listing_page"))
-    end
-
     def reject_non_article_host!
       return unless @host
 
@@ -144,31 +116,15 @@ module Investigations
       end
     end
 
-    def reject_index_page!
-      # Root path with no meaningful path segments
+    def reject_bare_homepage!
       clean_path = @path.chomp("/")
-      return if clean_path.blank? && @query.present? # allow root with query params (API-style)
+      return if clean_path.blank? && @query.present?
 
       segments = clean_path.split("/").reject(&:blank?)
 
       if segments.empty?
         raise RejectedUrlError.new(:index_page, I18n.t("investigations.url_rejected.index_page"))
       end
-
-      # Single short segment with no article signals = likely a category/section page
-      if segments.size == 1 && !has_article_signals?
-        raise RejectedUrlError.new(:section_page, I18n.t("investigations.url_rejected.section_page"))
-      end
-
-      # Two segments but both are short category-like words (e.g., /economia/mercado)
-      if segments.size == 2 && segments.all? { |s| s.length < 12 && s.match?(/\A[a-z-]+\z/i) } && !has_article_signals?
-        raise RejectedUrlError.new(:section_page, I18n.t("investigations.url_rejected.section_page"))
-      end
-    end
-
-    def has_article_signals?
-      path_and_query = "#{@path}?#{@query}"
-      ARTICLE_SIGNALS.any? { |pattern| path_and_query.match?(pattern) }
     end
 
     def ecommerce_path?

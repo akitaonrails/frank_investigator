@@ -38,10 +38,15 @@ class Investigations::FetchRootArticleJobTest < ActiveJob::TestCase
       "https://example.com/news",
       html: <<~HTML
         <html>
-          <head><title>City Hall says taxes will fall in 2026</title></head>
+          <head>
+            <title>City Hall says taxes will fall in 2026</title>
+            <meta property="og:type" content="article">
+            <script type="application/ld+json">{"@type": "NewsArticle", "headline": "City Hall says taxes will fall in 2026"}</script>
+          </head>
           <body>
             <header><a href="https://ignore.example.com">Ignore me</a></header>
             <article>
+              <h1>City Hall says taxes will fall in 2026</h1>
               <p>City Hall announced taxes will fall by 4 percent in 2026.</p>
               <p>The article cites the full budget document published by the treasury department.</p>
               <p>Officials expect the reduction to benefit over 30 million residents across the metropolitan area and surrounding regions.</p>

@@ -19,6 +19,12 @@ module Articles
       end
 
       unless Parsing::DocumentExtractor.document_url?(@article.normalized_url)
+        detection = Parsing::ArticleDetector.call(html: @html)
+        unless detection.article
+          @article.update!(fetch_status: :rejected, rejection_reason: "not_article")
+          return extracted
+        end
+
         gate = Parsing::ContentQualityGate.call(
           body_text: extracted.body_text,
           title: extracted.title || @fetched_title,

@@ -131,16 +131,16 @@ class Investigations::UrlClassifierTest < ActiveSupport::TestCase
     assert_rejected "https://www.folha.uol.com.br/", :index_page
   end
 
-  test "rejects single section path" do
-    assert_rejected "https://g1.globo.com/economia", :section_page
+  test "accepts single section path (post-fetch filtering handles these)" do
+    assert_accepted "https://g1.globo.com/economia"
   end
 
-  test "rejects single section path with trailing slash" do
-    assert_rejected "https://www.folha.uol.com.br/mercado/", :section_page
+  test "accepts section path with trailing slash (post-fetch filtering handles these)" do
+    assert_accepted "https://www.folha.uol.com.br/mercado/"
   end
 
-  test "rejects two short category segments" do
-    assert_rejected "https://g1.globo.com/economia/mercado", :section_page
+  test "accepts two short category segments (post-fetch filtering handles these)" do
+    assert_accepted "https://g1.globo.com/economia/mercado"
   end
 
   # --- Rejected: non-content ---
@@ -157,34 +157,34 @@ class Investigations::UrlClassifierTest < ActiveSupport::TestCase
     assert_rejected "https://example.com/media/video.mp4", :non_content
   end
 
-  # --- Rejected: listing pages ---
+  # --- Formerly rejected listing pages now pass pre-fetch (post-fetch ArticleDetector handles these) ---
 
-  test "rejects tag page" do
-    assert_rejected "https://g1.globo.com/tag/economia/", :listing_page
+  test "accepts tag page (post-fetch filtering)" do
+    assert_accepted "https://g1.globo.com/tag/economia/"
   end
 
-  test "rejects author page" do
-    assert_rejected "https://www.folha.uol.com.br/author/joao-silva/", :listing_page
+  test "accepts author page (post-fetch filtering)" do
+    assert_accepted "https://www.folha.uol.com.br/author/joao-silva/"
   end
 
-  test "rejects category page with deep path" do
-    assert_rejected "https://news.example.com/brasil/category/politica/", :listing_page
+  test "accepts category page (post-fetch filtering)" do
+    assert_accepted "https://news.example.com/brasil/category/politica/"
   end
 
-  test "rejects archive page" do
-    assert_rejected "https://example.com/blog/archive/2025/", :listing_page
+  test "accepts archive page (post-fetch filtering)" do
+    assert_accepted "https://example.com/blog/archive/2025/"
   end
 
-  test "rejects paginated listing" do
-    assert_rejected "https://example.com/noticias/page/3/", :listing_page
+  test "accepts paginated listing (post-fetch filtering)" do
+    assert_accepted "https://example.com/noticias/page/3/"
   end
 
-  test "rejects autor page in Portuguese" do
-    assert_rejected "https://example.com/autor/maria-silva/artigos", :listing_page
+  test "accepts autor page in Portuguese (post-fetch filtering)" do
+    assert_accepted "https://example.com/autor/maria-silva/artigos"
   end
 
-  test "rejects topics page" do
-    assert_rejected "https://example.com/topics/climate-change/", :listing_page
+  test "accepts topics page (post-fetch filtering)" do
+    assert_accepted "https://example.com/topics/climate-change/"
   end
 
   # --- Rejected: non-article hosts ---
