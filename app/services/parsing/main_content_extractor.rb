@@ -90,17 +90,36 @@ module Parsing
       @document.css(BLOCKED_SELECTORS).remove
       node, selector = best_content_node
       body_text = extract_body_text(node)
+      excerpt = extract_excerpt(node, body_text)
 
       Result.new(
         title: @document.at("title")&.text.to_s.squish,
         body_text:,
-        excerpt: body_text.truncate(280),
+        excerpt:,
         main_content_path: selector,
         links: extract_links(node)
       )
     end
 
     private
+
+    # Build excerpt from the first real paragraph — not the raw body_text which
+    # may include navigation noise when extraction falls back to <body>.
+    # Requires 80+ chars, low link density, and no noise patterns.
+    def extract_excerpt(node, body_text)
+      node.css("p").each do |p|
+        text = p.text.squish
+        next if text.length < 80
+        next if text.match?(AD_MARKER_PATTERN) || text.match?(SHARE_TEXT_PATTERN) || text.match?(SECTION_HEADER_PATTERN)
+        # Skip paragraphs that are mostly links (navigation)
+        link_len = p.css("a").sum { |a| a.text.to_s.length }
+        next if text.length > 0 && link_len.to_f / text.length > 0.5
+        # Skip paragraphs that end with a question mark and have no period — likely prompts/CTAs
+        next if text.end_with?("?") && !text.include?(".")
+        return text.truncate(280)
+      end
+      body_text.truncate(280)
+    end
 
     def best_content_node
       candidates = CONTENT_SELECTORS.filter_map do |selector|
