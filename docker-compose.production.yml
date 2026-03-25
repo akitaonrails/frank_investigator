@@ -6,7 +6,7 @@ services:
     image: ${REGISTRY_HOST}:${REGISTRY_PORT}/akitaonrails/frank_investigator:latest
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-3000}:80"
+      - "${APP_PORT:-3666}:80"
     env_file:
       - ${APP_DATA_DIR}/.env.production
     environment:

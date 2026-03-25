@@ -16,8 +16,8 @@ IMAGE_TAG="${REGISTRY_HOST}:${REGISTRY_PORT}/akitaonrails/frank_investigator:lat
 PULL_TAG="${REGISTRY_PULL_HOST}:${REGISTRY_PORT}/akitaonrails/frank_investigator:latest"
 SSH_CMD="ssh -F /dev/null -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${DEPLOY_SSH_PORT} ${DEPLOY_USER}@${DEPLOY_HOST}"
 SCP_CMD="scp -F /dev/null -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${DEPLOY_SSH_PORT}"
-COMPOSE_ENV_FILE="${COMPOSE_FILE%.yml}.env"
-DC="docker compose --env-file $COMPOSE_ENV_FILE -f $COMPOSE_FILE"
+ENV_FILE="${APP_DATA_DIR}/.env.production"
+DC="docker compose --env-file $ENV_FILE -f $COMPOSE_FILE"
 
 COMMAND="${1:-deploy}"
 
@@ -30,8 +30,16 @@ set -euo pipefail
 mkdir -p "$APP_DATA_DIR/storage"
 mkdir -p "$(dirname "$COMPOSE_FILE")"
 
-if [ ! -f "$APP_DATA_DIR/.env.production" ]; then
-  cat > "$APP_DATA_DIR/.env.production" <<'ENV'
+if [ ! -f "$ENV_FILE" ]; then
+  cat > "$ENV_FILE" <<'ENVBLOCK'
+# --- Compose variable substitution (used by docker-compose.production.yml) ---
+REGISTRY_HOST=localhost
+REGISTRY_PORT=3007
+APP_DATA_DIR=/home/akitaonrails/frank_investigator
+APP_PORT=3666
+
+# --- App runtime environment (passed into the container) ---
+
 # Required
 OPENROUTER_API_KEY=your-openrouter-api-key
 RAILS_MASTER_KEY=change-me
@@ -47,18 +55,14 @@ FRANK_INVESTIGATOR_OPENROUTER_MODELS=google/gemini-2.0-flash-001,meta-llama/llam
 WEB_CONCURRENCY=1
 RAILS_MAX_THREADS=3
 JOB_CONCURRENCY=3
-ENV
-  echo "  Created $APP_DATA_DIR/.env.production — edit it with real values."
+ENVBLOCK
+  echo "  Created $ENV_FILE — edit it with real values."
 else
-  echo "  $APP_DATA_DIR/.env.production already exists, skipping."
+  echo "  $ENV_FILE already exists, skipping."
 fi
 
-cat > "$COMPOSE_ENV_FILE" <<ENV
-REGISTRY_HOST=${REGISTRY_PULL_HOST}
-REGISTRY_PORT=${REGISTRY_PORT}
-APP_DATA_DIR=${APP_DATA_DIR}
-APP_PORT=${APP_PORT}
-ENV
+# Clean up old separate compose env file if it exists
+rm -f "${COMPOSE_FILE%.yml}.env"
 SETUP
 
     echo "==> Uploading docker-compose file..."
@@ -66,7 +70,7 @@ SETUP
       "${DEPLOY_USER}@${DEPLOY_HOST}:${COMPOSE_FILE}"
 
     echo "==> Setup complete."
-    echo "    1. Edit $APP_DATA_DIR/.env.production on the server with real values."
+    echo "    1. Edit $ENV_FILE on the server with real values."
     echo "    2. Run: bin/deploy"
     ;;
 
