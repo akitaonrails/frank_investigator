@@ -9,7 +9,9 @@ class LlmInteraction < ApplicationRecord
     contradiction_analysis: "contradiction_analysis",
     headline_analysis: "headline_analysis",
     rhetorical_analysis: "rhetorical_analysis",
-    search_query_generation: "search_query_generation"
+    search_query_generation: "search_query_generation",
+    contextual_gap_analysis: "contextual_gap_analysis",
+    investigation_summary: "investigation_summary"
   }, default: :assessment, validate: true
 
   enum :status, {

@@ -30,7 +30,10 @@ module Investigations
         }
       end
     ensure
-      Investigations::RefreshStatus.call(@investigation) if @investigation
+      if @investigation
+        Investigations::AnalyzeContextualGapsJob.perform_later(@investigation.id)
+        Investigations::RefreshStatus.call(@investigation)
+      end
     end
   end
 end

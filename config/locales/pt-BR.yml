@@ -38,6 +38,7 @@ pt-BR:
       what_we_could_not_check: "O que não pudemos verificar"
       default_uncheckable_reason: "Esta alegação precisa de mais contexto antes de poder ser verificada."
       uncheckable_pending: "Nenhuma alegação subjetiva ou ambígua foi classificada ainda."
+      no_uncheckable_claims: "Nenhuma alegação não verificável foi encontrada neste artigo."
 
     progress:
       analyzing: "Análise em andamento"
@@ -114,9 +115,25 @@ pt-BR:
       detected_fallacies: "Falácias detectadas"
       undermines: "Prejudica:"
 
+    contextual_gaps:
+      heading: "Análise de lacunas contextuais"
+      completeness: "Completude contextual"
+      unaddressed_questions: "Questões não abordadas"
+      evidence_found: "Contra-evidência encontrada"
+
+    investigation_summary:
+      heading: "Resumo da investigação"
+      strengths: "Pontos fortes"
+      weaknesses: "Pontos fracos"
+      quality_strong: "Forte"
+      quality_mixed: "Misto"
+      quality_weak: "Fraco"
+      quality_insufficient: "Insuficiente"
+
     pipeline_panel:
       heading: "Etapas do pipeline"
       empty: "As tarefas ainda não foram iniciadas."
+      show_details: "Mostrar detalhes das etapas"
 
     failures:
       interstitial_detected: "O site de destino bloqueou nossa solicitação com um desafio de detecção de bot. Tente novamente mais tarde ou use uma fonte diferente."
@@ -258,6 +275,8 @@ pt-BR:
       analyze_headline: "Analisar manchete"
       assess_claims: "Avaliar alegações"
       expand_linked_articles_root: "Expandir artigos vinculados"
+      analyze_contextual_gaps: "Analisar lacunas contextuais"
+      generate_summary: "Gerar resumo"
     severity:
       error: "Erro"
       warning: "Aviso"
@@ -269,6 +288,31 @@ pt-BR:
     no_issues: "Nenhum problema retórico detectado pela análise heurística."
     no_analysis: "Nenhuma análise retórica realizada."
     no_evidence: "Nenhuma evidência vinculada foi relevante o suficiente para avaliar esta alegação ainda."
+
+    summary:
+      supported_claims:
+        one: "%{count} alegação é bem sustentada por evidência"
+        other: "%{count} alegações são bem sustentadas por evidência"
+      disputed_claims:
+        one: "%{count} alegação é contestada por evidência"
+        other: "%{count} alegações são contestadas por evidência"
+      needs_evidence_claims:
+        one: "%{count} alegação ainda precisa de mais evidência"
+        other: "%{count} alegações ainda precisam de mais evidência"
+      high_headline_bait: "A manchete parece sensacionalista em relação ao conteúdo do artigo"
+      contextual_gaps_found:
+        one: "%{count} lacuna contextual crítica foi identificada — contexto importante está ausente"
+        other: "%{count} lacunas contextuais críticas foram identificadas — contexto importante está ausente"
+      conclusion: "De %{total} alegações avaliadas, %{supported} são sustentadas, %{disputed} são contestadas e %{needs_evidence} precisam de mais evidência."
+
+    contextual_gaps:
+      scope_mismatch_question: "Os estudos estrangeiros citados se aplicam ao contexto econômico e institucional local?"
+      scope_mismatch_relevance: "O artigo cita principalmente evidências estrangeiras para apoiar conclusões sobre o contexto local, sem abordar diferenças estruturais."
+      one_sided_question: "Quais contra-argumentos ou evidências contrárias existem que o artigo não aborda?"
+      one_sided_relevance: "Todas as alegações avaliadas são sustentadas, mas o artigo não apresenta nenhuma visão oposta ou contexto qualificador, sugerindo apresentação seletiva de evidências."
+      heuristic_summary: "A análise heurística identificou %{count} possível(is) lacuna(s) contextual(is)."
+      no_gaps: "Nenhuma lacuna contextual significativa detectada pela análise heurística."
+      no_analysis: "Nenhuma análise de lacunas contextuais realizada."
 
     fallacy_types:
       bait_and_pivot: "Isca e desvio"

@@ -34,6 +34,7 @@ en:
       what_we_could_not_check: "What we could not check"
       default_uncheckable_reason: "This claim needs more context before it can be checked."
       uncheckable_pending: "No subjective or ambiguous claims have been classified yet."
+      no_uncheckable_claims: "No uncheckable claims were found in this article."
 
     progress:
       analyzing: "Analysis in progress"
@@ -110,9 +111,25 @@ en:
       detected_fallacies: "Detected fallacies"
       undermines: "Undermines:"
 
+    contextual_gaps:
+      heading: "Contextual gap analysis"
+      completeness: "Contextual completeness"
+      unaddressed_questions: "Unaddressed questions"
+      evidence_found: "Counter-evidence found"
+
+    investigation_summary:
+      heading: "Investigation summary"
+      strengths: "Strengths"
+      weaknesses: "Weaknesses"
+      quality_strong: "Strong"
+      quality_mixed: "Mixed"
+      quality_weak: "Weak"
+      quality_insufficient: "Insufficient"
+
     pipeline_panel:
       heading: "Pipeline steps"
       empty: "Jobs have not started yet."
+      show_details: "Show step details"
 
     failures:
       interstitial_detected: "The target website blocked our request with a bot-detection challenge. Try again later or use a different source."
@@ -254,6 +271,8 @@ en:
       analyze_headline: "Analyze headline"
       assess_claims: "Assess claims"
       expand_linked_articles_root: "Expand linked articles"
+      analyze_contextual_gaps: "Analyze contextual gaps"
+      generate_summary: "Generate summary"
     severity:
       error: "Error"
       warning: "Warning"
@@ -265,6 +284,31 @@ en:
     no_issues: "No rhetorical issues detected by heuristic analysis."
     no_analysis: "No rhetorical analysis performed."
     no_evidence: "No linked evidence was relevant enough to assess this claim yet."
+
+    summary:
+      supported_claims:
+        one: "%{count} claim is well-supported by evidence"
+        other: "%{count} claims are well-supported by evidence"
+      disputed_claims:
+        one: "%{count} claim is disputed by evidence"
+        other: "%{count} claims are disputed by evidence"
+      needs_evidence_claims:
+        one: "%{count} claim still needs more evidence"
+        other: "%{count} claims still need more evidence"
+      high_headline_bait: "The headline appears sensationalized relative to the article content"
+      contextual_gaps_found:
+        one: "%{count} critical contextual gap was identified — important context is missing"
+        other: "%{count} critical contextual gaps were identified — important context is missing"
+      conclusion: "Of %{total} assessed claims, %{supported} are supported, %{disputed} are disputed, and %{needs_evidence} need more evidence."
+
+    contextual_gaps:
+      scope_mismatch_question: "Do the cited foreign studies apply to the local economic and institutional context?"
+      scope_mismatch_relevance: "The article cites primarily foreign evidence to support conclusions about the local context, without addressing structural differences."
+      one_sided_question: "What counter-arguments or contrary evidence exist that the article does not address?"
+      one_sided_relevance: "All assessed claims are supported but the article presents no opposing viewpoint or qualifying context, suggesting selective evidence presentation."
+      heuristic_summary: "Heuristic analysis identified %{count} potential contextual gap(s)."
+      no_gaps: "No significant contextual gaps detected by heuristic analysis."
+      no_analysis: "No contextual gap analysis performed."
 
     fallacy_types:
       bait_and_pivot: "Bait and pivot"

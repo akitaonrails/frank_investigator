@@ -1,5 +1,5 @@
 class Investigation < ApplicationRecord
-  REQUIRED_STEPS = %w[fetch_root_article extract_claims analyze_headline assess_claims expand_linked_articles_root].freeze
+  REQUIRED_STEPS = %w[fetch_root_article extract_claims analyze_headline assess_claims expand_linked_articles_root analyze_contextual_gaps generate_summary].freeze
 
   broadcasts_refreshes
 

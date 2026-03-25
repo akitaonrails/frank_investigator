@@ -1,0 +1,71 @@
+<% summary = investigation.llm_summary %>
+<% return unless investigation.completed? && summary.present? %>
+
+<%
+  quality = summary["overall_quality"].to_s
+  callout_color = case quality
+  when "strong"
+    "border-l-verdict-green bg-verdict-green/4"
+  when "weak"
+    "border-l-verdict-red bg-verdict-red/4"
+  when "insufficient"
+    "border-l-verdict-slate bg-verdict-slate/4"
+  else
+    "border-l-verdict-amber bg-verdict-amber/4"
+  end
+
+  quality_badge = case quality
+  when "strong"
+    badge_class_for("supported")
+  when "weak"
+    badge_class_for("disputed")
+  when "insufficient"
+    badge_class_for("not_checkable")
+  else
+    badge_class_for("mixed")
+  end
+%>
+
+<section class="border border-line rounded-3xl p-5 mb-4 border-l-4 <%= callout_color %>">
+  <div class="flex items-center gap-3 mb-3">
+    <h3 class="font-bold"><%= t("investigations.investigation_summary.heading") %></h3>
+    <span class="<%= quality_badge %>"><%= t("investigations.investigation_summary.quality_#{quality}") %></span>
+  </div>
+
+  <p class="leading-relaxed"><%= summary["conclusion"] %></p>
+
+  <% strengths = Array(summary["strengths"]) %>
+  <% weaknesses = Array(summary["weaknesses"]) %>
+
+  <% if strengths.any? || weaknesses.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+      <% if strengths.any? %>
+        <div>
+          <h4 class="text-sm font-semibold text-verdict-green mb-2"><%= t("investigations.investigation_summary.strengths") %></h4>
+          <ul class="list-none p-0 m-0 space-y-1">
+            <% strengths.each do |s| %>
+              <li class="flex items-start gap-2 text-sm">
+                <span class="text-verdict-green shrink-0 mt-0.5">&#10003;</span>
+                <span><%= s %></span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <% if weaknesses.any? %>
+        <div>
+          <h4 class="text-sm font-semibold text-verdict-amber mb-2"><%= t("investigations.investigation_summary.weaknesses") %></h4>
+          <ul class="list-none p-0 m-0 space-y-1">
+            <% weaknesses.each do |w| %>
+              <li class="flex items-start gap-2 text-sm">
+                <span class="text-verdict-amber shrink-0 mt-0.5">&#9888;</span>
+                <span><%= w %></span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</section>
