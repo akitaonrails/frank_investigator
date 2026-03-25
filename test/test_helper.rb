@@ -15,6 +15,9 @@ require "rails/test_help"
 
 module ActiveSupport
   class TestCase
+    # Tests always run in English regardless of the configured default locale
+    setup { I18n.locale = :en }
+
     # Run tests in parallel with specified workers
     parallelize(workers: :number_of_processors)
 
