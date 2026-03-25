@@ -1,11 +1,33 @@
-<article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg">
+<article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
   <h2 class="text-lg font-bold mb-4"><%= t("investigations.pipeline_panel.heading") %></h2>
   <% if steps.any? %>
-    <ul class="grid gap-3 m-0 p-0 list-none">
-      <% steps.each do |step| %>
-        <%= render "pipeline_step", step: step %>
+    <div class="flex flex-wrap items-center gap-1.5">
+      <% steps.each_with_index do |step, i| %>
+        <%
+          color = case step.status
+          when "completed" then "bg-verdict-green"
+          when "running", "processing" then "bg-verdict-amber animate-pulse-dot"
+          when "failed" then "bg-verdict-red"
+          else "bg-black/15"
+          end
+          tooltip = pipeline_step_name(step.name)
+          tooltip += " (#{pipeline_step_duration(step)})" if pipeline_step_duration(step)
+        %>
+        <span class="w-4 h-4 rounded-full <%= color %> cursor-default" title="<%= tooltip %>"></span>
+        <% if i < steps.size - 1 %>
+          <span class="w-3 h-0.5 bg-line rounded-full"></span>
+        <% end %>
       <% end %>
-    </ul>
+    </div>
+
+    <details class="mt-3">
+      <summary class="cursor-pointer text-sm text-muted hover:text-ink"><%= t("investigations.pipeline_panel.show_details") %></summary>
+      <ul class="grid gap-3 m-0 p-0 list-none mt-3">
+        <% steps.each do |step| %>
+          <%= render "pipeline_step", step: step %>
+        <% end %>
+      </ul>
+    </details>
   <% else %>
     <p class="text-muted"><%= t("investigations.pipeline_panel.empty") %></p>
   <% end %>

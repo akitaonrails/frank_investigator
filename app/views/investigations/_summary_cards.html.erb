@@ -1,13 +1,13 @@
 <section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-4" id="summary_cards">
-  <article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg">
+  <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
     <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.pipeline_status") %></p>
     <p class="text-2xl flex items-center gap-2"><span class="<%= badge_class_for(investigation.status) %>"><%= te(:pipeline_status, investigation.status) %></span></p>
   </article>
-  <article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg">
+  <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
     <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.checkability") %></p>
     <p class="text-2xl flex items-center gap-2"><span class="<%= badge_class_for(investigation.checkability_status) %>"><%= te(:checkability_status, investigation.checkability_status) %></span></p>
   </article>
-  <article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg">
+  <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
     <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.headline_bait") %></p>
     <p class="text-2xl flex items-center gap-2">
       <span class="inline-block w-20 h-2 bg-black/8 rounded-full overflow-hidden">
@@ -16,7 +16,7 @@
       <span class="text-base font-bold"><%= score_percent(investigation.headline_bait_score) %></span>
     </p>
   </article>
-  <article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg">
+  <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
     <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.overall_confidence") %></p>
     <p class="text-2xl flex items-center gap-2">
       <span class="inline-block w-20 h-2 bg-black/8 rounded-full overflow-hidden">

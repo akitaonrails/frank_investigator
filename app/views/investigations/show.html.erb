@@ -3,17 +3,16 @@
 <%= turbo_stream_from @investigation %>
 
 <main class="w-full max-w-[1120px] mx-auto px-4 py-8 pb-16">
-  <header class="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-6">
-    <div>
-      <p class="mb-3 text-muted text-xs tracking-[0.14em] uppercase"><%= t(".eyebrow") %></p>
-      <h1 class="font-serif text-[clamp(2.2rem,5vw,4rem)] leading-[0.95]"><%= t(".heading") %></h1>
-      <p class="text-muted"><%= @investigation.normalized_url %></p>
+  <header class="mb-8">
+    <p class="mb-3 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t(".eyebrow") %></p>
+    <h1 class="font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] font-extrabold tracking-tight mb-2"><%= t(".heading") %></h1>
+    <div class="flex flex-wrap items-center gap-3">
+      <a href="<%= @investigation.normalized_url %>" target="_blank" rel="noopener" class="text-muted text-sm hover:text-ink truncate max-w-[600px] transition-colors"><%= @investigation.normalized_url %></a>
+      <%= form_with url: root_path, method: :get, class: "inline-flex", local: true do |form| %>
+        <%= form.hidden_field :url, value: @investigation.normalized_url %>
+        <%= form.submit t(".rerun"), class: "text-sm text-muted hover:text-ink px-3 py-1 border border-line rounded-lg cursor-pointer bg-transparent hover:bg-paper-strong transition-colors" %>
+      <% end %>
     </div>
-
-    <%= form_with url: root_path, method: :get, class: "flex flex-wrap gap-3", local: true do |form| %>
-      <%= form.url_field :url, value: @investigation.normalized_url, class: "flex-1 basis-[420px] min-h-12 px-4 py-3 border border-line rounded-full bg-white/85 text-ink font-serif", required: true %>
-      <%= form.submit t(".rerun"), class: "min-h-12 px-5 py-3 border-0 rounded-full bg-ink text-white cursor-pointer font-serif" %>
-    <% end %>
   </header>
 
   <% if @failure_info.present? %>
@@ -41,18 +40,29 @@
   <%= render "summary_cards", investigation: @investigation %>
 
   <% unless @investigation.completed? || @investigation.failed? %>
-    <section class="flex items-center gap-3 mb-4 px-5 py-3 border border-verdict-amber/25 rounded-xl bg-verdict-amber/6 text-sm" id="progress_banner">
-      <span class="inline-block w-2.5 h-2.5 rounded-full bg-verdict-amber shrink-0 animate-pulse-dot"></span>
-      <span>
-        <%= t("investigations.progress.analyzing") %>
-        <% if (step = active_step_name(@investigation)) %>
-          &mdash; <%= step %>
-        <% end %>
-      </span>
-      <span class="text-muted">
-        <%= @investigation.pipeline_steps.where(status: "completed").count %>/<%= @investigation.pipeline_steps.count %>
-        <%= t("investigations.progress.steps_done") %>
-      </span>
+    <%
+      completed_count = @investigation.pipeline_steps.where(status: "completed").count
+      total_count = @investigation.pipeline_steps.count
+      progress_pct = total_count > 0 ? (completed_count.to_f / total_count * 100).round : 0
+    %>
+    <section class="mb-6 px-5 py-4 border border-line rounded-2xl bg-card" id="progress_banner">
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div class="flex items-center gap-2.5">
+          <svg class="w-4 h-4 text-verdict-amber animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="50 20" stroke-linecap="round"/>
+          </svg>
+          <span class="text-sm font-medium">
+            <%= t("investigations.progress.analyzing") %>
+            <% if (step = active_step_name(@investigation)) %>
+              &mdash; <%= step %>
+            <% end %>
+          </span>
+        </div>
+        <span class="text-muted text-sm font-medium tabular-nums"><%= completed_count %>/<%= total_count %></span>
+      </div>
+      <div class="w-full h-1.5 bg-line/40 rounded-full overflow-hidden">
+        <div class="h-full rounded-full bg-verdict-amber transition-all duration-500 ease-out" style="width: <%= progress_pct %>%"></div>
+      </div>
     </section>
   <% end %>
 
@@ -62,11 +72,15 @@
 
   <%= render "rhetorical_analysis", investigation: @investigation %>
 
-  <section class="grid grid-cols-1 lg:grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-4">
+  <%= render "contextual_gaps", investigation: @investigation %>
+
+  <%= render "investigation_summary", investigation: @investigation %>
+
+  <section class="space-y-4">
     <%= render "root_article_panel", root_article: @root_article %>
 
-    <article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg" id="checkable_claims">
-      <h2 class="text-lg font-bold mb-4"><%= t(".what_we_checked") %></h2>
+    <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm" id="checkable_claims">
+      <h2 class="text-base font-semibold mb-4 uppercase tracking-wide text-muted"><%= t(".what_we_checked") %></h2>
       <% if @checkable_claims.any? %>
         <% @checkable_claims.each do |assessment| %>
           <%= render "claim_assessment", assessment: %>
@@ -74,12 +88,29 @@
       <% elsif @investigation.completed? && @investigation.not_checkable? %>
         <p class="text-muted"><%= t(".no_checkable_claims") %></p>
       <% else %>
-        <p class="text-muted"><%= t(".claims_pending") %></p>
+        <div class="space-y-4">
+          <div class="flex items-center gap-2.5 text-muted text-sm">
+            <svg class="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="50 20" stroke-linecap="round"/>
+            </svg>
+            <span><%= t(".claims_pending") %></span>
+          </div>
+          <% 3.times do %>
+            <div class="pt-4 border-t border-line/60 space-y-2">
+              <div class="h-4 w-3/4 rounded progress-shimmer"></div>
+              <div class="h-3 w-1/2 rounded progress-shimmer"></div>
+              <div class="flex gap-2">
+                <div class="h-6 w-16 rounded-full progress-shimmer"></div>
+                <div class="h-6 w-20 rounded-full progress-shimmer"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
       <% end %>
     </article>
 
-    <article class="border border-line bg-card backdrop-blur-sm rounded-3xl p-5 shadow-lg" id="uncheckable_claims">
-      <h2 class="text-lg font-bold mb-4"><%= t(".what_we_could_not_check") %></h2>
+    <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm" id="uncheckable_claims">
+      <h2 class="text-base font-semibold mb-4 uppercase tracking-wide text-muted"><%= t(".what_we_could_not_check") %></h2>
       <% if @uncheckable_claims.any? %>
         <% @uncheckable_claims.each do |assessment| %>
           <section class="pt-4 border-t border-line/60 first:pt-0 first:border-t-0">
@@ -93,8 +124,21 @@
             <p class="text-muted"><%= assessment.reason_summary.presence || t(".default_uncheckable_reason") %></p>
           </section>
         <% end %>
+      <% elsif @investigation.completed? || @investigation.failed? %>
+        <p class="text-muted"><%= t(".no_uncheckable_claims") %></p>
       <% else %>
-        <p class="text-muted"><%= t(".uncheckable_pending") %></p>
+        <div class="flex items-center gap-2.5 text-muted text-sm">
+          <svg class="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="50 20" stroke-linecap="round"/>
+          </svg>
+          <span><%= t(".uncheckable_pending") %></span>
+        </div>
+        <% 2.times do %>
+          <div class="pt-3 border-t border-line/60 space-y-2">
+            <div class="h-4 w-2/3 rounded progress-shimmer"></div>
+            <div class="h-3 w-1/3 rounded progress-shimmer"></div>
+          </div>
+        <% end %>
       <% end %>
     </article>
 

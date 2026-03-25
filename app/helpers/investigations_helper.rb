@@ -105,4 +105,17 @@ module InvestigationsHelper
       "#{seconds / 60}m #{seconds % 60}s"
     end
   end
+
+  def render_reason_summary(text)
+    return "" if text.blank?
+
+    html = ERB::Util.html_escape(text)
+    # Convert markdown links [text](url) to <a> tags
+    html = html.gsub(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/) do
+      %(<a href="#{$2}" target="_blank" rel="noopener">#{$1}</a>)
+    end
+    # Convert **bold** to <strong>
+    html = html.gsub(/\*\*([^*]+)\*\*/, '<strong>\1</strong>')
+    html.html_safe
+  end
 end

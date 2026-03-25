@@ -1,22 +1,22 @@
 <% content_for :title, t(".title") %>
 
 <main class="w-full max-w-[1120px] mx-auto px-4 py-8">
-  <section class="max-w-3xl mx-auto mt-[8vh] p-8 md:p-10 border border-line bg-card backdrop-blur-sm rounded-3xl shadow-lg">
-    <p class="mb-3 text-muted text-xs tracking-[0.14em] uppercase"><%= t(".eyebrow") %></p>
-    <h1 class="mb-3 font-serif text-[clamp(2.2rem,5vw,4rem)] leading-[0.95]"><%= t(".heading") %></h1>
-    <p class="text-muted"><%= t(".hero_copy") %></p>
+  <section class="max-w-2xl mx-auto mt-[12vh] p-8 md:p-12">
+    <p class="mb-4 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t(".eyebrow") %></p>
+    <h1 class="mb-4 font-serif text-[clamp(2.4rem,5vw,3.8rem)] leading-[1.05] font-extrabold tracking-tight"><%= t(".heading") %></h1>
+    <p class="text-muted text-lg leading-relaxed max-w-xl"><%= t(".hero_copy") %></p>
 
-    <%= form_with url: root_path, method: :get, class: "flex flex-wrap gap-3 mt-6", local: true do |form| %>
+    <%= form_with url: root_path, method: :get, class: "flex flex-wrap gap-3 mt-8", local: true do |form| %>
       <%= form.url_field :url,
           value: @submitted_url,
           placeholder: t(".placeholder"),
           required: true,
-          class: "flex-1 basis-[420px] min-h-14 px-4 py-3.5 border border-line rounded-full bg-white/85 text-ink font-serif" %>
-      <%= form.submit t(".submit"), class: "min-h-14 px-6 py-3.5 border-0 rounded-full bg-ink text-white cursor-pointer font-serif" %>
+          class: "flex-1 basis-[420px] min-h-14 px-5 py-3.5 border border-line rounded-2xl bg-white text-ink text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-shadow" %>
+      <%= form.submit t(".submit"), class: "min-h-14 px-7 py-3.5 border-0 rounded-2xl bg-ink text-white cursor-pointer font-semibold text-base hover:bg-ink/90 transition-colors shadow-sm" %>
     <% end %>
 
     <% if @error_message.present? %>
-      <p class="mt-4 text-verdict-red"><%= @error_message %></p>
+      <p class="mt-4 text-verdict-red text-sm"><%= @error_message %></p>
     <% end %>
   </section>
 </main>

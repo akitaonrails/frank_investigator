@@ -48,7 +48,7 @@
     <% end %>
   </p>
 
-  <p class="mt-2"><%= assessment.reason_summary %></p>
+  <p class="mt-2 reason-summary text-sm leading-relaxed text-muted"><%= render_reason_summary(assessment.reason_summary) %></p>
 
   <% if assessment.claim.canonical_parent.present? %>
     <p class="text-muted"><strong><%= t("investigations.claim_assessment.variant_of") %></strong> <%= assessment.claim.canonical_parent.canonical_text.truncate(150) %></p>
