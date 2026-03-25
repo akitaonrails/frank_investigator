@@ -5,7 +5,7 @@ module Investigations
     def perform(investigation_id)
       @investigation = Investigation.includes(:root_article, claim_assessments: :claim).find(investigation_id)
 
-      Pipeline::StepRunner.call(investigation: @investigation, name: "analyze_rhetorical_structure") do
+      Pipeline::StepRunner.call(investigation: @investigation, name: "analyze_rhetorical_structure", allow_rerun: true) do
         result = Analyzers::RhetoricalFallacyAnalyzer.call(investigation: @investigation)
 
         analysis_data = {

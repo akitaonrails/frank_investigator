@@ -5,7 +5,7 @@ module Investigations
     def perform(investigation_id)
       @investigation = Investigation.includes(:root_article, claim_assessments: :claim).find(investigation_id)
 
-      Pipeline::StepRunner.call(investigation: @investigation, name: "generate_summary") do
+      Pipeline::StepRunner.call(investigation: @investigation, name: "generate_summary", allow_rerun: true) do
         result = Investigations::GenerateSummary.call(investigation: @investigation)
 
         summary_data = if result
