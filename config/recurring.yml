@@ -33,12 +33,5 @@ production:
     queue: default
     schedule: every 12 hours
   recover_stale_pipelines:
-    command: |
-      PipelineStep.where(status: "running").where("started_at < ?", 15.minutes.ago).find_each do |step|
-        step.update!(status: :failed, error_message: "Recovered: step exceeded 15 minute timeout", finished_at: Time.current)
-        Rails.logger.warn("[StaleRecovery] Marked #{step.name} as failed on investigation #{step.investigation_id}")
-      end
-      Investigation.where(status: "processing").find_each do |inv|
-        Investigations::RefreshStatus.call(inv)
-      end
+    command: "Pipeline::ResumeInterrupted.call"
     schedule: every 5 minutes
