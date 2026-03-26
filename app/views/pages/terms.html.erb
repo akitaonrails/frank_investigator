@@ -1,0 +1,53 @@
+<% content_for :title, t("pages.terms.title") %>
+
+<main class="w-full max-w-[800px] mx-auto px-4 py-8 pb-16">
+  <header class="mb-8">
+    <p class="mb-3 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t("app_name") %></p>
+    <h1 class="font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.1] font-extrabold tracking-tight mb-2"><%= t("pages.terms.heading") %></h1>
+  </header>
+
+  <article class="prose prose-neutral max-w-none space-y-6 text-[15px] leading-relaxed">
+    <section>
+      <h2 class="text-lg font-bold mt-0"><%= t("pages.terms.nature_heading") %></h2>
+      <p><%= t("pages.terms.nature_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.terms.not_heading") %></h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <% t("pages.terms.not_items").each do |item| %>
+          <li><%= item %></li>
+        <% end %>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.terms.methodology_heading") %></h2>
+      <p><%= t("pages.terms.methodology_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.terms.limitations_heading") %></h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <% t("pages.terms.limitations_items").each do |item| %>
+          <li><%= item %></li>
+        <% end %>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.terms.purpose_heading") %></h2>
+      <p><%= t("pages.terms.purpose_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.terms.liability_heading") %></h2>
+      <p><%= t("pages.terms.liability_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.terms.opensource_heading") %></h2>
+      <p><%= t("pages.terms.opensource_body_html") %></p>
+    </section>
+  </article>
+</main>

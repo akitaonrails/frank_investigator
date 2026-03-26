@@ -12,6 +12,35 @@ pt-BR:
     formats:
       long: "%d/%m/%Y %H:%M:%S %Z"
 
+  pages:
+    terms:
+      title: "Termos de Uso — Frank Investigator"
+      heading: "Termos de Uso e Aviso Legal"
+      link_text: "Termos de uso"
+      nature_heading: "Natureza deste serviço"
+      nature_body: "O Frank Investigator é uma ferramenta analítica automatizada que examina artigos de notícias publicamente disponíveis utilizando inteligência artificial, processamento de linguagem natural e busca na web. O sistema extrai alegações factuais dos artigos, busca evidências corroborantes e contraditórias, analisa a estrutura retórica, identifica omissões contextuais e detecta padrões de cobertura midiática coordenada. Seus relatórios são gerados algoritmicamente e têm o objetivo de auxiliar os leitores a formarem seus próprios julgamentos informados."
+      not_heading: "O que este serviço NÃO é"
+      not_items:
+        - "Não é uma autoridade de verificação de fatos. Nenhum relatório produzido por este sistema constitui uma determinação definitiva de verdade ou falsidade. O sistema identifica padrões, sinaliza potenciais problemas e apresenta contra-evidências — o leitor deve tirar suas próprias conclusões."
+        - "Não é uma ferramenta de moderação de conteúdo ou censura. A análise de um artigo não implica que o artigo deva ser removido, sancionado ou suprimido. Todo conteúdo analisado permanece como propriedade intelectual e responsabilidade editorial de seus publicadores originais."
+        - "Não é um ataque ao jornalismo ou a qualquer veículo de notícias específico. A identificação de padrões retóricos, lacunas contextuais ou sinais de coordenação em um artigo é uma forma de análise de mídia, não uma acusação de má-fé. O jornalismo legítimo rotineiramente contém escolhas editoriais que este sistema pode sinalizar — tais achados refletem a natureza do trabalho editorial, não malícia."
+        - "Não é uma agência de verificação de fatos sancionada ou oficialmente endossada pelo governo. Este é um projeto independente e de código aberto, sem afiliação institucional, sem autoridade regulatória e sem poder de compelir ou penalizar."
+      methodology_heading: "Metodologia"
+      methodology_body: "Cada investigação executa um pipeline de múltiplas etapas que inclui: busca do artigo via navegador headless, extração de alegações, análise de manchete, avaliação de alegações contra evidências da web, detecção de distorção de fontes, análise temporal e estatística, verificação de citações, análise de cadeia de autoridade, detecção de falácias retóricas, análise de lacunas contextuais com busca de contra-evidências, detecção de narrativa coordenada entre veículos, pontuação de manipulação emocional e um resumo executivo final. O sistema utiliza modelos de linguagem de grande porte (LLMs) como ferramentas analíticas — não como fontes de verdade. As saídas dos LLMs são restringidas por esquemas estruturados e cruzadas com evidências publicamente recuperáveis."
+      limitations_heading: "Limitações e restrições conhecidas"
+      limitations_items:
+        - "A análise automatizada é inerentemente imperfeita. O sistema pode produzir falsos positivos (sinalizando escolhas editoriais legítimas como problemáticas) ou falsos negativos (não detectando manipulação genuína). As pontuações são avaliações probabilísticas, não certezas."
+        - "O sistema analisa artigos isoladamente ou contra cobertura publicamente disponível. Não tem acesso a fontes não publicadas, documentos confidenciais ou à intenção editorial por trás de qualquer artigo."
+        - "A análise gerada por LLM reflete as capacidades e limitações dos modelos utilizados. Modelos diferentes podem produzir avaliações diferentes do mesmo artigo."
+        - "Os resultados de busca na web utilizados como contra-evidência estão sujeitos aos mesmos vieses e limitações de qualquer conteúdo online."
+        - "O sistema de pontuação é calibrado para distinguir imperfeições editoriais normais de manipulação deliberada, mas a calibração é um processo contínuo e pode não ser perfeita em todos os casos."
+      purpose_heading: "Finalidade pretendida"
+      purpose_body: "O único propósito deste sistema é encorajar a leitura crítica. Ao revelar o que um artigo diz, o que omite, como enquadra sua narrativa e como sua cobertura se compara a outros veículos, o sistema visa dar aos leitores as ferramentas para pensar mais profundamente sobre o que leem. Não diz aos leitores o que pensar — mostra quais perguntas fazer."
+      liability_heading: "Limitação de responsabilidade"
+      liability_body: "Este serviço é fornecido 'como está', sem garantias de qualquer tipo, expressas ou implícitas. O operador deste serviço não garante a precisão, completude ou confiabilidade de qualquer análise produzida. O operador não será responsabilizado por quaisquer decisões tomadas ou ações realizadas com base nas informações fornecidas por este sistema. Os usuários são os únicos responsáveis por sua própria interpretação e uso dos relatórios gerados."
+      opensource_heading: "Código aberto"
+      opensource_body_html: 'O código-fonte completo do Frank Investigator está publicamente disponível sob a <a href="https://github.com/akitaonrails/frank_investigator" target="_blank" rel="noopener" class="underline hover:text-ink">Licença Pública Geral Affero GNU v3.0</a>. Qualquer pessoa pode inspecionar, auditar, reproduzir ou melhorar a metodologia de análise.'
+
   investigations:
     home:
       title: "Frank Investigator"

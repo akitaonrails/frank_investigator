@@ -4,7 +4,11 @@
 
 <main class="w-full max-w-[1120px] mx-auto px-4 py-8 pb-16">
   <header class="mb-8">
-    <p class="mb-3 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t(".eyebrow") %></p>
+    <div class="flex items-center gap-3 mb-3">
+      <p class="text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t(".eyebrow") %></p>
+      <span class="text-muted text-xs">&middot;</span>
+      <%= link_to t("pages.terms.link_text"), terms_path, class: "text-muted text-xs hover:text-ink transition-colors underline" %>
+    </div>
     <h1 class="font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] font-extrabold tracking-tight mb-2"><%= t(".heading") %></h1>
     <a href="<%= @investigation.normalized_url %>" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-muted text-sm hover:text-ink transition-colors">
       <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 3.5H3a1 1 0 00-1 1V13a1 1 0 001 1h8.5a1 1 0 001-1V9.5M9.5 2.5h4m0 0v4m0-4L8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>

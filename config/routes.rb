@@ -23,6 +23,9 @@ Rails.application.routes.draw do
     end
   end
 
+  # Static pages — public, no auth
+  get "terms" => "pages#terms", as: :terms
+
   # Submission form — basic auth via FRANK_AUTH_SECRET
   root "investigations#home"
 end
