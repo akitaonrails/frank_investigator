@@ -40,17 +40,19 @@
 
           <% results = Array(gap["search_results"]) %>
           <% if results.any? %>
-            <div class="mt-2 pl-3 border-l-2 border-line/40">
-              <p class="text-xs text-muted uppercase tracking-wide mb-1"><%= t("investigations.contextual_gaps.evidence_found") %></p>
-              <% results.each do |sr| %>
-                <div class="mb-1.5 last:mb-0">
-                  <a href="<%= sr["url"] %>" target="_blank" rel="noopener" class="text-sm text-ink hover:underline"><%= sr["title"].presence || sr["url"] %></a>
-                  <% if sr["snippet"].present? %>
-                    <p class="text-muted text-xs mt-0.5"><%= sr["snippet"].truncate(200) %></p>
-                  <% end %>
-                </div>
-              <% end %>
-            </div>
+            <details class="mt-2">
+              <summary class="cursor-pointer text-xs text-muted hover:text-ink"><%= t("investigations.contextual_gaps.evidence_found") %> (<%= results.size %>)</summary>
+              <div class="mt-1 pl-3 border-l-2 border-line/40">
+                <% results.each do |sr| %>
+                  <div class="mb-1.5 last:mb-0">
+                    <a href="<%= sr["url"] %>" target="_blank" rel="noopener" class="text-sm text-ink hover:underline"><%= sr["title"].presence || sr["url"] %></a>
+                    <% if sr["snippet"].present? %>
+                      <p class="text-muted text-xs mt-0.5"><%= sr["snippet"].truncate(200) %></p>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            </details>
           <% end %>
         </li>
       <% end %>
