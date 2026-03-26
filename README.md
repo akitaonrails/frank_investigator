@@ -84,42 +84,51 @@ bundle exec rails test                    # Full suite
 bundle exec rails test test/path_test.rb  # Single file
 ```
 
-## Deployment
+## Deployment (Kamal)
 
-The app ships with a Docker image and a `bin/deploy` script for push-based deployment to a remote server with a Docker registry.
+The app deploys via [Kamal](https://kamal-deploy.org/) to any server with Docker and SSH access.
 
 ### First-time setup
 
+Set these environment variables locally before deploying:
+
 ```bash
-cp config/deploy.env.example config/deploy.env   # Fill in server IP, SSH port, registry, paths
-bin/deploy setup                                  # Creates dirs, env files, uploads compose file
+export KAMAL_REGISTRY_USERNAME=your-github-username
+export KAMAL_REGISTRY_PASSWORD=ghp_your_github_pat    # PAT with write:packages scope
+export OPENROUTER_API_KEY=sk-or-v1-...
+export FRANK_INVESTIGATOR_OPENROUTER_MODELS=google/gemini-2.0-flash-001,meta-llama/llama-4-maverick
+export FRANK_AUTH_SECRET=$(openssl rand -hex 32)
+export JOBS_AUTH_PASSWORD=$(openssl rand -hex 16)
 ```
 
-Then edit `.env.production` on the server with your real `OPENROUTER_API_KEY` and `RAILS_MASTER_KEY`.
+Then bootstrap the server:
+
+```bash
+kamal setup
+```
 
 ### Deploy
 
 ```bash
-bin/deploy              # Build image, push to registry, pull on server, restart
+kamal deploy
 ```
 
 ### Other commands
 
 ```bash
-bin/deploy logs         # Tail production logs
-bin/deploy status       # Show container status
-bin/deploy stop         # Stop containers
-bin/deploy shell        # Open bash in the running container
-bin/deploy console      # Open Rails console
+kamal console           # Open Rails console
+kamal shell             # Open bash in the container
+kamal logs              # Tail production logs
+kamal app details       # Show container status
 ```
 
 ### How it works
 
-- `docker-compose.production.yml` defines the service (generic, no server-specific values)
-- `config/deploy.env` holds your server connection details (gitignored)
-- On the server, `APP_DATA_DIR/storage` is volume-mounted for SQLite databases
-- `APP_DATA_DIR/.env.production` holds runtime secrets (API keys, master key)
-- Solid Queue runs inside Puma (`SOLID_QUEUE_IN_PUMA=1`) — single container, no sidecars
+- `config/deploy.yml` defines the Kamal service (server, image, volumes, env)
+- `.kamal/secrets` pulls secrets from local env vars — no raw credentials in git
+- kamal-proxy handles SSL via Let's Encrypt and routes by hostname
+- `frank_investigator_storage` Docker volume persists SQLite databases
+- Solid Queue runs inside Puma (`SOLID_QUEUE_IN_PUMA=1`) — single container
 - Chromium is included in the Docker image for headless page fetching
 
 ## Internationalization

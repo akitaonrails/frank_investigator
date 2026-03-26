@@ -1,55 +1,61 @@
-# Name of your application. Used to uniquely configure containers.
-service: frank_investigator
+# Kamal deploy configuration for Frank Investigator
+# Shares server with makita-newsletter and marvin-bot
+service: frank-investigator
 
-# Name of the container image.
-image: akitaonrails/frank_investigator
+image: ghcr.io/akitaonrails/frank-investigator
 
-# Deploy to these servers (update with your actual server IP).
 servers:
   web:
-    - <%= ENV["DEPLOY_HOST"] || "192.168.0.1" %>
+    hosts:
+      - 107.170.70.49
+    options:
+      network: makita-network
+      shm-size: 512m
 
-# Enable SSL auto certification via Let's Encrypt.
-# Using an SSL proxy like this requires config.assume_ssl and config.force_ssl in production.rb.
 proxy:
   ssl: true
-  host: <%= ENV["DEPLOY_DOMAIN"] || "frank.example.com" %>
+  host: investigator.themakitachronicles.com
+  healthcheck:
+    path: /up
+    interval: 30
 
-# GitHub Container Registry
 registry:
   server: ghcr.io
-  username: akitaonrails
+  username:
+    - KAMAL_REGISTRY_USERNAME
   password:
     - KAMAL_REGISTRY_PASSWORD
 
-# Inject ENV variables into containers (secrets come from .kamal/secrets).
 env:
+  clear:
+    RAILS_ENV: production
+    RAILS_LOG_TO_STDOUT: true
+    SOLID_QUEUE_IN_PUMA: 1
+    FRANK_INVESTIGATOR_LOCALE: pt-BR
+    CHROMIUM_PATH: /usr/bin/chromium
+    LLM_TIMEOUT_SECONDS: 120
+    FRANK_INVESTIGATOR_MAX_LINK_DEPTH: 1
+    WEB_CONCURRENCY: 0
+    RAILS_MAX_THREADS: 5
+    JOBS_AUTH_USER: admin
   secret:
     - RAILS_MASTER_KEY
     - OPENROUTER_API_KEY
+    - FRANK_INVESTIGATOR_OPENROUTER_MODELS
+    - FRANK_AUTH_SECRET
+    - ALLOWED_HOST
     - JOBS_AUTH_PASSWORD
-  clear:
-    SOLID_QUEUE_IN_PUMA: true
-    JOB_CONCURRENCY: 3
-    WEB_CONCURRENCY: 2
-    RAILS_MAX_THREADS: 3
-    ALLOWED_HOST: <%= ENV["DEPLOY_DOMAIN"] || "frank.example.com" %>
-    JOBS_AUTH_USER: admin
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"
   shell: app exec --interactive --reuse "bash"
   logs: app logs -f
-  dbc: app exec --interactive --reuse "bin/rails dbconsole --include-password"
-  smoke: app exec "bin/rails frank:smoke_all"
 
-# Use a persistent storage volume for sqlite database files and local Active Storage files.
 volumes:
   - "frank_investigator_storage:/rails/storage"
 
-# Bridge fingerprinted assets between versions to avoid 404 on in-flight requests.
 asset_path: /rails/public/assets
 
-# Configure the image builder.
 builder:
   arch: amd64
+  context: .
