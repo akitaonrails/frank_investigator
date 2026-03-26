@@ -40,6 +40,9 @@
 # Ignore deploy configuration (contains server-specific IPs, ports, etc.)
 /config/deploy.env
 
+# Ignore Kamal secrets (contains raw credentials)
+/.kamal/secrets
+
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
