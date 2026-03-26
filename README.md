@@ -34,7 +34,8 @@ A fact does not become false because a million sources repeat a falsehood, and a
 - Detects rhetorical fallacies that undermine the article's own factual claims
 - Analyzes contextual gaps: what the article omits that would change the reader's conclusion
 - Searches for counter-evidence addressing each identified gap
-- Generates an executive summary factoring in claims, rhetoric, and omissions
+- Detects coordinated narrative campaigns: finds related coverage, compares narrative fingerprints, flags convergent framing and convergent omissions across outlets
+- Generates an executive summary factoring in claims, rhetoric, omissions, and coordination signals
 - Live updates via Turbo Streams as the pipeline progresses
 
 ## Stack
