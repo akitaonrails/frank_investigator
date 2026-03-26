@@ -18,6 +18,7 @@ class LlmInteraction < ApplicationRecord
     selective_quotation: "selective_quotation",
     authority_laundering: "authority_laundering",
     emotional_manipulation: "emotional_manipulation",
+    batch_content_analysis: "batch_content_analysis",
     investigation_summary: "investigation_summary"
   }, default: :assessment, validate: true
 

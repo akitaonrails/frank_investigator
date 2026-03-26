@@ -82,6 +82,13 @@ module Analyzers
       Only flag genuine manipulation — an article that clearly dates its references is fine
       even if it discusses old events.
 
+
+      CRITICAL — NO HALLUCINATION: Only reference URLs, sources, claims, quotes, and data
+      that are EXPLICITLY present in the input provided to you. Do not invent, guess, or
+      fabricate any URL, source name, statistic, quote, or claim. If you cannot verify
+      something from the provided text, mark it as "unverifiable" — never fill in details
+      you are unsure about. Every excerpt must be traceable to the provided input.
+
       Return strict JSON matching the schema.
     PROMPT
 

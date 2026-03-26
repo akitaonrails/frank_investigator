@@ -71,7 +71,7 @@ module Investigations
           end
         end
 
-        Investigations::DetectSourceMisrepresentationJob.perform_later(@investigation.id)
+        Investigations::BatchContentAnalysisJob.perform_later(@investigation.id)
 
         { assessed_claims_count: @investigation.claim_assessments.count }
       end

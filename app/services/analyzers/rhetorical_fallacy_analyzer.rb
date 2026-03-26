@@ -106,6 +106,13 @@ module Analyzers
       IMPORTANT: The type and severity fields must always use the English enum values above.
       However, write the explanation, summary, and excerpt texts in %{locale_name}.
 
+
+      CRITICAL — NO HALLUCINATION: Only reference URLs, sources, claims, quotes, and data
+      that are EXPLICITLY present in the input provided to you. Do not invent, guess, or
+      fabricate any URL, source name, statistic, quote, or claim. If you cannot verify
+      something from the provided text, mark it as "unverifiable" — never fill in details
+      you are unsure about. Every excerpt must be traceable to the provided input.
+
       Return strict JSON matching the schema.
     PROMPT
 
