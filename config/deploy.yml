@@ -17,7 +17,8 @@ proxy:
   host: investigator.themakitachronicles.com
   healthcheck:
     path: /up
-    interval: 30
+    interval: 3
+    timeout: 90
 
 registry:
   server: ghcr.io
