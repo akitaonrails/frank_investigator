@@ -90,7 +90,7 @@ The app deploys via [Kamal](https://kamal-deploy.org/) to any server with Docker
 
 ### First-time setup
 
-Set these environment variables locally before deploying:
+Export these environment variables in your shell before deploying. Kamal reads them via `.kamal/secrets` — no manual editing of secret files needed.
 
 ```bash
 export KAMAL_REGISTRY_USERNAME=your-github-username
@@ -99,6 +99,7 @@ export OPENROUTER_API_KEY=sk-or-v1-...
 export FRANK_INVESTIGATOR_OPENROUTER_MODELS=google/gemini-2.0-flash-001,meta-llama/llama-4-maverick
 export FRANK_AUTH_SECRET=$(openssl rand -hex 32)
 export JOBS_AUTH_PASSWORD=$(openssl rand -hex 16)
+export GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX               # Optional
 ```
 
 Then bootstrap the server:
@@ -106,6 +107,8 @@ Then bootstrap the server:
 ```bash
 kamal setup
 ```
+
+Point your DNS (A record) to the server IP for the hostname configured in `config/deploy.yml`.
 
 ### Deploy
 
