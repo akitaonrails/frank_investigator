@@ -33,7 +33,7 @@ class InvestigationsController < ApplicationController
   end
 
   def show
-    @investigation = Investigation.find(params[:id])
+    @investigation = Investigation.find_by!(slug: params[:id])
     @root_article = @investigation.root_article
     @checkable_claims = @investigation.claim_assessments
       .includes(claim: {}, evidence_items: :article, llm_interactions: {}, verdict_snapshots: {})
@@ -61,7 +61,7 @@ class InvestigationsController < ApplicationController
   end
 
   def graph_data
-    investigation = Investigation.find(params[:id])
+    investigation = Investigation.find_by!(slug: params[:id])
     root = investigation.root_article
 
     nodes = []

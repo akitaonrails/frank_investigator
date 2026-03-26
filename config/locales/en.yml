@@ -21,7 +21,7 @@ en:
       title: "Frank Investigator"
       eyebrow: "Frank Investigator"
       heading: "Article investigation"
-      rerun: "Re-run"
+      view_original: "View original article"
       investigation_failed: "Investigation failed"
       technical_details: "Technical details"
       step_label: "Step:"

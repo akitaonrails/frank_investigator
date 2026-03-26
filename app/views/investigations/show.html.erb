@@ -6,13 +6,10 @@
   <header class="mb-8">
     <p class="mb-3 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t(".eyebrow") %></p>
     <h1 class="font-serif text-[clamp(2rem,4vw,3rem)] leading-[1.1] font-extrabold tracking-tight mb-2"><%= t(".heading") %></h1>
-    <div class="flex flex-wrap items-center gap-3">
-      <a href="<%= @investigation.normalized_url %>" target="_blank" rel="noopener" class="text-muted text-sm hover:text-ink truncate max-w-[600px] transition-colors"><%= @investigation.normalized_url %></a>
-      <%= form_with url: root_path, method: :get, class: "inline-flex", local: true do |form| %>
-        <%= form.hidden_field :url, value: @investigation.normalized_url %>
-        <%= form.submit t(".rerun"), class: "text-sm text-muted hover:text-ink px-3 py-1 border border-line rounded-lg cursor-pointer bg-transparent hover:bg-paper-strong transition-colors" %>
-      <% end %>
-    </div>
+    <a href="<%= @investigation.normalized_url %>" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-muted text-sm hover:text-ink transition-colors">
+      <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 3.5H3a1 1 0 00-1 1V13a1 1 0 001 1h8.5a1 1 0 001-1V9.5M9.5 2.5h4m0 0v4m0-4L8 8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <%= t(".view_original") %>
+    </a>
   </header>
 
   <% if @failure_info.present? %>
@@ -31,9 +28,6 @@
           <% end %>
         </p>
       </details>
-      <p>
-        <%= link_to t(".try_again"), root_path(url: @investigation.normalized_url), class: "inline-block min-h-12 px-5 py-3 rounded-full bg-ink text-white no-underline font-serif" %>
-      </p>
     </section>
   <% end %>
 

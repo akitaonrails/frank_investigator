@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_25_155530) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_25_235649) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -200,6 +200,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_25_155530) do
     t.decimal "overall_confidence_score", precision: 5, scale: 2, default: "0.0", null: false
     t.json "rhetorical_analysis"
     t.integer "root_article_id"
+    t.string "slug"
     t.string "status", default: "queued", null: false
     t.string "submitted_url", null: false
     t.text "summary"
@@ -207,6 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_25_155530) do
     t.index ["checkability_status"], name: "index_investigations_on_checkability_status"
     t.index ["normalized_url"], name: "index_investigations_on_normalized_url", unique: true
     t.index ["root_article_id"], name: "index_investigations_on_root_article_id"
+    t.index ["slug"], name: "index_investigations_on_slug", unique: true
     t.index ["status"], name: "index_investigations_on_status"
   end
 

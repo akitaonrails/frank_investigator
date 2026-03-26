@@ -25,7 +25,7 @@ pt-BR:
       title: "Frank Investigator"
       eyebrow: "Frank Investigator"
       heading: "Investigação do artigo"
-      rerun: "Re-executar"
+      view_original: "Ver artigo original"
       investigation_failed: "Investigação falhou"
       technical_details: "Detalhes técnicos"
       step_label: "Etapa:"

@@ -22,7 +22,6 @@ class ErrorPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "section.border-l-verdict-red"
     assert_match(/could not fetch/, response.body)
-    assert_match(/Try again/, response.body)
   end
 
   test "shows interstitial-specific message for bot detection" do

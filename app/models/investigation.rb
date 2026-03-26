@@ -26,7 +26,19 @@ class Investigation < ApplicationRecord
   validates :submitted_url, :normalized_url, presence: true
   validates :normalized_url, uniqueness: true
 
+  before_create :generate_slug
+
+  def to_param
+    slug
+  end
+
   def status_badge
     I18n.t("enums.pipeline_status.#{status}", default: status.tr("_", " "))
+  end
+
+  private
+
+  def generate_slug
+    self.slug ||= SecureRandom.hex(5)
   end
 end
