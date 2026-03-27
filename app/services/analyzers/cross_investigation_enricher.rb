@@ -15,6 +15,7 @@ module Analyzers
     include LlmHelpers
 
     MIN_ENTITY_OVERLAP = 2
+    MIN_KEYWORD_OVERLAP = 6
     MAX_RELATED = 10
 
     SYSTEM_PROMPT_TEMPLATE = <<~PROMPT.freeze
@@ -101,10 +102,18 @@ module Analyzers
         .includes(:root_article, :claim_assessments)
         .limit(50)
 
+      keywords = extract_keywords_from(@investigation)
+
       related = candidates.select do |inv|
+        # Match by entity names (proper nouns)
         other_entities = extract_entities_from(inv)
-        overlap = (entities & other_entities).size
-        overlap >= MIN_ENTITY_OVERLAP
+        entity_overlap = (entities & other_entities).size
+        next true if entity_overlap >= MIN_ENTITY_OVERLAP
+
+        # Match by keyword overlap (significant words from claims + title)
+        other_keywords = extract_keywords_from(inv)
+        keyword_overlap = (keywords & other_keywords).size
+        keyword_overlap >= MIN_KEYWORD_OVERLAP
       end
 
       related.first(MAX_RELATED)
@@ -112,6 +121,28 @@ module Analyzers
 
     def extract_entities
       extract_entities_from(@investigation)
+    end
+
+    # Stop words to exclude from keyword matching
+    STOP_WORDS = Set.new(%w[
+      a o e de da do das dos em na no nas nos por para com que se um uma os as ao aos
+      the and of to in for is on at by from with this that was were are be been has have
+      não foi são ser mais como entre sobre após desde também ainda
+    ]).freeze
+
+    def extract_keywords_from(investigation)
+      text = [
+        investigation.root_article&.title,
+        investigation.root_article&.body_text.to_s.truncate(2000),
+        investigation.claim_assessments.includes(:claim).map { |ca| ca.claim.canonical_text }
+      ].flatten.compact.join(" ")
+
+      text.downcase
+        .gsub(/[^a-zà-ú0-9\s]/, " ")
+        .split
+        .reject { |w| w.length < 5 || STOP_WORDS.include?(w) }
+        .uniq
+        .to_set
     end
 
     def extract_entities_from(investigation)
