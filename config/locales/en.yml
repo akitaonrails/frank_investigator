@@ -214,6 +214,7 @@ en:
       heading: "Investigation summary"
       strengths: "Strengths"
       weaknesses: "Weaknesses"
+      event_context_warning: "Related investigations reveal additional facts this article omits:"
       quality_strong: "Strong"
       quality_mixed: "Mixed"
       quality_weak: "Weak"

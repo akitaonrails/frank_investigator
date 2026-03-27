@@ -68,4 +68,23 @@
       <% end %>
     </div>
   <% end %>
+
+  <% ctx = investigation.event_context %>
+  <% critical = Array(ctx&.dig("critical_omissions")) %>
+  <% if critical.any? %>
+    <div class="mt-4 p-3 bg-verdict-red/4 rounded-xl border border-verdict-red/20">
+      <p class="text-sm font-semibold text-verdict-red mb-1"><%= t("investigations.investigation_summary.event_context_warning") %></p>
+      <ul class="list-none p-0 m-0 space-y-1">
+        <% critical.first(3).each do |o| %>
+          <li class="flex items-start gap-2 text-xs text-muted">
+            <span class="text-verdict-red shrink-0 mt-0.5">&#9888;</span>
+            <span><%= render_reason_summary(o.truncate(150)) %></span>
+          </li>
+        <% end %>
+        <% if critical.size > 3 %>
+          <li class="text-xs text-muted pl-5">+<%= critical.size - 3 %> more</li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 </section>

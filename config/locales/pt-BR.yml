@@ -218,6 +218,7 @@ pt-BR:
       heading: "Resumo da investigação"
       strengths: "Pontos fortes"
       weaknesses: "Pontos fracos"
+      event_context_warning: "Investigações relacionadas revelam fatos adicionais que este artigo omite:"
       quality_strong: "Forte"
       quality_mixed: "Misto"
       quality_weak: "Fraco"

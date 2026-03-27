@@ -37,6 +37,24 @@ namespace :frank do
     puts "  Jobs enqueued. Pipeline will complete via Solid Queue."
   end
 
+  desc "Cross-reference ALL completed investigations"
+  task crossref_all: :environment do
+    investigations = Investigation.where(status: "completed").order(created_at: :desc)
+    puts "Cross-referencing #{investigations.count} completed investigations..."
+
+    investigations.each do |inv|
+      result = Analyzers::CrossInvestigationEnricher.call(investigation: inv)
+      if result
+        related = Array(result[:related_investigations])
+        puts "  #{inv.slug} — #{related.size} related" if related.size > 1
+      end
+    rescue StandardError => e
+      puts "  #{inv.slug} — ERROR: #{e.message.truncate(80)}"
+    end
+
+    puts "Done."
+  end
+
   desc "Cross-reference an investigation with related ones (by slug)"
   task :crossref, [ :slug ] => :environment do |_t, args|
     slug = args[:slug] || ENV["SLUG"]
