@@ -72,6 +72,9 @@ en:
       steps_done: "steps completed"
 
     summary_cards:
+      credibility: "Credibility"
+      coordination: "Coordination"
+      completeness: "Completeness"
       pipeline_status: "Pipeline status"
       checkability: "Checkability"
       headline_bait: "Headline bait"

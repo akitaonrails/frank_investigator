@@ -1,28 +1,44 @@
-<section class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-4" id="summary_cards">
+<%
+  # Compute overall credibility from all analyzer signals
+  coordination = investigation.coordinated_narrative&.dig("coordination_score").to_f
+  completeness = investigation.contextual_gaps&.dig("completeness_score").to_f
+  manipulation = investigation.emotional_manipulation&.dig("manipulation_score").to_f
+  headline_bait = investigation.headline_bait_score.to_f / 100.0
+
+  # Credibility is the inverse of the worst signals — a single severe finding matters
+  worst_signal = [ coordination, 1.0 - completeness, manipulation, headline_bait ].max
+  credibility = (1.0 - worst_signal).clamp(0, 1)
+%>
+<section class="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 mb-4" id="summary_cards">
   <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
-    <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.overall_confidence") %></p>
+    <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.credibility") %></p>
     <p class="text-2xl flex items-center gap-2">
       <span class="inline-block w-20 h-2 bg-black/8 rounded-full overflow-hidden">
-        <span class="block h-full rounded-full score-fill <%= score_color_class(investigation.overall_confidence_score) %>" style="width: <%= score_bar_width(investigation.overall_confidence_score) %>%"></span>
+        <span class="block h-full rounded-full score-fill <%= score_color_class(credibility) %>" style="width: <%= score_bar_width(credibility) %>%"></span>
       </span>
-      <span class="text-base font-bold"><%= score_percent(investigation.overall_confidence_score * 100) %></span>
+      <span class="text-base font-bold"><%= score_percent(credibility * 100) %></span>
     </p>
   </article>
   <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
-    <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.headline_bait") %></p>
+    <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.coordination") %></p>
     <p class="text-2xl flex items-center gap-2">
       <span class="inline-block w-20 h-2 bg-black/8 rounded-full overflow-hidden">
-        <span class="block h-full rounded-full score-fill <%= score_color_class(investigation.headline_bait_score) %>" style="width: <%= score_bar_width(investigation.headline_bait_score) %>%"></span>
+        <span class="block h-full rounded-full score-fill <%= score_color_class(1.0 - coordination) %>" style="width: <%= score_bar_width(coordination) %>%"></span>
       </span>
-      <span class="text-base font-bold"><%= score_percent(investigation.headline_bait_score) %></span>
+      <span class="text-base font-bold"><%= score_percent(coordination * 100) %></span>
+    </p>
+  </article>
+  <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
+    <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.completeness") %></p>
+    <p class="text-2xl flex items-center gap-2">
+      <span class="inline-block w-20 h-2 bg-black/8 rounded-full overflow-hidden">
+        <span class="block h-full rounded-full score-fill <%= score_color_class(completeness) %>" style="width: <%= score_bar_width(completeness) %>%"></span>
+      </span>
+      <span class="text-base font-bold"><%= score_percent(completeness * 100) %></span>
     </p>
   </article>
   <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
     <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.pipeline_status") %></p>
     <p class="text-2xl flex items-center gap-2"><span class="<%= badge_class_for(investigation.status) %>"><%= te(:pipeline_status, investigation.status) %></span></p>
-  </article>
-  <article class="border border-line bg-card backdrop-blur-sm rounded-2xl p-5 shadow-sm">
-    <p class="mb-1 text-muted text-sm uppercase tracking-wide"><%= t("investigations.summary_cards.checkability") %></p>
-    <p class="text-2xl flex items-center gap-2"><span class="<%= badge_class_for(investigation.checkability_status) %>"><%= te(:checkability_status, investigation.checkability_status) %></span></p>
   </article>
 </section>

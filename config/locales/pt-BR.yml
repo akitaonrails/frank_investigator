@@ -76,6 +76,9 @@ pt-BR:
       steps_done: "etapas concluídas"
 
     summary_cards:
+      credibility: "Credibilidade"
+      coordination: "Coordenação"
+      completeness: "Completude"
       pipeline_status: "Status do pipeline"
       checkability: "Verificabilidade"
       headline_bait: "Manchete sensacionalista"
