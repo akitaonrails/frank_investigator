@@ -1,0 +1,95 @@
+<% content_for :title, t("pages.methodology.title") %>
+
+<main class="w-full max-w-[800px] mx-auto px-4 py-8 pb-16">
+  <header class="mb-8">
+    <p class="mb-3 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t("app_name") %></p>
+    <h1 class="font-serif text-[clamp(1.8rem,3.5vw,2.5rem)] leading-[1.1] font-extrabold tracking-tight mb-2"><%= t("pages.methodology.heading") %></h1>
+  </header>
+
+  <article class="prose prose-neutral max-w-none space-y-6 text-[15px] leading-relaxed">
+
+    <section>
+      <h2 class="text-lg font-bold mt-0"><%= t("pages.methodology.overview_heading") %></h2>
+      <p><%= t("pages.methodology.overview_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.top_scores_heading") %></h2>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.credibility_heading") %></h3>
+      <p><%= t("pages.methodology.credibility_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.coordination_heading") %></h3>
+      <p><%= t("pages.methodology.coordination_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.completeness_heading") %></h3>
+      <p><%= t("pages.methodology.completeness_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.summary_heading") %></h2>
+      <p><%= t("pages.methodology.summary_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.event_context_heading") %></h2>
+      <p><%= t("pages.methodology.event_context_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.headline_heading") %></h2>
+      <p><%= t("pages.methodology.headline_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.coordinated_narrative_heading") %></h2>
+      <p><%= t("pages.methodology.coordinated_narrative_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.emotional_heading") %></h2>
+      <p><%= t("pages.methodology.emotional_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.detailed_heading") %></h2>
+      <p><%= t("pages.methodology.detailed_intro") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.source_misrep_heading") %></h3>
+      <p><%= t("pages.methodology.source_misrep_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.temporal_heading") %></h3>
+      <p><%= t("pages.methodology.temporal_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.statistical_heading") %></h3>
+      <p><%= t("pages.methodology.statistical_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.quotation_heading") %></h3>
+      <p><%= t("pages.methodology.quotation_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.authority_heading") %></h3>
+      <p><%= t("pages.methodology.authority_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.rhetorical_heading") %></h3>
+      <p><%= t("pages.methodology.rhetorical_body") %></p>
+
+      <h3 class="text-base font-semibold mt-4"><%= t("pages.methodology.contextual_gaps_heading") %></h3>
+      <p><%= t("pages.methodology.contextual_gaps_body") %></p>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.quality_heading") %></h2>
+      <ul class="list-disc pl-5 space-y-2">
+        <% t("pages.methodology.quality_items").each do |item| %>
+          <li><%= item %></li>
+        <% end %>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-lg font-bold"><%= t("pages.methodology.calibration_heading") %></h2>
+      <p><%= t("pages.methodology.calibration_body") %></p>
+    </section>
+
+  </article>
+</main>

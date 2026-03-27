@@ -94,6 +94,16 @@ The `UrlClassifier` rejects known non-article hosts (app stores, login subdomain
 - Models use Rails enums with string backing and prefix option.
 - Tests use Minitest, not RSpec. No mocking of database — integration tests hit real SQLite.
 
+## Documentation
+
+When adding or changing analysis sections, scores, pipeline steps, or report layout:
+
+1. Update `README.md` with the new feature in the feature list.
+2. Update `app/views/pages/methodology.html.erb` and the corresponding i18n keys in both `en.yml` and `pt-BR.yml` under `pages.methodology.*` — this is the user-facing "How to read a report" page.
+3. Update `CLAUDE.md` if the change affects development workflow, core principles, or architecture.
+
+The methodology page must always reflect the current report structure so readers can understand what each section and score means.
+
 ## i18n
 
 All user-presentable text must use `t()` lookups — never hardcode strings in views, controllers, or helpers. Locale files live in `config/locales/` (`en.yml`, `pt-BR.yml`). When adding or changing any user-facing text:
