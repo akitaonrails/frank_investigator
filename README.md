@@ -31,7 +31,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 - Detects source corrections and flags stale assessments
 - Provides full verdict history with evidence provenance snapshots
 - Analyzes headline-body divergence and headline citation amplification
-- Detects rhetorical fallacies that undermine the article's own factual claims
+- Detects 14 rhetorical fallacies including 4 derived from Schopenhauer's 38 Stratagems
 - Detects source misrepresentation: when an article claims a source says X but it actually says Y
 - Detects temporal manipulation: old data presented as current, selective timeframes, timeline mixing
 - Detects statistical deception: cherry-picked baselines, misleading percentages, missing denominators

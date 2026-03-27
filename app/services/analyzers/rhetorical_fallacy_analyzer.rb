@@ -29,6 +29,9 @@ module Analyzers
       keyword_init: true
     )
 
+    # Fallacy types informed by classical rhetoric and Schopenhauer's 38 Stratagems
+    # ("The Art of Being Right", 1831). Each maps to one or more of Schopenhauer's
+    # eristic dialectic techniques adapted for written news analysis.
     FALLACY_TYPES = %w[
       bait_and_pivot
       appeal_to_authority
@@ -40,6 +43,10 @@ module Analyzers
       slippery_slope
       ad_hominem
       cherry_picking
+      equivocation
+      odious_categorization
+      twisted_conclusion
+      paradox_framing
     ].freeze
 
     SYSTEM_PROMPT_TEMPLATE = <<~PROMPT.freeze
@@ -91,6 +98,28 @@ module Analyzers
 
       cherry_picking: Selectively presenting data that supports a narrative while ignoring
       contradicting data that the article itself mentions.
+
+      equivocation: Using the same term with different meanings in different parts of the
+      article to create a false impression of consistency. Example: "growth" meaning GDP
+      growth in one paragraph and stock market growth in another, implying both support
+      the same conclusion. (Based on Schopenhauer's Stratagem #2)
+
+      odious_categorization: Dismissing a position or group by assigning a negative label
+      rather than engaging with the substance. Example: labeling opposition as
+      "ultraconservative", "extremist", "denialist", or "radical" without addressing their
+      actual arguments. This is distinct from ad_hominem — it targets a group or position
+      rather than an individual. (Based on Schopenhauer's Stratagem #32)
+
+      twisted_conclusion: The article's data or evidence points toward conclusion X, but
+      the article draws conclusion Y instead, without justifying the leap. The facts are
+      reported accurately but the editorial conclusion doesn't follow from them.
+      (Based on Schopenhauer's Stratagem #9)
+
+      paradox_framing: Framing a claim so that rejecting it appears absurd, irrational,
+      or morally indefensible — even when legitimate counter-arguments exist. Example:
+      "Anyone who questions this policy must want people to suffer." Forces the reader
+      into agreement by making dissent socially costly rather than logically unsound.
+      (Based on Schopenhauer's Stratagem #13)
 
       IMPORTANT rules:
       - Only flag clear, identifiable fallacies. Do NOT flag normal journalistic framing,
@@ -287,6 +316,29 @@ module Analyzers
       /\bcomo (economista|analista|especialista|professor)\b/i
     ].freeze
 
+    # Schopenhauer #32: Odious categorization — dismissive labels used to discredit
+    ODIOUS_LABEL_PATTERNS = [
+      /\b(ultra)?conservador[a]?\b/i,
+      /\bextremist[a]?\b/i,
+      /\bnegacionista\b/i,
+      /\bradical\b/i,
+      /\bfanátic[oa]\b/i,
+      /\bextrem(e|ist)\b/i,
+      /\bdenialist\b/i,
+      /\bfanatic\b/i,
+      /\bfar[- ]?(right|left)\b/i,
+      /\bextrema[- ]?(direita|esquerda)\b/i
+    ].freeze
+
+    # Schopenhauer #13: Paradox framing — making dissent seem absurd
+    PARADOX_FRAMING_PATTERNS = [
+      /\bquem\s+(é\s+)?contra\b.{0,40}\b(quer|deseja|prefere)\b/i,
+      /\bqualquer\s+pessoa\s+(sensata|racional|decente)\b/i,
+      /\banyone\s+who\s+(opposes?|questions?|rejects?)\b.{0,40}\b(wants?|must)\b/i,
+      /\bno\s+reasonable\s+person\b/i,
+      /\bonly\s+a\s+(fool|idiot)\b/i
+    ].freeze
+
     def heuristic_analysis(article)
       body = article.body_text.to_s
       fallacies = []
@@ -314,6 +366,34 @@ module Analyzers
             severity: "low",
             excerpt: match[0].truncate(200),
             explanation: I18n.t("heuristic_fallbacks.appeal_to_authority_explanation")
+          )
+          break
+        end
+      end
+
+      # Detect odious categorization (Schopenhauer #32)
+      ODIOUS_LABEL_PATTERNS.each do |pattern|
+        match = body.match(pattern)
+        if match
+          fallacies << Fallacy.new(
+            type: "odious_categorization",
+            severity: "low",
+            excerpt: match[0].truncate(200),
+            explanation: I18n.t("heuristic_fallbacks.odious_categorization_explanation")
+          )
+          break
+        end
+      end
+
+      # Detect paradox framing (Schopenhauer #13)
+      PARADOX_FRAMING_PATTERNS.each do |pattern|
+        match = body.match(pattern)
+        if match
+          fallacies << Fallacy.new(
+            type: "paradox_framing",
+            severity: "medium",
+            excerpt: match[0].truncate(200),
+            explanation: I18n.t("heuristic_fallbacks.paradox_framing_explanation")
           )
           break
         end

@@ -75,7 +75,7 @@ en:
       authority_heading: "Authority laundering"
       authority_body: "Analyzes the citation chain to detect vertical authority inflation — when a low-authority source (blog, social media) gets cited by progressively larger outlets without new evidence being added, making it appear authoritative. Traces the chain from origin to the article being analyzed."
       rhetorical_heading: "Rhetorical analysis"
-      rhetorical_body: "Detects logical fallacies in the article's argumentative structure: bait-and-pivot (presenting data then undermining it with opinion), appeal to authority over data, strawman, false cause, anecdote over data, loaded language, false dilemma, slippery slope, ad hominem, and cherry picking. Each fallacy is rated by severity and linked to the specific claim it undermines."
+      rhetorical_body: "Detects logical fallacies in the article's argumentative structure, including classical fallacies and four patterns derived from Schopenhauer's 38 Stratagems ('The Art of Being Right', 1831): bait-and-pivot, appeal to authority, strawman, false cause, anecdote over data, loaded language, false dilemma, slippery slope, ad hominem, cherry picking, equivocation (using the same term with different meanings), odious categorization (dismissive labeling to discredit opposition), twisted conclusion (data supports X but article concludes Y), and paradox framing (making dissent seem absurd). Each fallacy is rated by severity and linked to the specific claim it undermines."
       contextual_gaps_heading: "Contextual gap analysis"
       contextual_gaps_body: "Identifies what the article doesn't address — questions a well-informed reader would ask. Detects scope mismatches, missing counter-evidence, theoretical vs practical gaps, distributional blindness, causal chain gaps, historical amnesia, reversal framing, benefit pass-through gaps, and selective attribution. For each gap, the system searches the web for counter-evidence."
       quality_heading: "Quality ratings"
@@ -437,6 +437,8 @@ en:
     heuristic_summary: "Heuristic analysis detected %{count} potential rhetorical issue(s)."
     no_issues: "No rhetorical issues detected by heuristic analysis."
     no_analysis: "No rhetorical analysis performed."
+    odious_categorization_explanation: "The article uses a dismissive label to discredit a position or group without engaging with the substance of their arguments."
+    paradox_framing_explanation: "The article frames dissent from its position as absurd or morally indefensible, discouraging the reader from considering legitimate counter-arguments."
     no_evidence: "No linked evidence was relevant enough to assess this claim yet."
 
     summary:
@@ -513,3 +515,7 @@ en:
       slippery_slope: "Slippery slope"
       ad_hominem: "Ad hominem"
       cherry_picking: "Cherry picking"
+      equivocation: "Equivocation"
+      odious_categorization: "Dismissive labeling"
+      twisted_conclusion: "Twisted conclusion"
+      paradox_framing: "Paradox framing"

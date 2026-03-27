@@ -79,7 +79,7 @@ pt-BR:
       authority_heading: "Lavagem de autoridade"
       authority_body: "Analisa a cadeia de citações para detectar inflação vertical de autoridade — quando uma fonte de baixa autoridade (blog, rede social) é citada por veículos progressivamente maiores sem adição de evidência nova, fazendo-a parecer autoritativa. Rastreia a cadeia desde a origem até o artigo analisado."
       rhetorical_heading: "Análise retórica"
-      rhetorical_body: "Detecta falácias lógicas na estrutura argumentativa do artigo: isca e desvio (apresentar dados e depois miná-los com opinião), apelo à autoridade sobre dados, espantalho, falsa causa, anedota sobre dados, linguagem carregada, falso dilema, ladeira escorregadia, ad hominem e seleção enviesada. Cada falácia é classificada por severidade e vinculada à alegação específica que prejudica."
+      rhetorical_body: "Detecta falácias lógicas na estrutura argumentativa do artigo, incluindo falácias clássicas e quatro padrões derivados dos 38 Estratagemas de Schopenhauer ('A Arte de Ter Razão', 1831): isca e desvio, apelo à autoridade, espantalho, falsa causa, anedota sobre dados, linguagem carregada, falso dilema, ladeira escorregadia, ad hominem, seleção enviesada, equivocação (usar o mesmo termo com significados diferentes), rotulação depreciativa (rótulos para desacreditar oposição), conclusão distorcida (dados apoiam X mas artigo conclui Y) e enquadramento paradoxal (tornar a discordância absurda). Cada falácia é classificada por severidade e vinculada à alegação específica que prejudica."
       contextual_gaps_heading: "Análise de lacunas contextuais"
       contextual_gaps_body: "Identifica o que o artigo não aborda — questões que um leitor bem informado faria. Detecta descompasso de escopo, contra-evidências ausentes, lacunas teórico-práticas, cegueira distributiva, lacunas na cadeia causal, amnésia histórica, enquadramento de reversão, lacunas de repasse de benefícios e atribuição seletiva. Para cada lacuna, o sistema busca contra-evidências na web."
       quality_heading: "Classificações de qualidade"
@@ -441,6 +441,8 @@ pt-BR:
     heuristic_summary: "A análise heurística detectou %{count} possível(is) problema(s) retórico(s)."
     no_issues: "Nenhum problema retórico detectado pela análise heurística."
     no_analysis: "Nenhuma análise retórica realizada."
+    odious_categorization_explanation: "O artigo usa um rótulo depreciativo para desacreditar uma posição ou grupo sem abordar a substância de seus argumentos."
+    paradox_framing_explanation: "O artigo enquadra a discordância de sua posição como absurda ou moralmente indefensável, desencorajando o leitor de considerar contra-argumentos legítimos."
     no_evidence: "Nenhuma evidência vinculada foi relevante o suficiente para avaliar esta alegação ainda."
 
     summary:
@@ -517,3 +519,7 @@ pt-BR:
       slippery_slope: "Ladeira escorregadia"
       ad_hominem: "Ad hominem"
       cherry_picking: "Seleção enviesada"
+      equivocation: "Equivocação"
+      odious_categorization: "Rotulação depreciativa"
+      twisted_conclusion: "Conclusão distorcida"
+      paradox_framing: "Enquadramento paradoxal"
