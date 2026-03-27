@@ -52,7 +52,19 @@ bundle exec rails test                    # Full suite
 bundle exec rails test test/path_test.rb  # Single file
 ```
 
-All tests must pass before committing. Current count: 648+.
+All tests must pass before committing. Current count: 678+.
+
+### LLM stubbing in tests
+
+Tests use WebMock (`test/support/llm_stubs.rb`) to stub OpenRouter API calls. This makes the suite run in ~1.5s instead of ~9 minutes. The stubs return schema-aware responses based on the request's schema name.
+
+**When adding or modifying stubs:**
+
+- Every stubbed response MUST resemble a real LLM response. Before writing a stub, make at least one live call to see the actual response shape, field names, and realistic values. Do not invent response structures — base them on observed LLM output.
+- The stub must return data that exercises the code path being tested. A stub that returns empty arrays for everything does not validate that the code correctly parses and uses the LLM result.
+- Tests that verify heuristic fallback paths (when the LLM is unavailable) should disable the LLM by clearing `ENV["OPENROUTER_API_KEY"]` in a `without_llm` block, not by making the stub return errors.
+- `Fetchers::WebSearcher` Chromium calls are also stubbed to avoid browser launches. The stub lives in `LlmStubs.stub_web_searcher!`.
+- To run tests against real LLM endpoints (integration verification), use: `OPENROUTER_API_KEY=sk-or-... bundle exec rails test`
 
 ## Key Architecture Decisions
 
