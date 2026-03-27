@@ -50,6 +50,30 @@ module Analyzers
       /\bneg(ou|aram)\s+(as?\s+)?acusaç/i              # Portuguese: denied accusations
     ].freeze
 
+    # Euphemistic/softening headline language that downplays severity
+    DOWNPLAY_HEADLINE_PATTERNS = [
+      /\btomou\b/i, /\blevou\b/i, /\bpegou\b/i,     # Portuguese: took (soft for stole)
+      /\bpesquisador[a]?\b/i,                          # Portuguese: researcher (humanizing label)
+      /\bincidente\b/i,                                # Portuguese: incident (soft for crime)
+      /\benvolvid[oa]\b/i,                             # Portuguese: involved (passive)
+      /\btook\b/i, /\bremoved?\b/i, /\baccessed?\b/i, # English: soft verbs
+      /\bresearcher\b/i, /\bscientist\b/i,            # humanizing labels
+      /\bincident\b/i, /\bevent\b/i, /\bsituation\b/i # minimizing nouns
+    ].freeze
+
+    # Severe body language that the headline should reflect but doesn't
+    SEVERITY_BODY_PATTERNS = [
+      /\broubou?\b/i, /\bfurtou?\b/i,                 # Portuguese: stole/robbed
+      /\bpreso\b/i, /\bpresos?\b/i, /\bdeti[dv]/i,    # Portuguese: arrested/detained
+      /\bcrim[ei]/i,                                    # Portuguese: crime/criminal
+      /\barma\s+biológica\b/i, /\bvírus\b/i,          # Portuguese: bioweapon/virus
+      /\bperigo/i, /\brisco\b/i, /\bameaça\b/i,       # Portuguese: danger/risk/threat
+      /\bstole\b/i, /\btheft\b/i, /\brobbed?\b/i,
+      /\barrested?\b/i, /\bdetained?\b/i, /\bcharged?\b/i,
+      /\bbioweapon/i, /\bdangerous\b/i, /\bthreat\b/i, /\blethal\b/i,
+      /\bhazard/i, /\bcontaminat/i
+    ].freeze
+
     # Positive framing words in headlines
     POSITIVE_HEADLINE_PATTERNS = [
       /\bcort[aou]\b/i,              # Portuguese: cuts
@@ -110,11 +134,21 @@ module Analyzers
         0
       end
 
-      score = ((unsupported_ratio * 0.5) + (sensationality * 0.7) + (escalation * 0.8) + (selective_framing * 0.7)).clamp(0, 1)
+      # Euphemistic downplaying: headline uses soft/humanizing language while
+      # the body describes severe events (theft, arrest, danger, bioweapons)
+      downplay_headline = DOWNPLAY_HEADLINE_PATTERNS.count { |p| title.to_s.match?(p) }
+      severity_body = SEVERITY_BODY_PATTERNS.count { |p| body_text_str.match?(p) }
+      downplaying = if downplay_headline > 0 && severity_body >= 2
+        [ downplay_headline * 0.12 + severity_body * 0.05, 0.5 ].min
+      else
+        0
+      end
+
+      score = ((unsupported_ratio * 0.5) + (sensationality * 0.7) + (escalation * 0.8) + (selective_framing * 0.7) + (downplaying * 0.7)).clamp(0, 1)
 
       Result.new(
         score: (score * 100).round(2),
-        reason: reason_for(score, escalation, selective_framing),
+        reason: reason_for(score, escalation, selective_framing, downplaying),
         definitive_claims: definitive_claims,
         hedging_signals: hedging_signals
       )
@@ -125,8 +159,10 @@ module Analyzers
     end
     private_class_method :tokenize
 
-    def self.reason_for(score, escalation, selective_framing = 0)
-      if selective_framing > 0.15
+    def self.reason_for(score, escalation, selective_framing = 0, downplaying = 0)
+      if downplaying > 0.15
+        "Headline uses soft or euphemistic language that downplays the severity of events described in the article body. The body contains references to serious actions (crime, danger, arrest) that the headline minimizes through neutral or humanizing framing."
+      elsif selective_framing > 0.15
         "Headline presents a selectively positive framing while the article body contains significant qualifying context (reversals, backlash, prior negative actions) that the headline omits."
       elsif escalation > 0.2
         "Headline makes definitive claims that the article body does not substantiate. The body contains hedging language (alleged, unconfirmed, sources say) that contradicts the headline's certainty."

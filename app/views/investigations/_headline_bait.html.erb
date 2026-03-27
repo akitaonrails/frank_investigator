@@ -6,20 +6,26 @@
   else
     "border-l-verdict-green bg-verdict-green/4"
   end
+
+  # Re-compute specific reason from article data for display
+  article = investigation.root_article
+  analysis = if article&.title.present? && article&.body_text.present?
+    Analyzers::HeadlineBaitAnalyzer.call(title: article.title, body_text: article.body_text)
+  end
 %>
 <section class="border border-line rounded-3xl p-5 mb-4 border-l-4 <%= callout_color %>">
   <h3 class="font-bold mb-2"><%= t("investigations.headline_bait.heading") %></h3>
-  <p><%= headline_bait_explanation(investigation.headline_bait_score) %></p>
-  <% if investigation.root_article&.title.present? %>
+  <p><%= analysis&.reason || headline_bait_explanation(investigation.headline_bait_score) %></p>
+  <% if article&.title.present? %>
     <dl class="grid gap-2.5 mt-3">
       <div class="grid gap-0.5">
         <dt class="text-muted text-xs uppercase tracking-wide"><%= t("investigations.headline_bait.headline") %></dt>
-        <dd class="m-0"><strong><%= investigation.root_article.title %></strong></dd>
+        <dd class="m-0"><strong><%= article.title %></strong></dd>
       </div>
-      <% if investigation.root_article.excerpt.present? %>
+      <% if article.excerpt.present? %>
         <div class="grid gap-0.5">
           <dt class="text-muted text-xs uppercase tracking-wide"><%= t("investigations.headline_bait.lead_paragraph") %></dt>
-          <dd class="m-0 text-muted"><%= investigation.root_article.excerpt.truncate(300) %></dd>
+          <dd class="m-0 text-muted"><%= article.excerpt.truncate(300) %></dd>
         </div>
       <% end %>
     </dl>
