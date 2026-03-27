@@ -290,10 +290,13 @@ en:
       news_reporting: "Journalistic reporting"
       unknown: "Role not classified"
     headline_bait:
-      high: "High likelihood of sensationalized headline. The title likely exaggerates or misrepresents the article body."
-      moderate: "Moderate headline embellishment. Some claims in the title may not be fully supported by the article."
-      low: "Low headline bait. The title appears reasonably aligned with the article content."
+      high: "Headline appears materially more sensational than the article body."
+      moderate: "Headline is somewhat stronger than the body evidence."
+      low: "Headline largely matches the article body."
       none: "Not yet analyzed."
+      downplaying: "Headline uses soft or euphemistic language that downplays the severity of events described in the article body. The body contains references to serious actions (crime, danger, arrest) that the headline minimizes through neutral or humanizing framing."
+      selective_positive: "Headline presents a selectively positive framing while the article body contains significant qualifying context (reversals, backlash, prior negative actions) that the headline omits."
+      escalation: "Headline makes definitive claims that the article body does not substantiate. The body contains hedging language (alleged, unconfirmed, sources say) that contradicts the headline's certainty."
   enums:
     verdict:
       pending: "Pending"

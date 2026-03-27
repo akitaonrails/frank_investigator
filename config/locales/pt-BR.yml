@@ -294,10 +294,13 @@ pt-BR:
       news_reporting: "Reportagem jornalística"
       unknown: "Papel não classificado"
     headline_bait:
-      high: "Alta probabilidade de manchete sensacionalista. O título provavelmente exagera ou distorce o conteúdo do artigo."
-      moderate: "Embelezamento moderado da manchete. Algumas alegações no título podem não ser totalmente sustentadas pelo artigo."
-      low: "Baixo sensacionalismo. O título parece razoavelmente alinhado com o conteúdo do artigo."
+      high: "A manchete parece materialmente mais sensacionalista que o corpo do artigo."
+      moderate: "A manchete é um pouco mais forte que as evidências no corpo do texto."
+      low: "A manchete corresponde amplamente ao corpo do artigo."
       none: "Ainda não analisado."
+      downplaying: "A manchete usa linguagem suave ou eufemística que minimiza a gravidade dos eventos descritos no corpo do artigo. O corpo contém referências a ações graves (crime, perigo, prisão) que a manchete minimiza através de enquadramento neutro ou humanizante."
+      selective_positive: "A manchete apresenta um enquadramento seletivamente positivo enquanto o corpo do artigo contém contexto qualificador significativo (reversões, reações contrárias, ações negativas anteriores) que a manchete omite."
+      escalation: "A manchete faz alegações definitivas que o corpo do artigo não sustenta. O corpo contém linguagem de ressalva (alegadamente, não confirmado, fontes dizem) que contradiz a certeza da manchete."
   enums:
     verdict:
       pending: "Pendente"

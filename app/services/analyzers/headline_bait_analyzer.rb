@@ -166,19 +166,20 @@ module Analyzers
     private_class_method :tokenize
 
     def self.reason_for(score, escalation, selective_framing = 0, downplaying = 0)
-      if downplaying > 0.15
-        "Headline uses soft or euphemistic language that downplays the severity of events described in the article body. The body contains references to serious actions (crime, danger, arrest) that the headline minimizes through neutral or humanizing framing."
+      key = if downplaying > 0.15
+        "downplaying"
       elsif selective_framing > 0.15
-        "Headline presents a selectively positive framing while the article body contains significant qualifying context (reversals, backlash, prior negative actions) that the headline omits."
+        "selective_positive"
       elsif escalation > 0.2
-        "Headline makes definitive claims that the article body does not substantiate. The body contains hedging language (alleged, unconfirmed, sources say) that contradicts the headline's certainty."
+        "escalation"
       elsif score < 0.25
-        "Headline largely matches the article body."
+        "low"
       elsif score < 0.6
-        "Headline is somewhat stronger than the body evidence."
+        "moderate"
       else
-        "Headline appears materially more sensational than the article body."
+        "high"
       end
+      I18n.t("helpers.headline_bait.#{key}")
     end
     private_class_method :reason_for
   end
