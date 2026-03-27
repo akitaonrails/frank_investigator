@@ -29,10 +29,13 @@ module Investigations
       end
       @step_succeeded = true
     ensure
-      if @investigation
-        Investigations::AnalyzeRhetoricalStructureJob.perform_later(@investigation.id) if @step_succeeded
-        Investigations::RefreshStatus.call(@investigation)
+      if @investigation && @step_succeeded
+        # Fan out: these 3 steps are independent and run in parallel
+        Investigations::AnalyzeRhetoricalStructureJob.perform_later(@investigation.id)
+        Investigations::AnalyzeContextualGapsJob.perform_later(@investigation.id)
+        Investigations::DetectCoordinatedNarrativeJob.perform_later(@investigation.id)
       end
+      Investigations::RefreshStatus.call(@investigation) if @investigation
     end
   end
 end

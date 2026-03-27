@@ -32,9 +32,20 @@ module Investigations
       @step_succeeded = true
     ensure
       if @investigation
-        Investigations::DetectCoordinatedNarrativeJob.perform_later(@investigation.id) if @step_succeeded
+        enqueue_next_if_converged if @step_succeeded
         Investigations::RefreshStatus.call(@investigation)
       end
+    end
+
+    private
+
+    PARALLEL_STEPS = %w[analyze_rhetorical_structure analyze_contextual_gaps detect_coordinated_narrative].freeze
+
+    def enqueue_next_if_converged
+      @investigation.reload
+      return unless Pipeline::ParallelConvergence.all_completed?(@investigation, PARALLEL_STEPS)
+
+      Investigations::ScoreEmotionalManipulationJob.perform_later(@investigation.id)
     end
   end
 end
