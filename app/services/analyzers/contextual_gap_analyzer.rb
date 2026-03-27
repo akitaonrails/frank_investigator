@@ -55,6 +55,26 @@ module Analyzers
       6. HISTORICAL AMNESIA: Making claims about what "will happen" while ignoring that
          the same conditions existed before without the predicted outcome.
 
+      7. REVERSAL FRAMING: Presenting a partial rollback of a negative action as a
+         positive action. When an article reports a government benefit (tax cut, price
+         reduction, subsidy), ALWAYS ask: was there a preceding action in the opposite
+         direction? Is this a net change or a partial reversal of a prior increase/
+         restriction? What is the real baseline — before the original change, or after?
+         Example: government raises tariffs on 5000 products, then "cuts" tariffs on
+         1000 of them and announces a generous tax relief — while net taxes are still
+         higher than before. The article reporting only the cut is propaganda by omission.
+
+      8. BENEFIT PASS-THROUGH: When an article claims a policy will benefit consumers
+         (lower prices, more access), ask whether there is evidence the benefit actually
+         reaches the end consumer. Tax cuts on imports don't automatically mean lower
+         retail prices — intermediaries may absorb the margin. Without evidence of
+         pass-through, the claimed benefit is speculative.
+
+      9. SELECTIVE ATTRIBUTION: When an article attributes a positive outcome to a
+         specific actor (government, company, leader), ask whether the outcome was
+         actually caused by that actor or by external factors (market conditions,
+         seasonal patterns, prior policies by other actors).
+
       You will receive the article's title, excerpt, assessed claims with verdicts, and
       any rhetorical analysis already performed.
 
