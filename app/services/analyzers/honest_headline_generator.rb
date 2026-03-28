@@ -15,14 +15,20 @@ module Analyzers
       3. Contextual gaps found (what the article omits)
       4. Coordination findings (euphemistic framing, causal chain erasure)
       5. The investigation summary
+      6. EVENT CONTEXT from related investigations — this is the MOST IMPORTANT input.
+         It contains a composite timeline built from multiple articles about the same
+         event and critical omissions found by comparing coverage across outlets.
 
       Your job: write what the headline SHOULD have been — a more honest,
       complete headline that:
-      - Reflects the actual substance of the article, not just the positive framing
-      - Includes causal context that the original omits (if relevant)
+      - PRIORITIZE the event context. If the composite timeline reveals facts the
+        original article omits (e.g., a "cut" was actually a reversal of a prior
+        increase, or a "right" was actually a last resort after institutional failure),
+        the honest headline MUST include that context.
+      - Reflects the full causal chain, not just the endpoint
       - Avoids euphemistic language that downplays severity
       - Doesn't sensationalize either — be factual, not dramatic
-      - Stays within reasonable headline length (max 120 characters)
+      - Stays within reasonable headline length (max 150 characters)
 
       If the original headline is already accurate and balanced, return it unchanged.
 
@@ -86,6 +92,7 @@ module Analyzers
       gaps = Array(@investigation.contextual_gaps&.dig("gaps")).first(3).map { |g| g["question"] }
       coordination = @investigation.coordinated_narrative || {}
       summary = @investigation.llm_summary || {}
+      event = @investigation.event_context || {}
 
       {
         original_headline: article.title,
@@ -96,8 +103,12 @@ module Analyzers
         convergent_framing: Array(coordination["convergent_framing"]).first(3),
         convergent_omissions: Array(coordination["convergent_omissions"]).first(3),
         summary_quality: summary["overall_quality"],
-        summary_weaknesses: Array(summary["weaknesses"]).first(3)
-      }.to_json
+        summary_weaknesses: Array(summary["weaknesses"]).first(3),
+        event_context: {
+          composite_timeline: event["composite_timeline"].to_s.truncate(500),
+          critical_omissions: Array(event["critical_omissions"]).first(3)
+        }.presence
+      }.compact.to_json
     end
 
     def response_schema
