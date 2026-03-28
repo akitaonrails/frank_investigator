@@ -25,7 +25,10 @@ module Analyzers
         original article omits (e.g., a "cut" was actually a reversal of a prior
         increase, or a "right" was actually a last resort after institutional failure),
         the honest headline MUST include that context.
-      - Reflects the full causal chain, not just the endpoint
+      - LEAD WITH THE CAUSE, NOT THE PROCEDURE. If the event has a causal chain
+        (e.g., crime → injury → consequence), the headline must start with the
+        originating cause, not the final procedural step. A headline about a court
+        ruling should mention what caused the case, not just who won.
       - Avoids euphemistic language that downplays severity
       - Doesn't sensationalize either — be factual, not dramatic
       - Stays within reasonable headline length (max 150 characters)
