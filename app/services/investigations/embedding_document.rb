@@ -2,10 +2,6 @@ require "digest"
 
 module Investigations
   class EmbeddingDocument
-    MAX_BODY_CHARS = 1500
-    MAX_CLAIMS = 8
-    MAX_GAPS = 6
-
     def self.call(investigation:)
       new(investigation:).call
     end
@@ -18,9 +14,10 @@ module Investigations
       [
         title_line,
         host_line,
+        subjects_line,
+        lead_section,
         claims_section,
-        gaps_section,
-        body_section
+        gaps_section
       ].compact.join("\n").strip
     end
 
@@ -31,47 +28,55 @@ module Investigations
     private
 
     def title_line
-      return if root_article.blank? || root_article.title.blank?
+      return if signals.title.blank?
 
-      "title: #{root_article.title}"
+      "title: #{signals.title}"
     end
 
     def host_line
-      return if root_article.blank? || root_article.host.blank?
+      return if signals.host.blank?
 
-      "host: #{root_article.host}"
+      "host: #{signals.host}"
+    end
+
+    def subjects_line
+      subjects = signals.primary_subjects.to_a.sort
+      return if subjects.empty?
+
+      "subjects: #{subjects.join(', ')}"
+    end
+
+    def lead_section
+      return if signals.lead_text.blank?
+
+      "lead: #{signals.lead_text}"
     end
 
     def claims_section
-      claims = @investigation.claim_assessments.includes(:claim).map do |assessment|
-        claim = assessment.claim
-        next if claim.blank?
+      claims = signals.central_claim_records.map do |record|
+        claim = record.claim
+        assessment = @investigation.claim_assessments.find { |item| item.claim_id == claim.id }
+        verdict = assessment&.verdict || "pending"
+        "#{claim.canonical_text} [#{verdict}]"
+      end
 
-        "#{claim.canonical_text} [#{assessment.verdict}]"
-      end.compact.first(MAX_CLAIMS)
+      if claims.empty?
+        claims = signals.central_claim_texts.map { |text| "#{text} [pending]" }
+      end
       return if claims.empty?
 
       "claims:\n- #{claims.join("\n- ")}"
     end
 
     def gaps_section
-      gaps = Array(@investigation.contextual_gaps&.dig("gaps")).filter_map { |gap| gap["question"].presence }.first(MAX_GAPS)
+      gaps = signals.relevant_gap_questions
       return if gaps.empty?
 
       "gaps:\n- #{gaps.join("\n- ")}"
     end
 
-    def body_section
-      return if root_article.blank? || root_article.body_text.blank?
-
-      cleaned = root_article.body_text.squish.truncate(MAX_BODY_CHARS)
-      return if cleaned.blank?
-
-      "body: #{cleaned}"
-    end
-
-    def root_article
-      @investigation.root_article
+    def signals
+      @signals ||= IdentitySignals.new(@investigation)
     end
   end
 end

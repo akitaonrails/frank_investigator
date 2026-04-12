@@ -70,4 +70,25 @@ class Analyzers::ClaimExtractorTest < ActiveSupport::TestCase
   ensure
     ENV["OPENROUTER_API_KEY"] = original_key if original_key
   end
+
+  test "heuristic fallback deprioritizes off-topic side sentences" do
+    original_key = ENV.delete("OPENROUTER_API_KEY")
+
+    article = Article.create!(
+      url: "https://example.com/side-topic",
+      normalized_url: "https://example.com/side-topic",
+      host: "example.com",
+      title: "Haddad foi um bom ministro",
+      body_text: "Haddad foi elogiado por aliados ao comentar politica fiscal. " \
+                 "O texto discute Haddad, impostos e resultado fiscal. " \
+                 "Daniel Vorcaro apareceu em um episodio lateral sem relacao com a tese central.",
+      fetch_status: :fetched
+    )
+
+    results = Analyzers::ClaimExtractor.call(article)
+
+    refute results.any? { |result| result.canonical_text.include?("Daniel Vorcaro") }
+  ensure
+    ENV["OPENROUTER_API_KEY"] = original_key if original_key
+  end
 end

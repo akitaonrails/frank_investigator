@@ -116,6 +116,8 @@ module Analyzers
       subject_topic_tokens = extract_subject_topic_tokens_from(@investigation)
 
       related = candidates.filter_map do |inv|
+        next unless signals_for(inv).mentions_any_subject?(primary_subjects)
+
         score = relatedness_score(
           investigation: inv,
           primary_subjects:,
@@ -152,25 +154,24 @@ module Analyzers
       other_topics = extract_topics_from(investigation)
       topic_overlap = (topics & other_topics)
 
-      score =
-        primary_overlap = (primary_subjects & other_primary_subjects).size
-        if primary_overlap.positive?
-          primary_overlap * 100
-        elsif anchor_subjects.present? && other_anchor_subjects.present?
-          anchor_overlap = (anchor_subjects & other_anchor_subjects).size
-          return unless anchor_overlap.positive?
+      primary_overlap = (primary_subjects & other_primary_subjects).size
+      score = if primary_overlap.positive?
+        primary_overlap * 100
+      elsif anchor_subjects.present? && other_anchor_subjects.present?
+        anchor_overlap = (anchor_subjects & other_anchor_subjects).size
+        return unless anchor_overlap.positive?
 
-          anchor_overlap * 70
-        elsif subject_topic_tokens.any? && (subject_topic_tokens & topic_overlap).any? &&
-            topic_overlap.size >= MIN_SUBJECT_TOPIC_OVERLAP
-          40 + topic_overlap.size
-        else
-          other_entities = extract_entities_from(investigation)
-          entity_overlap = (fallback_entities & other_entities).size
-          return unless entity_overlap >= MIN_ENTITY_OVERLAP
+        anchor_overlap * 70
+      elsif subject_topic_tokens.any? && (subject_topic_tokens & topic_overlap).any? &&
+          topic_overlap.size >= MIN_SUBJECT_TOPIC_OVERLAP
+        40 + topic_overlap.size
+      else
+        other_entities = extract_entities_from(investigation)
+        entity_overlap = (fallback_entities & other_entities).size
+        return unless entity_overlap >= MIN_ENTITY_OVERLAP
 
-          entity_overlap * 100
-        end
+        entity_overlap * 100
+      end
 
       return unless topic_overlap.size >= MIN_TOPIC_OVERLAP
 
@@ -189,21 +190,7 @@ module Analyzers
     end
 
     def extract_primary_subjects_from(investigation)
-      title = investigation.root_article&.title.to_s
-      subjects = Set.new
-
-      title.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each do |name|
-        subjects << name.downcase
-      end
-
-      title.scan(/\b[A-ZÀ-Ú][a-zà-ú]{4,}\b/).each do |name|
-        normalized = name.downcase
-        next if GENERIC_ENTITY_TOKENS.include?(normalized)
-
-        subjects << normalized
-      end
-
-      subjects
+      signals_for(investigation).primary_subjects
     end
 
     def extract_anchor_subjects_from(investigation)
@@ -277,36 +264,17 @@ module Analyzers
     end
 
     def cross_reference_text_for(investigation)
-      [
-        investigation.root_article&.title,
-        investigation.root_article&.body_text.to_s.truncate(2000),
-        investigation.claim_assessments.includes(:claim).map { |ca| ca.claim.canonical_text },
-        Array(investigation.contextual_gaps&.dig("gaps")).map { |gap| gap["question"] }
-      ].flatten.compact.join(" ")
+      signals_for(investigation).identity_segments.join(" ")
     end
 
     def extract_entities_from(investigation)
       entities = Set.new
       single_word_counts = Hash.new(0)
+      texts = signals_for(investigation).identity_segments
 
-      # From claims
-      investigation.claim_assessments.includes(:claim).each do |ca|
-        text = ca.claim.canonical_text.to_s
-        # Extract capitalized multi-word names (simple NER heuristic)
+      texts.each do |text|
         text.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each { |name| entities << name.downcase }
         count_single_word_entities(text, single_word_counts)
-      end
-
-      # From article title
-      title = investigation.root_article&.title.to_s
-      title.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each { |name| entities << name.downcase }
-      count_single_word_entities(title, single_word_counts)
-
-      # From contextual gaps questions (often contain entity names)
-      Array(investigation.contextual_gaps&.dig("gaps")).each do |gap|
-        q = gap["question"].to_s
-        q.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each { |name| entities << name.downcase }
-        count_single_word_entities(q, single_word_counts)
       end
 
       single_word_counts.each do |name, count|
@@ -321,18 +289,16 @@ module Analyzers
 
     def named_subject_counts_for(investigation)
       counts = Hash.new(0)
-
-      investigation.claim_assessments.includes(:claim).each do |ca|
-        count_named_subjects(ca.claim.canonical_text.to_s, counts)
-      end
-
-      count_named_subjects(investigation.root_article&.title.to_s, counts)
-
-      Array(investigation.contextual_gaps&.dig("gaps")).each do |gap|
-        count_named_subjects(gap["question"].to_s, counts)
+      signals_for(investigation).identity_segments.each do |text|
+        count_named_subjects(text, counts)
       end
 
       counts
+    end
+
+    def signals_for(investigation)
+      @signals ||= {}
+      @signals[investigation.id] ||= Investigations::IdentitySignals.new(investigation)
     end
 
     def count_named_subjects(text, counts)

@@ -1,3 +1,5 @@
+require "set"
+
 module Analyzers
   class ClaimExtractor
     include LlmHelpers
@@ -45,6 +47,8 @@ module Analyzers
 
     def extract_body_claims
       sentences.first(3).filter_map.with_index do |sentence, index|
+        next if index.positive? && !central_sentence?(sentence)
+
         build_result(sentence, role: index.zero? ? :lead : :body, importance_score: index.zero? ? 0.85 : 0.65)
       end
     end
@@ -208,6 +212,29 @@ module Analyzers
       text = @article.body_text.to_s.squish
       return [] if text.blank?
       text.split(/(?<=[.!?])\s+/).map(&:strip)
+    end
+
+    def central_sentence?(sentence)
+      return true if @article.title.blank?
+
+      sentence_tokens = normalized_tokens_for(sentence)
+      return false if sentence_tokens.empty?
+
+      title_tokens = normalized_tokens_for(@article.title)
+      return true if (sentence_tokens & title_tokens).size >= 2
+
+      title_subjects = extract_title_subject_tokens
+      title_subjects.any? { |token| sentence_tokens.include?(token) }
+    end
+
+    def extract_title_subject_tokens
+      @extract_title_subject_tokens ||= @article.title.to_s.scan(/\b[A-ZÀ-Ú][a-zà-ú]{4,}\b/)
+        .map(&:downcase)
+        .to_set
+    end
+
+    def normalized_tokens_for(text)
+      text.to_s.downcase.scan(/[[:alnum:]][[:alnum:]\-]+/).to_set
     end
 
     def interaction_type_name

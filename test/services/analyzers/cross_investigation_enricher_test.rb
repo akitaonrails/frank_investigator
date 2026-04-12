@@ -260,6 +260,14 @@ class Analyzers::CrossInvestigationEnricherTest < ActiveSupport::TestCase
       canonical_fingerprint: "haddad-vorcaro-side-claim",
       checkability_status: :checkable
     )
+    ArticleClaim.create!(
+      article: root_a,
+      claim: claim_a,
+      role: :body,
+      surface_text: claim_a.canonical_text,
+      importance_score: 0.6,
+      title_related: false
+    )
     ClaimAssessment.create!(investigation: inv_a, claim: claim_a, verdict: :supported, checkability_status: :checkable)
 
     root_b = Article.create!(
@@ -275,6 +283,14 @@ class Analyzers::CrossInvestigationEnricherTest < ActiveSupport::TestCase
       canonical_text: "Daniel Vorcaro foi associado incorretamente ao PT.",
       canonical_fingerprint: "vorcaro-pt-associacao",
       checkability_status: :checkable
+    )
+    ArticleClaim.create!(
+      article: root_b,
+      claim: claim_b,
+      role: :headline,
+      surface_text: claim_b.canonical_text,
+      importance_score: 1.0,
+      title_related: true
     )
     ClaimAssessment.create!(investigation: inv_b, claim: claim_b, verdict: :supported, checkability_status: :checkable)
 

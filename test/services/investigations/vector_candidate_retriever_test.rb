@@ -36,12 +36,54 @@ class Investigations::VectorCandidateRetrieverTest < ActiveSupport::TestCase
       with_singleton_stub(SqliteVec, :nearest_neighbors, [
         { "investigation_id" => source.id, "distance" => 0.0 },
         { "investigation_id" => candidate_b.id, "distance" => 0.1 },
-        { "investigation_id" => candidate_a.id, "distance" => 0.2 }
+        { "investigation_id" => candidate_a.id, "distance" => 0.2 },
+        { "investigation_id" => 999_999, "distance" => 0.9 }
       ]) do
         with_singleton_stub(Investigations::EmbeddingIndexer, :call, source.investigation_embedding) do
           investigations = Investigations::VectorCandidateRetriever.call(investigation: source, limit: 5)
 
           assert_equal [ candidate_b.id, candidate_a.id ], investigations.map(&:id)
+        end
+      end
+    end
+  end
+
+  test "drops weak vector neighbors beyond the distance cutoff" do
+    root_article = Article.create!(
+      url: "https://example.com/source-weak",
+      normalized_url: "https://example.com/source-weak",
+      host: "example.com",
+      title: "Haddad foi um bom ministro",
+      body_text: "Texto sobre Haddad, impostos e fiscal.",
+      fetch_status: :fetched
+    )
+    source = Investigation.create!(
+      submitted_url: root_article.url,
+      normalized_url: root_article.normalized_url,
+      root_article: root_article,
+      status: :completed
+    )
+    source.create_investigation_embedding!(
+      status: :indexed,
+      model_id: "openai/text-embedding-3-small",
+      dimensions: 1536,
+      content_digest: "source-weak-digest",
+      embedding_json: JSON.generate(Array.new(1536, 0.1)),
+      indexed_at: Time.current
+    )
+
+    weak_candidate = create_candidate("https://example.com/weak", "Assunto distante")
+    InvestigationEmbedding.where(investigation_id: weak_candidate.id).update_all(status: "indexed")
+
+    with_singleton_stub(SqliteVec, :ready?, true) do
+      with_singleton_stub(SqliteVec, :nearest_neighbors, [
+        { "investigation_id" => source.id, "distance" => 0.0 },
+        { "investigation_id" => weak_candidate.id, "distance" => 0.8 }
+      ]) do
+        with_singleton_stub(Investigations::EmbeddingIndexer, :call, source.investigation_embedding) do
+          investigations = Investigations::VectorCandidateRetriever.call(investigation: source, limit: 5)
+
+          assert_empty investigations
         end
       end
     end

@@ -1,6 +1,7 @@
 module Investigations
   class VectorCandidateRetriever
     DEFAULT_LIMIT = 25
+    MAX_DISTANCE = 0.45
 
     def self.call(investigation:, limit: DEFAULT_LIMIT)
       new(investigation:, limit:).call
@@ -21,7 +22,7 @@ module Investigations
         vector: vector_for(@investigation.id),
         limit: @limit + 1,
         exclude_ids: [ @investigation.id ]
-      )
+      ).select { |row| row["distance"].to_f <= MAX_DISTANCE }
       return [] if candidate_rows.empty?
 
       indexed_ids = InvestigationEmbedding.indexed.where(investigation_id: candidate_rows.map { |row| row["investigation_id"] })
