@@ -147,7 +147,7 @@ module Analyzers
       interaction = record_interaction(prompt, fingerprint)
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-      response = RubyLLM.chat(model: contradiction_model, provider: :openrouter, assume_model_exists: true)
+      response = llm_chat(model: contradiction_model)
         .with_instructions(CONTRADICTION_SYSTEM_PROMPT)
         .with_schema(contradiction_schema)
         .ask(prompt)
@@ -348,7 +348,7 @@ module Analyzers
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       response = Timeout.timeout(timeout) do
-        RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+        Llm::ProviderConfig.chat(model:)
           .with_instructions(BATCH_CONTRADICTION_SYSTEM_PROMPT)
           .with_schema(schema)
           .ask(prompt_text)
@@ -360,7 +360,7 @@ module Analyzers
         Rails.logger.warn("[EvidenceRelationshipAnalyzer] Empty batch response from #{model}, retrying once")
         start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
         response = Timeout.timeout(timeout) do
-          RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+          Llm::ProviderConfig.chat(model:)
             .with_instructions(BATCH_CONTRADICTION_SYSTEM_PROMPT)
             .with_schema(schema)
             .ask(prompt_text)
@@ -396,11 +396,11 @@ module Analyzers
     end
 
     def self.llm_available_class?
-      defined?(RubyLLM) && ENV["OPENROUTER_API_KEY"].present?
+      Llm::ProviderConfig.available?
     end
 
     def self.contradiction_model_class
-      Array(Rails.application.config.x.frank_investigator.openrouter_models).first || "anthropic/claude-sonnet-4-6"
+      Array(Rails.application.config.x.frank_investigator.llm_models).first || "gpt-5-mini"
     end
 
     def self.parse_contradiction_response_class(payload)

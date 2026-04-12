@@ -23,7 +23,7 @@ module Llm
 
     VERDICT_ORDER = %w[supported mixed disputed needs_more_evidence not_checkable].freeze
 
-    def initialize(models: Rails.application.config.x.frank_investigator.openrouter_models)
+    def initialize(models: Rails.application.config.x.frank_investigator.llm_models)
       quarantined = ENV.fetch("QUARANTINED_MODELS", "").split(",").map(&:strip).reject(&:blank?)
       @models = Array(models).reject { |m| quarantined.include?(m) }
     end
@@ -88,7 +88,7 @@ module Llm
     end
 
     def available?
-      defined?(RubyLLM) && ENV["OPENROUTER_API_KEY"].present? && @models.any?
+      Llm::ProviderConfig.available? && @models.any?
     end
 
     private
@@ -180,7 +180,7 @@ module Llm
 
     def llm_call_with_retry(model:, system_prompt:, schema:, prompt:, timeout: LLM_TIMEOUT_SECONDS)
       response = Timeout.timeout(timeout) do
-        RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+        Llm::ProviderConfig.chat(model:)
           .with_instructions(system_prompt)
           .with_schema(schema)
           .ask(prompt)
@@ -189,7 +189,7 @@ module Llm
       if response.content.blank?
         Rails.logger.warn("[LLM Retry] Empty response from #{model}, retrying once")
         response = Timeout.timeout(timeout) do
-          RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+          Llm::ProviderConfig.chat(model:)
             .with_instructions(system_prompt)
             .with_schema(schema)
             .ask(prompt)

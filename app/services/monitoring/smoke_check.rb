@@ -62,18 +62,19 @@ module Monitoring
     end
 
     def llm_availability
-      models = Rails.application.config.x.frank_investigator.openrouter_models
-      api_key = ENV["OPENROUTER_API_KEY"]
+      provider = Rails.application.config.x.frank_investigator.llm_provider
+      models = Rails.application.config.x.frank_investigator.llm_models
+      api_key = ENV[Llm::ProviderConfig.api_key_env]
 
       if api_key.blank?
-        return Result.new(check_name: "llm_availability", status: :skip, message: "OPENROUTER_API_KEY not configured")
+        return Result.new(check_name: "llm_availability", status: :skip, message: "#{Llm::ProviderConfig.api_key_env} not configured")
       end
 
       if models.empty?
         return Result.new(check_name: "llm_availability", status: :fail, message: "No models configured")
       end
 
-      Result.new(check_name: "llm_availability", status: :ok, message: "#{models.size} model(s) configured: #{models.join(', ')}")
+      Result.new(check_name: "llm_availability", status: :ok, message: "#{provider}: #{models.size} model(s) configured: #{models.join(', ')}")
     end
   end
 end

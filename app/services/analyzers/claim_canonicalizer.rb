@@ -40,7 +40,7 @@ module Analyzers
 
       prompt = build_prompt
       response = Timeout.timeout(30) do
-        RubyLLM.chat(model: canonicalization_model, provider: :openrouter, assume_model_exists: true)
+        llm_chat(model: canonicalization_model)
           .with_instructions(SYSTEM_PROMPT)
           .with_schema(schema)
           .ask(prompt)

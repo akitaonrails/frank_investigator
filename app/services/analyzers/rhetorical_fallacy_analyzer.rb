@@ -216,7 +216,7 @@ module Analyzers
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       response = Timeout.timeout(llm_timeout) do
-        RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+        llm_chat(model:)
           .with_instructions(system_prompt)
           .with_schema(response_schema)
           .ask(prompt)

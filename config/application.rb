@@ -34,6 +34,7 @@ module FrankInvestigator
     config.x.frank_investigator.fetcher_class = ENV.fetch("FRANK_INVESTIGATOR_FETCHER_CLASS", "Fetchers::ChromiumFetcher")
     config.x.frank_investigator.llm_client_class = ENV.fetch("FRANK_INVESTIGATOR_LLM_CLIENT_CLASS", "Llm::RubyLlmClient")
     config.x.frank_investigator.vector_search_enabled = ENV.fetch("FRANK_INVESTIGATOR_VECTOR_SEARCH_ENABLED", "true") == "true"
+    config.x.frank_investigator.llm_provider = ENV.fetch("FRANK_INVESTIGATOR_LLM_PROVIDER", "openrouter")
     config.x.frank_investigator.embedding_provider = ENV.fetch("FRANK_INVESTIGATOR_EMBEDDING_PROVIDER", "openrouter")
     config.x.frank_investigator.embedding_model = ENV.fetch(
       "FRANK_INVESTIGATOR_EMBEDDING_MODEL",
@@ -44,10 +45,18 @@ module FrankInvestigator
       "FRANK_INVESTIGATOR_SQLITE_VEC_PATH",
       Rails.root.join("vendor/sqlite-vec/vec0.so").to_s
     )
-    config.x.frank_investigator.openrouter_models = ENV.fetch(
-      "FRANK_INVESTIGATOR_OPENROUTER_MODELS",
-      "openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro"
+    default_llm_models = case config.x.frank_investigator.llm_provider
+    when "openai"
+      "gpt-5-mini"
+    else
+      ENV["FRANK_INVESTIGATOR_OPENROUTER_MODELS"].presence ||
+        "openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro"
+    end
+    config.x.frank_investigator.llm_models = ENV.fetch(
+      "FRANK_INVESTIGATOR_LLM_MODELS",
+      default_llm_models
     ).split(",").map(&:strip).reject(&:blank?)
+    config.x.frank_investigator.openrouter_models = config.x.frank_investigator.llm_models
     config.x.frank_investigator.quarantined_models = ENV.fetch(
       "QUARANTINED_MODELS", ""
     ).split(",").map(&:strip).reject(&:blank?)

@@ -43,7 +43,7 @@ module Analyzers
 
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
       response = Timeout.timeout(LLM_TIMEOUT_SECONDS) do
-        RubyLLM.chat(model:, provider: :openrouter, assume_model_exists: true)
+        llm_chat(model:)
           .with_instructions(SYSTEM_PROMPT)
           .with_schema(response_schema)
           .ask(prompt)
@@ -115,7 +115,7 @@ module Analyzers
     end
 
     def models
-      @models ||= Array(Rails.application.config.x.frank_investigator.openrouter_models)
+      @models ||= Array(Rails.application.config.x.frank_investigator.llm_models)
     end
   end
 end

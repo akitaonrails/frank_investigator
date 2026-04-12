@@ -1,6 +1,6 @@
 module Analyzers
   # Shared LLM interaction helpers for all analyzers.
-  # Include in any analyzer that makes LLM calls via OpenRouter.
+  # Include in any analyzer that makes LLM calls via the configured LLM provider.
   #
   # Requires the including class to define:
   #   - LOCALE_NAMES (hash) — optional, defaults provided
@@ -49,11 +49,15 @@ module Analyzers
     end
 
     def llm_available?
-      defined?(RubyLLM) && ENV["OPENROUTER_API_KEY"].present?
+      Llm::ProviderConfig.available?
     end
 
     def primary_model
-      Array(Rails.application.config.x.frank_investigator.openrouter_models).first || "anthropic/claude-sonnet-4-6"
+      Llm::ProviderConfig.models.first || "gpt-5-mini"
+    end
+
+    def llm_chat(model: primary_model)
+      Llm::ProviderConfig.chat(model:)
     end
 
     def llm_timeout

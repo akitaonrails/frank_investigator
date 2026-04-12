@@ -68,16 +68,16 @@ Tests use WebMock (`test/support/llm_stubs.rb`) to stub OpenRouter API calls. Th
 
 - Every stubbed response MUST resemble a real LLM response. Before writing a stub, make at least one live call to see the actual response shape, field names, and realistic values. Do not invent response structures — base them on observed LLM output.
 - The stub must return data that exercises the code path being tested. A stub that returns empty arrays for everything does not validate that the code correctly parses and uses the LLM result.
-- Tests that verify heuristic fallback paths (when the LLM is unavailable) should disable the LLM by clearing `ENV["OPENROUTER_API_KEY"]` in a `without_llm` block, not by making the stub return errors.
+- Tests that verify heuristic fallback paths (when the LLM is unavailable) should disable the configured LLM provider key in a `without_llm` block, not by making the stub return errors. In the default test setup that still means clearing `ENV["OPENROUTER_API_KEY"]`.
 - `Fetchers::WebSearcher` Chromium calls are also stubbed to avoid browser launches. The stub lives in `LlmStubs.stub_web_searcher!`.
-- To run tests against real LLM endpoints (integration verification), use: `OPENROUTER_API_KEY=sk-or-... bundle exec rails test`
+- To run tests against real LLM endpoints (integration verification), set the provider and matching key explicitly, for example: `FRANK_INVESTIGATOR_LLM_PROVIDER=openai OPENAI_API_KEY=sk-proj-... bundle exec rails test`
 
 ## Key Architecture Decisions
 
 - **No JavaScript frameworks.** UI is server-rendered with Turbo Streams. No React, no Vue, no Stimulus controllers beyond what Rails provides.
 - **Tailwind CSS v4.** Propshaft pipeline with `tailwindcss-rails`. Custom theme in `app/assets/tailwind/application.css` with warm cream/brown palette. Utility-first classes in templates, minimal custom CSS for popovers and timeline.
 - **SQLite in production.** WAL mode, tuned pragmas. No Postgres dependency.
-- **LLM via OpenRouter.** Multi-model consensus through `RubyLLM` gem. Models configurable via `OPENROUTER_MODELS` env var.
+- **LLM provider is configurable.** The app routes chat analysis through `RubyLLM` using `FRANK_INVESTIGATOR_LLM_PROVIDER` and `FRANK_INVESTIGATOR_LLM_MODELS`. Production currently uses direct OpenAI for chat and embeddings because the OpenRouter account path was degraded.
 - **Heuristic fallback must be safe.** The app continues operating when LLM-backed steps fail, but heuristic-only output must remain conservative. Do not let degraded semantic analysis silently inflate verdict confidence.
 - **Background jobs via Solid Queue.** Production runs Solid Queue in a dedicated Kamal `worker` role via `bin/jobs start`; the web role does not embed Solid Queue inside Puma. Fetch-heavy jobs use a dedicated low-concurrency `fetch` queue to keep Chromium failures from wedging the rest of the pipeline. Recurring jobs remain defined in `config/recurring.yml`.
 - **Recurring jobs must stay wired to a live worker queue.** The production worker pool must subscribe to both `default` and `solid_queue_recurring`; otherwise recovery and cleanup jobs can silently accumulate even while the worker process itself looks healthy.

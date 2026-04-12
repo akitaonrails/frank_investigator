@@ -65,7 +65,7 @@ module Analyzers
       interaction = record_interaction(prompt, packet_fingerprint)
       start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-      response = RubyLLM.chat(model: extraction_model, provider: :openrouter, assume_model_exists: true)
+      response = llm_chat(model: extraction_model)
         .with_instructions(EXTRACTION_SYSTEM_PROMPT)
         .with_schema(extraction_schema)
         .ask(prompt)

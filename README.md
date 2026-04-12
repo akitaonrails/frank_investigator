@@ -67,8 +67,8 @@ bin/dev            # Start Rails + Solid Queue via Procfile.dev
 Required environment variables:
 
 ```bash
-OPENROUTER_API_KEY=your_key_here           # Required for LLM assessment
-OPENAI_API_KEY=your_key_here               # Optional: direct embeddings provider when OpenRouter is degraded
+OPENROUTER_API_KEY=your_key_here           # Required when FRANK_INVESTIGATOR_LLM_PROVIDER=openrouter
+OPENAI_API_KEY=your_key_here               # Required when FRANK_INVESTIGATOR_LLM_PROVIDER=openai, and for direct OpenAI embeddings
 ```
 
 Optional configuration:
@@ -77,7 +77,8 @@ Optional configuration:
 FRANK_INVESTIGATOR_LOCALE=pt-BR            # en or pt-BR (default: pt-BR)
 FRANK_INVESTIGATOR_MAX_LINK_DEPTH=1        # How deep to follow links (default: 1)
 FRANK_INVESTIGATOR_ARTICLE_FRESHNESS_TTL=3600  # Cache TTL in seconds (default: 3600)
-FRANK_INVESTIGATOR_OPENROUTER_MODELS=openai/gpt-5-mini,anthropic/claude-3.7-sonnet,google/gemini-2.5-pro
+FRANK_INVESTIGATOR_LLM_PROVIDER=openrouter      # or openai
+FRANK_INVESTIGATOR_LLM_MODELS=openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro
 FRANK_INVESTIGATOR_VECTOR_SEARCH_ENABLED=true
 FRANK_INVESTIGATOR_EMBEDDING_PROVIDER=openrouter   # or openai
 FRANK_INVESTIGATOR_EMBEDDING_MODEL=openai/text-embedding-3-small   # use text-embedding-3-small with provider=openai
@@ -103,8 +104,9 @@ Export these environment variables in your shell before deploying. Kamal reads t
 ```bash
 export KAMAL_REGISTRY_USERNAME=your-github-username
 export KAMAL_REGISTRY_PASSWORD=ghp_your_github_pat    # PAT with write:packages scope
-export OPENROUTER_API_KEY=sk-or-v1-...
-export FRANK_INVESTIGATOR_OPENROUTER_MODELS=anthropic/claude-sonnet-4-6,openai/gpt-5.4,google/gemini-3.1-pro-preview
+export OPENAI_API_KEY=sk-proj-...
+export FRANK_INVESTIGATOR_LLM_PROVIDER=openai
+export FRANK_INVESTIGATOR_LLM_MODELS=gpt-5-mini
 export FRANK_AUTH_SECRET=$(openssl rand -hex 32)
 export JOBS_AUTH_PASSWORD=$(openssl rand -hex 16)
 export GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX               # Optional

@@ -100,7 +100,7 @@ module Analyzers
 
       prompt = build_equivalence_prompt(candidates)
       response = Timeout.timeout(30) do
-        RubyLLM.chat(model: equivalence_model, provider: :openrouter, assume_model_exists: true)
+        llm_chat(model: equivalence_model)
           .with_instructions(EQUIVALENCE_SYSTEM_PROMPT)
           .with_schema(equivalence_schema(candidates.size))
           .ask(prompt)
