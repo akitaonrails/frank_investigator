@@ -44,41 +44,70 @@
     <div class="mt-3 grid gap-3">
       <% related.each do |inv_data| %>
         <% is_current = inv_data["slug"] == investigation.slug %>
-        <div class="p-3 rounded-lg border <%= is_current ? 'border-ink/20 bg-ink/3' : 'border-line/40' %>">
-          <div class="flex items-center gap-2 mb-1">
-            <% if is_current %>
-              <span class="text-xs font-bold uppercase tracking-wide text-muted"><%= t("investigations.event_context.this_article") %></span>
-            <% else %>
-              <%= link_to investigation_path(inv_data["slug"]), class: "text-sm text-ink hover:underline" do %>
-                <%= inv_data["host"] %>
-              <% end %>
+        <% included = Array(inv_data["facts_included"]) %>
+        <% omitted = Array(inv_data["facts_omitted"]) %>
+        <details class="rounded-lg border <%= is_current ? 'border-ink/20 bg-ink/3' : 'border-line/40 bg-card/40' %>" <%= "open" if is_current %>>
+          <summary class="cursor-pointer list-none p-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <% if is_current %>
+                    <span class="text-xs font-bold uppercase tracking-wide text-muted"><%= t("investigations.event_context.this_article") %></span>
+                  <% else %>
+                    <span class="text-sm text-ink"><%= inv_data["host"] %></span>
+                  <% end %>
+                  <span class="<%= badge_class_for(inv_data["quality"] == "strong" ? "supported" : inv_data["quality"] == "weak" ? "disputed" : "mixed") %> text-xs"><%= inv_data["quality"]&.capitalize %></span>
+                </div>
+                <p class="text-xs text-muted"><%= inv_data["title"] %></p>
+              </div>
+              <div class="text-right text-xs text-muted shrink-0">
+                <% if included.any? %>
+                  <div><%= t("investigations.event_context.facts_included") %>: <%= included.size %></div>
+                <% end %>
+                <% if omitted.any? %>
+                  <div><%= t("investigations.event_context.facts_omitted") %>: <%= omitted.size %></div>
+                <% end %>
+              </div>
+            </div>
+          </summary>
+          <div class="px-3 pb-3 pt-0 border-t border-line/30">
+            <% unless is_current %>
+              <p class="pt-3 text-sm">
+                <%= link_to investigation_path(inv_data["slug"]), class: "text-ink hover:underline" do %>
+                  <%= t("investigations.event_context.open_investigation") %>
+                <% end %>
+              </p>
             <% end %>
-            <span class="<%= badge_class_for(inv_data["quality"] == "strong" ? "supported" : inv_data["quality"] == "weak" ? "disputed" : "mixed") %> text-xs"><%= inv_data["quality"]&.capitalize %></span>
+
+            <% if included.any? %>
+              <div class="pt-3">
+                <h5 class="text-xs font-semibold uppercase tracking-wide text-verdict-green mb-2"><%= t("investigations.event_context.facts_included") %></h5>
+                <ul class="space-y-1">
+                  <% included.each do |fact| %>
+                    <li class="text-sm text-ink flex items-start gap-2">
+                      <span class="text-verdict-green shrink-0 mt-0.5">&#10003;</span>
+                      <span><%= render_reason_summary(fact) %></span>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if omitted.any? %>
+              <div class="pt-3">
+                <h5 class="text-xs font-semibold uppercase tracking-wide text-verdict-red mb-2"><%= t("investigations.event_context.facts_omitted") %></h5>
+                <ul class="space-y-1">
+                  <% omitted.each do |fact| %>
+                    <li class="text-sm text-ink flex items-start gap-2">
+                      <span class="text-verdict-red shrink-0 mt-0.5">&#10007;</span>
+                      <span><%= render_reason_summary(fact) %></span>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
           </div>
-          <p class="text-xs text-muted mb-2"><%= inv_data["title"] %></p>
-
-          <% included = Array(inv_data["facts_included"]) %>
-          <% omitted = Array(inv_data["facts_omitted"]) %>
-
-          <% if included.any? %>
-            <div class="mb-1">
-              <% included.first(3).each do |f| %>
-                <span class="inline-flex items-center gap-1 text-xs text-verdict-green mr-1">&#10003; <%= f.truncate(60) %></span>
-              <% end %>
-            </div>
-          <% end %>
-
-          <% if omitted.any? %>
-            <div>
-              <% omitted.first(3).each do |f| %>
-                <span class="inline-flex items-center gap-1 text-xs text-verdict-red mr-1">&#10007; <%= f.truncate(60) %></span>
-              <% end %>
-              <% if omitted.size > 3 %>
-                <span class="text-xs text-muted">+<%= omitted.size - 3 %> more</span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
+        </details>
       <% end %>
     </div>
   </details>

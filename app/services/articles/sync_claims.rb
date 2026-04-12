@@ -45,6 +45,7 @@ module Articles
       if existing
         existing.update!(last_seen_at: Time.current)
         backfill_canonical!(existing, canon)
+        reconcile_checkability!(existing, decomposed.checkability_status || result.checkability_status)
         return existing
       end
 
@@ -53,6 +54,7 @@ module Articles
         key_match = Claim.find_by(semantic_key: canon.semantic_key)
         if key_match
           key_match.update!(last_seen_at: Time.current)
+          reconcile_checkability!(key_match, decomposed.checkability_status || result.checkability_status)
           return key_match
         end
       end
@@ -68,6 +70,7 @@ module Articles
       if matches.any? && matches.first.similarity_score >= 0.7
         matched_claim = matches.first.claim
         matched_claim.update!(last_seen_at: Time.current)
+        reconcile_checkability!(matched_claim, decomposed.checkability_status || result.checkability_status)
         return matched_claim
       end
 
@@ -125,6 +128,15 @@ module Articles
         semantic_key: canon.semantic_key,
         canonicalization_version: Analyzers::ClaimCanonicalizer::CANONICALIZATION_VERSION
       )
+    end
+
+    def reconcile_checkability!(claim, new_status)
+      desired = new_status.to_s
+      return if desired.blank? || claim.checkability_status == desired
+
+      if desired == "not_checkable" || claim.pending? || (claim.ambiguous? && desired == "checkable")
+        claim.update!(checkability_status: desired)
+      end
     end
 
     def upsert_article_claim!(claim, result)

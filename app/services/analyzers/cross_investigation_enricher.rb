@@ -14,9 +14,10 @@ module Analyzers
   class CrossInvestigationEnricher
     include LlmHelpers
 
+    MAX_CANDIDATES = 300
     MIN_ENTITY_OVERLAP = 2
-    MIN_KEYWORD_OVERLAP = 8
     MIN_TOPIC_OVERLAP = 2
+    MIN_SUBJECT_TOPIC_OVERLAP = 4
     MAX_RELATED = 10
 
     SYSTEM_PROMPT_TEMPLATE = <<~PROMPT.freeze
@@ -93,40 +94,136 @@ module Analyzers
     private
 
     def find_related_investigations
-      # Extract entity names from this investigation's claims
-      entities = extract_entities
-      return [] if entities.empty?
+      primary_subjects = extract_primary_subjects_from(@investigation)
+      anchor_subjects = extract_anchor_subjects_from(@investigation)
+      fallback_entities = extract_entities
+      return [] if primary_subjects.empty? && anchor_subjects.empty? && fallback_entities.empty?
 
-      # Search other completed investigations for overlapping entities
-      candidates = Investigation.where(status: "completed")
+      heuristic_candidates = Investigation.where(status: "completed")
         .where.not(id: @investigation.id)
         .includes(:root_article, :claim_assessments)
-        .limit(50)
+        .order(updated_at: :desc)
+        .limit(MAX_CANDIDATES)
+        .to_a
+      vector_candidates = Investigations::VectorCandidateRetriever.call(
+        investigation: @investigation,
+        limit: MAX_CANDIDATES
+      )
+      vector_ranks = vector_candidates.each_with_index.to_h { |investigation, index| [ investigation.id, index ] }
+      candidates = merge_candidates(vector_candidates, heuristic_candidates)
 
-      keywords = extract_keywords_from(@investigation)
       topics = extract_topics_from(@investigation)
+      subject_topic_tokens = extract_subject_topic_tokens_from(@investigation)
 
-      related = candidates.select do |inv|
-        # Match by entity names (proper nouns)
-        other_entities = extract_entities_from(inv)
-        entity_overlap = (entities & other_entities).size
-        next true if entity_overlap >= MIN_ENTITY_OVERLAP
+      related = candidates.filter_map do |inv|
+        score = relatedness_score(
+          investigation: inv,
+          primary_subjects:,
+          anchor_subjects:,
+          fallback_entities:,
+          topics:,
+          subject_topic_tokens:
+        )
+        next unless score
 
-        # Match by keyword overlap (significant words from claims + title)
-        other_keywords = extract_keywords_from(inv)
-        keyword_overlap = (keywords & other_keywords).size
-        next true if keyword_overlap >= MIN_KEYWORD_OVERLAP
+        [ inv, score + vector_boost_for(inv.id, vector_ranks) ]
+      end.compact
 
-        other_topics = extract_topics_from(inv)
-        topic_overlap = (topics & other_topics).size
-        entity_overlap >= 1 && topic_overlap >= MIN_TOPIC_OVERLAP
+      related
+        .sort_by { |(_inv, score)| -score }
+        .map(&:first)
+        .first(MAX_RELATED)
+    end
+
+    def merge_candidates(vector_candidates, heuristic_candidates)
+      seen_ids = Set.new
+
+      (vector_candidates + heuristic_candidates).each_with_object([]) do |investigation, merged|
+        next if seen_ids.include?(investigation.id)
+
+        seen_ids << investigation.id
+        merged << investigation
       end
+    end
 
-      related.first(MAX_RELATED)
+    def relatedness_score(investigation:, primary_subjects:, anchor_subjects:, fallback_entities:, topics:, subject_topic_tokens:)
+      other_primary_subjects = extract_primary_subjects_from(investigation)
+      other_anchor_subjects = extract_anchor_subjects_from(investigation)
+      other_topics = extract_topics_from(investigation)
+      topic_overlap = (topics & other_topics)
+
+      score =
+        primary_overlap = (primary_subjects & other_primary_subjects).size
+        if primary_overlap.positive?
+          primary_overlap * 100
+        elsif anchor_subjects.present? && other_anchor_subjects.present?
+          anchor_overlap = (anchor_subjects & other_anchor_subjects).size
+          return unless anchor_overlap.positive?
+
+          anchor_overlap * 70
+        elsif subject_topic_tokens.any? && (subject_topic_tokens & topic_overlap).any? &&
+            topic_overlap.size >= MIN_SUBJECT_TOPIC_OVERLAP
+          40 + topic_overlap.size
+        else
+          other_entities = extract_entities_from(investigation)
+          entity_overlap = (fallback_entities & other_entities).size
+          return unless entity_overlap >= MIN_ENTITY_OVERLAP
+
+          entity_overlap * 100
+        end
+
+      return unless topic_overlap.size >= MIN_TOPIC_OVERLAP
+
+      score + topic_overlap.size
+    end
+
+    def vector_boost_for(investigation_id, vector_ranks)
+      rank = vector_ranks[investigation_id]
+      return 0 unless rank
+
+      [ 25 - rank, 5 ].max
     end
 
     def extract_entities
       extract_entities_from(@investigation)
+    end
+
+    def extract_primary_subjects_from(investigation)
+      title = investigation.root_article&.title.to_s
+      subjects = Set.new
+
+      title.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each do |name|
+        subjects << name.downcase
+      end
+
+      title.scan(/\b[A-ZÀ-Ú][a-zà-ú]{4,}\b/).each do |name|
+        normalized = name.downcase
+        next if GENERIC_ENTITY_TOKENS.include?(normalized)
+
+        subjects << normalized
+      end
+
+      subjects
+    end
+
+    def extract_anchor_subjects_from(investigation)
+      primary_subjects = extract_primary_subjects_from(investigation)
+      subject_counts = named_subject_counts_for(investigation)
+      anchors = Set.new(primary_subjects)
+
+      subject_counts.each do |subject, count|
+        next if count < 2
+
+        anchors << subject
+      end
+
+      anchors
+    end
+
+    def extract_subject_topic_tokens_from(investigation)
+      extract_anchor_subjects_from(investigation)
+        .flat_map { |subject| extract_keywords_from_text(subject).to_a }
+        .to_set
     end
 
     # Stop words to exclude from keyword matching
@@ -141,29 +238,16 @@ module Analyzers
       other should since their those through would years
     ]).freeze
 
-    def extract_keywords_from(investigation)
-      text = [
-        investigation.root_article&.title,
-        investigation.root_article&.body_text.to_s.truncate(2000),
-        investigation.claim_assessments.includes(:claim).map { |ca| ca.claim.canonical_text }
-      ].flatten.compact.join(" ")
-
-      Analyzers::TextAnalysis.normalize(text)
-        .split
-        .map { |token| keyword_stem(token) }
-        .reject { |w| w.length < 4 || STOP_WORDS.include?(w) }
-        .uniq
-        .to_set
-    end
+    GENERIC_ENTITY_TOKENS = Set.new(%w[
+      brasil brasileira brasileiro brasileiras brasileiros
+      governo federal estadual municipal ministerio ministério camara câmara senado
+      prefeitura assembleia tribunal corte justiça congresso policia polícia
+      globo globonews folha uol bbc cnn veja estadao estadão poder360 g1
+      artigo reportagem coluna colunista editorial portal jornal jornais
+    ]).freeze
 
     def extract_topics_from(investigation)
-      text = [
-        investigation.root_article&.title,
-        investigation.root_article&.body_text.to_s.truncate(2500),
-        investigation.claim_assessments.includes(:claim).map { |ca| ca.claim.canonical_text }
-      ].flatten.compact.join(" ")
-
-      extract_keywords_from_text(text)
+      extract_keywords_from_text(cross_reference_text_for(investigation))
     end
 
     STEM_SUFFIXES = %w[
@@ -192,33 +276,86 @@ module Analyzers
         .to_set
     end
 
+    def cross_reference_text_for(investigation)
+      [
+        investigation.root_article&.title,
+        investigation.root_article&.body_text.to_s.truncate(2000),
+        investigation.claim_assessments.includes(:claim).map { |ca| ca.claim.canonical_text },
+        Array(investigation.contextual_gaps&.dig("gaps")).map { |gap| gap["question"] }
+      ].flatten.compact.join(" ")
+    end
+
     def extract_entities_from(investigation)
       entities = Set.new
+      single_word_counts = Hash.new(0)
 
       # From claims
       investigation.claim_assessments.includes(:claim).each do |ca|
         text = ca.claim.canonical_text.to_s
         # Extract capitalized multi-word names (simple NER heuristic)
         text.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each { |name| entities << name.downcase }
-        # Extract single capitalized words that are likely proper nouns (>4 chars)
-        text.scan(/\b[A-ZÀ-Ú][a-zà-ú]{4,}\b/).each { |name| entities << name.downcase }
+        count_single_word_entities(text, single_word_counts)
       end
 
       # From article title
       title = investigation.root_article&.title.to_s
       title.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each { |name| entities << name.downcase }
+      count_single_word_entities(title, single_word_counts)
 
       # From contextual gaps questions (often contain entity names)
       Array(investigation.contextual_gaps&.dig("gaps")).each do |gap|
         q = gap["question"].to_s
         q.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each { |name| entities << name.downcase }
+        count_single_word_entities(q, single_word_counts)
+      end
+
+      single_word_counts.each do |name, count|
+        next if count < 2
+        next if GENERIC_ENTITY_TOKENS.include?(name)
+
+        entities << name
       end
 
       entities
     end
 
+    def named_subject_counts_for(investigation)
+      counts = Hash.new(0)
+
+      investigation.claim_assessments.includes(:claim).each do |ca|
+        count_named_subjects(ca.claim.canonical_text.to_s, counts)
+      end
+
+      count_named_subjects(investigation.root_article&.title.to_s, counts)
+
+      Array(investigation.contextual_gaps&.dig("gaps")).each do |gap|
+        count_named_subjects(gap["question"].to_s, counts)
+      end
+
+      counts
+    end
+
+    def count_named_subjects(text, counts)
+      text.to_s.scan(/\b[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+\b/).each do |name|
+        counts[name.downcase] += 1
+      end
+
+      text.to_s.scan(/\b[A-ZÀ-Ú][a-zà-ú]{4,}\b/).each do |name|
+        normalized = name.downcase
+        next if GENERIC_ENTITY_TOKENS.include?(normalized)
+
+        counts[normalized] += 1
+      end
+    end
+
+    def count_single_word_entities(text, counts)
+      text.to_s.scan(/\b[A-ZÀ-Ú][a-zà-ú]{4,}\b/).each do |name|
+        counts[name.downcase] += 1
+      end
+    end
+
     def build_composite(investigations)
-      return nil unless llm_available?
+      return heuristic_composite(investigations) unless llm_available?
 
       prompt_data = investigations.map do |inv|
         {
@@ -264,7 +401,7 @@ module Analyzers
     rescue StandardError => e
       fail_interaction(interaction, e) if interaction
       Rails.logger.warn("Cross-investigation enrichment failed: #{e.message}")
-      nil
+      heuristic_composite(investigations)
     end
 
     def composite_schema
@@ -302,6 +439,58 @@ module Analyzers
 
     def system_prompt
       SYSTEM_PROMPT_TEMPLATE.gsub("%{locale_name}", locale_name)
+    end
+
+    def heuristic_composite(investigations)
+      facts_by_investigation = investigations.to_h do |inv|
+        [ inv, normalized_claims_for(inv) ]
+      end
+
+      all_facts = facts_by_investigation.values.flatten.uniq
+      return nil if all_facts.empty?
+
+      majority_threshold = (investigations.size / 2) + 1
+      critical_omissions = all_facts.select do |fact|
+        facts_by_investigation.values.count { |facts| facts.include?(fact) } < majority_threshold
+      end
+
+      {
+        composite_timeline: heuristic_timeline(all_facts),
+        coverage_map: investigations.map { |inv|
+          facts = facts_by_investigation.fetch(inv)
+          {
+            host: inv.root_article&.host,
+            facts_included: facts,
+            facts_omitted: critical_omissions - facts
+          }
+        },
+        narrative_assessment: heuristic_narrative_assessment(critical_omissions),
+        critical_omissions:
+      }
+    end
+
+    def normalized_claims_for(investigation)
+      investigation.claim_assessments.includes(:claim)
+        .reject { |assessment| assessment.claim.not_checkable? || assessment.verdict_pending? }
+        .map { |assessment| assessment.claim.canonical_text.to_s.squish }
+        .reject(&:blank?)
+        .uniq
+    end
+
+    def heuristic_timeline(facts)
+      I18n.t(
+        "heuristic_fallbacks.cross_investigation.composite_timeline",
+        default: "Heuristic composite from related investigations: %{facts}",
+        facts: facts.first(8).join(" | ")
+      )
+    end
+
+    def heuristic_narrative_assessment(critical_omissions)
+      key = critical_omissions.any? ? "divergent" : "aligned"
+      I18n.t(
+        "heuristic_fallbacks.cross_investigation.narrative_assessment.#{key}",
+        default: key == "divergent" ? "Related investigations cover overlapping facts but omit different details." : "Related investigations broadly cover the same factual core."
+      )
     end
   end
 end

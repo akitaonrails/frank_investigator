@@ -28,6 +28,7 @@ class Investigation < ApplicationRecord
   has_many :pipeline_steps, dependent: :destroy
   has_many :claim_assessments, dependent: :destroy
   has_many :claims, through: :claim_assessments
+  has_one :investigation_embedding, dependent: :destroy
 
   validates :submitted_url, :normalized_url, presence: true
   validates :normalized_url, uniqueness: true

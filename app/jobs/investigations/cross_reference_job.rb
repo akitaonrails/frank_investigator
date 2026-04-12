@@ -9,6 +9,7 @@ module Investigations
       @investigation = Investigation.includes(:root_article, claim_assessments: :claim).find(investigation_id)
       return unless @investigation.completed?
 
+      Investigations::EmbeddingIndexer.call(investigation: @investigation)
       Analyzers::CrossInvestigationEnricher.call(investigation: @investigation)
       Rails.logger.info("[CrossReference] Enriched investigation #{@investigation.slug}")
 

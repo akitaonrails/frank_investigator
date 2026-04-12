@@ -40,6 +40,8 @@ This is the foundational design constraint of the entire system. Every scoring, 
 
 15. **Conservative degradation when semantic analysis is unavailable.** If LLM-backed extraction or contradiction analysis is unavailable, the heuristic fallback must become more conservative, not more confident. In degraded mode, evaluative claims should stay `not_checkable` or `needs_more_evidence`, and opinion/blog amplification must not be able to manufacture a `:supported` verdict by repetition alone.
 
+16. **Vector retrieval is retrieval, not truth.** Embeddings may widen the search for related investigations, but they must never bypass hard subject and topic guardrails. The final relatedness decision stays deterministic and conservative.
+
 When in doubt, prefer `needs_more_evidence` over a weakly supported verdict. Conservative assessment protects users better than false confidence.
 
 ## Running the App
@@ -78,6 +80,9 @@ Tests use WebMock (`test/support/llm_stubs.rb`) to stub OpenRouter API calls. Th
 - **LLM via OpenRouter.** Multi-model consensus through `RubyLLM` gem. Models configurable via `OPENROUTER_MODELS` env var.
 - **Heuristic fallback must be safe.** The app continues operating when LLM-backed steps fail, but heuristic-only output must remain conservative. Do not let degraded semantic analysis silently inflate verdict confidence.
 - **Background jobs via Solid Queue.** Production runs Solid Queue in a dedicated Kamal `worker` role via `bin/jobs start`; the web role does not embed Solid Queue inside Puma. Fetch-heavy jobs use a dedicated low-concurrency `fetch` queue to keep Chromium failures from wedging the rest of the pipeline. Recurring jobs remain defined in `config/recurring.yml`.
+- **Recurring jobs must stay wired to a live worker queue.** The production worker pool must subscribe to both `default` and `solid_queue_recurring`; otherwise recovery and cleanup jobs can silently accumulate even while the worker process itself looks healthy.
+- **Vector search is local to SQLite.** Related-investigation retrieval uses a vendored `sqlite-vec` extension compiled into this app's image. Do not depend on server-global extensions or another app's container. Existing completed investigations must be backfilled after deploy with `bin/rails 'frank:index_embeddings[250]'` until the backlog is cleared.
+- **Embeddings provider is configurable.** Default wiring uses OpenRouter for embeddings, but production can switch to direct OpenAI embeddings with `FRANK_INVESTIGATOR_EMBEDDING_PROVIDER=openai` and `OPENAI_API_KEY` if OpenRouter is degraded.
 
 ## Link Extraction and Noise Filtering
 
@@ -99,11 +104,15 @@ The repo includes safe maintenance rake tasks for post-deploy repair work:
 
 ```bash
 bin/rails 'frank:reanalyze[SLUG]'   # Reset analysis-stage steps and re-run from headline analysis
+bin/rails 'frank:refresh[SLUG]'     # Rebuild one investigation from stored snapshots and current heuristics
 bin/rails 'frank:crossref[SLUG]'    # Recompute related-investigation context for one report
+bin/rails 'frank:index_embeddings[250]'  # Backfill vector embeddings for completed investigations
 bin/rails frank:crossref_all        # Recompute event context for all completed investigations
 ```
 
 `frank:reanalyze` only resets analysis-stage steps (`analyze_headline` onward). It does not re-fetch the article or rebuild the entire investigation from scratch. Use it when analyzer logic changed and the root fetch/claim extraction data are still valid.
+`frank:refresh` is the safe repair path when parser cleanup, source-role classification, or claim extraction logic changed. It replays stored snapshots through app services, refreshes source metadata, rebuilds claims, and reruns the downstream pipeline without direct database surgery.
+`frank:index_embeddings` is required after the first vector-search deploy, after changing embedding model/dimensions, or any time you need to backfill older completed investigations into the vector index.
 
 ## Code Conventions
 

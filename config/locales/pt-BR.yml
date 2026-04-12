@@ -61,7 +61,7 @@ pt-BR:
       event_context_heading: "Contexto do evento a partir de investigações relacionadas"
       event_context_body: "Quando múltiplos artigos sobre o mesmo evento foram investigados, o sistema constrói uma linha do tempo composta combinando fatos de TODOS os artigos. Em seguida, mostra quais fatos cada artigo inclui e quais omite. Omissões críticas — fatos presentes em pelo menos um artigo mas ausentes na maioria — são destacadas. Esta seção se enriquece à medida que mais artigos sobre o mesmo evento são investigados, independentemente da ordem de envio."
       headline_heading: "Análise da manchete"
-      headline_body: "Compara a manchete com o corpo do artigo para detectar três padrões: sensacionalismo (manchete faz alegações definitivas que o corpo não sustenta), enquadramento positivo seletivo (manchete destaca o positivo enquanto o corpo contém reversões e reações contrárias) e minimização eufemística (manchete usa linguagem suave enquanto o corpo descreve eventos graves). Borda verde significa que a manchete corresponde ao corpo; âmbar significa divergência moderada; vermelho significa manipulação significativa."
+      headline_body: "Compara a manchete com o corpo do artigo para detectar três padrões: sensacionalismo (manchete faz alegações definitivas que o corpo não sustenta), enquadramento positivo seletivo (manchete destaca o positivo enquanto o corpo contém reversões e reações contrárias) e minimização eufemística (manchete usa linguagem suave enquanto o corpo descreve eventos graves). Borda verde significa apenas baixa divergência entre título e corpo; âmbar significa divergência moderada; vermelho significa manipulação significativa. Mesmo com borda verde, as demais análises ainda podem apontar problemas relevantes."
       coordinated_narrative_heading: "Análise de narrativa coordenada"
       coordinated_narrative_body: "A análise completa de coordenação mostrando: enquadramento convergente (múltiplos veículos usam a mesma estrutura de culpa/defesa?), omissões convergentes (todos omitem a mesma contra-evidência?), apagamento de cadeia causal (todos pulam os mesmos elos na cadeia causal do evento?) e convergência eufemística (todos usam a mesma linguagem suavizante?). Também lista os artigos relacionados encontrados via busca na web."
       emotional_heading: "Manipulação emocional"
@@ -263,6 +263,9 @@ pt-BR:
       coverage_comparison: "Comparação de cobertura"
       articles: "artigos"
       this_article: "Este artigo"
+      open_investigation: "Abrir investigação"
+      facts_included: "Fatos incluídos"
+      facts_omitted: "Fatos omitidos"
 
     investigation_summary:
       heading: "Resumo da investigação"
@@ -361,8 +364,8 @@ pt-BR:
     headline_bait:
       high: "A manchete parece materialmente mais sensacionalista que o corpo do artigo."
       moderate: "A manchete é um pouco mais forte que as evidências no corpo do texto."
-      low: "A manchete corresponde amplamente ao corpo do artigo."
-      none: "Ainda não analisado."
+      low: "O título corresponde amplamente ao corpo do artigo, mas isso é apenas um sinal estrutural e não substitui as demais análises."
+      none: "A divergência entre título e corpo ainda não foi analisada; as outras verificações do relatório continuam sendo relevantes."
       downplaying: "A manchete usa linguagem suave ou eufemística que minimiza a gravidade dos eventos descritos no corpo do artigo. O corpo contém referências a ações graves (crime, perigo, prisão) que a manchete minimiza através de enquadramento neutro ou humanizante."
       selective_positive: "A manchete apresenta um enquadramento seletivamente positivo enquanto o corpo do artigo contém contexto qualificador significativo (reversões, reações contrárias, ações negativas anteriores) que a manchete omite."
       escalation: "A manchete faz alegações definitivas que o corpo do artigo não sustenta. O corpo contém linguagem de ressalva (alegadamente, não confirmado, fontes dizem) que contradiz a certeza da manchete."
@@ -463,6 +466,11 @@ pt-BR:
     odious_categorization_explanation: "O artigo usa um rótulo depreciativo para desacreditar uma posição ou grupo sem abordar a substância de seus argumentos."
     paradox_framing_explanation: "O artigo enquadra a discordância de sua posição como absurda ou moralmente indefensável, desencorajando o leitor de considerar contra-argumentos legítimos."
     no_evidence: "Nenhuma evidência vinculada foi relevante o suficiente para avaliar esta alegação ainda."
+    cross_investigation:
+      composite_timeline: "Compósito heurístico de investigações relacionadas: %{facts}"
+      narrative_assessment:
+        aligned: "As investigações relacionadas cobrem, em geral, o mesmo núcleo factual."
+        divergent: "As investigações relacionadas cobrem fatos sobrepostos, mas omitem detalhes diferentes."
 
     summary:
       supported_claims:

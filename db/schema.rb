@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_28_125602) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_12_190000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -187,6 +187,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_28_125602) do
     t.datetime "updated_at", null: false
     t.index ["article_id"], name: "index_html_snapshots_on_article_id"
     t.index ["content_fingerprint"], name: "index_html_snapshots_on_content_fingerprint", unique: true
+  end
+
+  create_table "investigation_embeddings", force: :cascade do |t|
+    t.string "content_digest", null: false
+    t.datetime "created_at", null: false
+    t.integer "dimensions", null: false
+    t.text "embedding_json"
+    t.string "error_class"
+    t.text "error_message"
+    t.datetime "indexed_at"
+    t.integer "investigation_id", null: false
+    t.string "model_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.index ["content_digest"], name: "index_investigation_embeddings_on_content_digest"
+    t.index ["investigation_id"], name: "index_investigation_embeddings_on_investigation_id", unique: true
+    t.index ["status"], name: "index_investigation_embeddings_on_status"
   end
 
   create_table "investigations", force: :cascade do |t|
@@ -434,6 +451,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_28_125602) do
   add_foreign_key "evidence_items", "articles"
   add_foreign_key "evidence_items", "claim_assessments"
   add_foreign_key "html_snapshots", "articles"
+  add_foreign_key "investigation_embeddings", "investigations"
   add_foreign_key "investigations", "articles", column: "root_article_id"
   add_foreign_key "llm_interactions", "claim_assessments"
   add_foreign_key "llm_interactions", "investigations"

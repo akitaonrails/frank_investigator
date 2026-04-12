@@ -33,6 +33,17 @@ module FrankInvestigator
     config.x.frank_investigator.article_freshness_ttl = ENV.fetch("FRANK_INVESTIGATOR_ARTICLE_FRESHNESS_TTL", 3600).to_i # seconds
     config.x.frank_investigator.fetcher_class = ENV.fetch("FRANK_INVESTIGATOR_FETCHER_CLASS", "Fetchers::ChromiumFetcher")
     config.x.frank_investigator.llm_client_class = ENV.fetch("FRANK_INVESTIGATOR_LLM_CLIENT_CLASS", "Llm::RubyLlmClient")
+    config.x.frank_investigator.vector_search_enabled = ENV.fetch("FRANK_INVESTIGATOR_VECTOR_SEARCH_ENABLED", "true") == "true"
+    config.x.frank_investigator.embedding_provider = ENV.fetch("FRANK_INVESTIGATOR_EMBEDDING_PROVIDER", "openrouter")
+    config.x.frank_investigator.embedding_model = ENV.fetch(
+      "FRANK_INVESTIGATOR_EMBEDDING_MODEL",
+      "openai/text-embedding-3-small"
+    )
+    config.x.frank_investigator.embedding_dimensions = ENV.fetch("FRANK_INVESTIGATOR_EMBEDDING_DIMENSIONS", 1536).to_i
+    config.x.frank_investigator.sqlite_vec_path = ENV.fetch(
+      "FRANK_INVESTIGATOR_SQLITE_VEC_PATH",
+      Rails.root.join("vendor/sqlite-vec/vec0.so").to_s
+    )
     config.x.frank_investigator.openrouter_models = ENV.fetch(
       "FRANK_INVESTIGATOR_OPENROUTER_MODELS",
       "openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro"

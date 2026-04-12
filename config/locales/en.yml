@@ -61,7 +61,7 @@ en:
       event_context_heading: "Event context from related investigations"
       event_context_body: "When multiple articles about the same event have been investigated, the system builds a composite timeline combining facts from ALL articles. It then shows which facts each article includes and which it omits. Critical omissions — facts present in at least one article but missing from the majority — are highlighted. This section grows richer as more articles about the same event are investigated, regardless of submission order."
       headline_heading: "Headline analysis"
-      headline_body: "Compares the headline against the article body to detect three patterns: sensationalism (headline makes definitive claims the body doesn't support), selective positive framing (headline highlights the positive while body contains reversals and backlash), and euphemistic downplaying (headline uses soft language while body describes severe events). A green border means the headline matches the body; amber means moderate divergence; red means significant manipulation."
+      headline_body: "Compares the headline against the article body to detect three patterns: sensationalism (headline makes definitive claims the body doesn't support), selective positive framing (headline highlights the positive while body contains reversals and backlash), and euphemistic downplaying (headline uses soft language while body describes severe events). A green border means only low headline-body divergence; amber means moderate divergence; red means significant manipulation. Even with a green border, the other analyses may still surface important problems."
       coordinated_narrative_heading: "Coordinated narrative analysis"
       coordinated_narrative_body: "The full coordination analysis showing: convergent framing (do multiple outlets use the same blame/defense structure?), convergent omissions (do they all omit the same counter-evidence?), causal chain erasure (do they all skip the same links in the event's causal chain?), and euphemistic convergence (do they all use the same softening language?). Also lists the related articles found via web search."
       emotional_heading: "Emotional manipulation"
@@ -263,6 +263,9 @@ en:
       coverage_comparison: "Coverage comparison"
       articles: "articles"
       this_article: "This article"
+      open_investigation: "Open investigation"
+      facts_included: "Facts included"
+      facts_omitted: "Facts omitted"
 
     investigation_summary:
       heading: "Investigation summary"
@@ -361,8 +364,8 @@ en:
     headline_bait:
       high: "Headline appears materially more sensational than the article body."
       moderate: "Headline is somewhat stronger than the body evidence."
-      low: "Headline largely matches the article body."
-      none: "Not yet analyzed."
+      low: "The headline largely matches the article body, but that is only one structural signal and does not replace the rest of the analysis."
+      none: "Headline-body divergence has not been analyzed yet; the other checks in the report still matter."
       downplaying: "Headline uses soft or euphemistic language that downplays the severity of events described in the article body. The body contains references to serious actions (crime, danger, arrest) that the headline minimizes through neutral or humanizing framing."
       selective_positive: "Headline presents a selectively positive framing while the article body contains significant qualifying context (reversals, backlash, prior negative actions) that the headline omits."
       escalation: "Headline makes definitive claims that the article body does not substantiate. The body contains hedging language (alleged, unconfirmed, sources say) that contradicts the headline's certainty."
@@ -463,6 +466,11 @@ en:
     odious_categorization_explanation: "The article uses a dismissive label to discredit a position or group without engaging with the substance of their arguments."
     paradox_framing_explanation: "The article frames dissent from its position as absurd or morally indefensible, discouraging the reader from considering legitimate counter-arguments."
     no_evidence: "No linked evidence was relevant enough to assess this claim yet."
+    cross_investigation:
+      composite_timeline: "Heuristic composite from related investigations: %{facts}"
+      narrative_assessment:
+        aligned: "Related investigations broadly cover the same factual core."
+        divergent: "Related investigations cover overlapping facts but omit different details."
 
     summary:
       supported_claims:

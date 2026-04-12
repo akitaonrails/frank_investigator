@@ -42,6 +42,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 - Searches for counter-evidence addressing each identified gap
 - Detects coordinated narrative campaigns: finds related coverage, compares narrative fingerprints, flags convergent framing and convergent omissions across outlets
 - Links related investigations more aggressively when the same subject is covered through opposed policy or fiscal framing
+- Uses hybrid related-investigation retrieval: sqlite-vec embeddings retrieve candidates, then subject/topic guardrails decide what is truly related
 - Scores emotional manipulation: emotional temperature vs evidence density, calibrated so passionate journalism backed by evidence is not penalized
 - Generates an executive summary from 15 pipeline steps with calibrated scoring that distinguishes normal editorial imperfections from deliberate manipulation
 - Live updates via Turbo Streams as the pipeline progresses
@@ -67,6 +68,7 @@ Required environment variables:
 
 ```bash
 OPENROUTER_API_KEY=your_key_here           # Required for LLM assessment
+OPENAI_API_KEY=your_key_here               # Optional: direct embeddings provider when OpenRouter is degraded
 ```
 
 Optional configuration:
@@ -76,6 +78,10 @@ FRANK_INVESTIGATOR_LOCALE=pt-BR            # en or pt-BR (default: pt-BR)
 FRANK_INVESTIGATOR_MAX_LINK_DEPTH=1        # How deep to follow links (default: 1)
 FRANK_INVESTIGATOR_ARTICLE_FRESHNESS_TTL=3600  # Cache TTL in seconds (default: 3600)
 FRANK_INVESTIGATOR_OPENROUTER_MODELS=openai/gpt-5-mini,anthropic/claude-3.7-sonnet,google/gemini-2.5-pro
+FRANK_INVESTIGATOR_VECTOR_SEARCH_ENABLED=true
+FRANK_INVESTIGATOR_EMBEDDING_PROVIDER=openrouter   # or openai
+FRANK_INVESTIGATOR_EMBEDDING_MODEL=openai/text-embedding-3-small   # use text-embedding-3-small with provider=openai
+FRANK_INVESTIGATOR_EMBEDDING_DIMENSIONS=1536
 QUARANTINED_MODELS=                        # Comma-separated models to skip
 ```
 
@@ -124,6 +130,15 @@ Point your DNS (A record) to the server IP for the hostname configured in `confi
 bin/kamal deploy
 ```
 
+After the first deploy that includes vector search, backfill embeddings for existing completed investigations so cross-reference can use the full corpus instead of only newly completed reports:
+
+```bash
+bin/kamal app exec -r web --reuse "bin/rails frank:index_embeddings[250]"
+```
+
+Repeat that command until it reports no remaining work, or increase the batch size if the server has enough headroom.
+If OpenRouter is still failing in production, switch embeddings to `FRANK_INVESTIGATOR_EMBEDDING_PROVIDER=openai` and set `OPENAI_API_KEY` before running the backfill.
+
 ### Other commands
 
 ```bash
@@ -139,11 +154,14 @@ bin/kamal app details   # Show container status
 
 ```bash
 bin/rails 'frank:reanalyze[SLUG]'   # Reset analysis-stage steps and rerun analyzers for one investigation
+bin/rails 'frank:refresh[SLUG]'     # Rebuild one investigation from stored snapshots and current heuristics
 bin/rails 'frank:crossref[SLUG]'    # Recompute related-investigation context for one investigation
+bin/rails 'frank:index_embeddings[250]'  # Backfill vector embeddings for completed investigations
 bin/rails frank:crossref_all        # Recompute related-investigation context for all completed investigations
 ```
 
 Use `frank:reanalyze` when analyzer logic changes and you want a report to pick up new heuristics without re-fetching the source article.
+Use `frank:refresh` when claim extraction, source-role classification, or parser cleanup changed and the investigation needs a full rebuild from stored article content without manual database edits.
 
 ### How it works
 
@@ -154,9 +172,12 @@ Use `frank:reanalyze` when analyzer logic changes and you want a report to pick 
 - Production runs separate `web` and `worker` containers for this app only
 - The `web` role serves HTTP traffic and does not embed Solid Queue in Puma
 - The `worker` role runs `./bin/jobs start` and is not exposed through kamal-proxy
+- The shared worker pool consumes both `default` and `solid_queue_recurring`, so recurring recovery/cleanup jobs are not stranded
 - Fetch-heavy jobs run on a dedicated low-concurrency `fetch` queue to limit Chromium pressure
 - Chromium is included in the Docker image for headless page fetching
+- The app image compiles and loads a vendored `sqlite-vec` extension, then stores investigation embeddings in SQLite for related-investigation retrieval
 - If LLM-backed analysis degrades, the heuristic fallback remains conservative: evaluative claims stay `not_checkable` or `needs_more_evidence`, and opinion/blog amplification is downweighted automatically
+- Cross-investigation enrichment now uses hybrid retrieval: vector candidates widen recall, while subject/topic guardrails and heuristic fallback keep unrelated investigations out
 
 ## Deployment Notes
 

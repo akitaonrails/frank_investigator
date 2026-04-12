@@ -74,6 +74,43 @@ namespace :frank do
     puts "Done."
   end
 
+  desc "Backfill vector embeddings for completed investigations"
+  task :index_embeddings, [ :limit ] => :environment do |_t, args|
+    limit = (args[:limit] || ENV["LIMIT"] || 250).to_i
+    model_id = Rails.configuration.x.frank_investigator.embedding_model
+    dimensions = Rails.configuration.x.frank_investigator.embedding_dimensions
+    scope = Investigation.where(status: "completed")
+      .left_outer_joins(:investigation_embedding)
+      .where(
+        <<~SQL.squish,
+          investigation_embeddings.id IS NULL OR
+          investigation_embeddings.status != ? OR
+          investigation_embeddings.model_id != ? OR
+          investigation_embeddings.dimensions != ?
+        SQL
+        InvestigationEmbedding.statuses[:indexed],
+        model_id,
+        dimensions
+      )
+      .distinct
+      .order(updated_at: :desc)
+    investigations = scope.includes(:root_article, claim_assessments: :claim).limit(limit)
+
+    puts "Indexing embeddings for up to #{investigations.size} completed investigations..."
+
+    investigations.each do |inv|
+      record = Investigations::EmbeddingIndexer.call(investigation: inv)
+      status = record&.status || "skipped"
+      puts "  #{inv.slug} — #{status}"
+    rescue StandardError => e
+      puts "  #{inv.slug} — ERROR: #{e.class}: #{e.message.truncate(120)}"
+    end
+
+    remaining = scope.count
+    puts "Remaining investigations still needing indexing: #{remaining}"
+    puts "Done."
+  end
+
   desc "Cross-reference an investigation with related ones (by slug)"
   task :crossref, [ :slug ] => :environment do |_t, args|
     slug = args[:slug] || ENV["SLUG"]
@@ -92,5 +129,21 @@ namespace :frank do
     else
       puts "  No related investigations found."
     end
+  end
+
+  desc "Refresh an investigation from stored snapshots and rebuild the pipeline (by slug)"
+  task :refresh, [ :slug ] => :environment do |_t, args|
+    slug = args[:slug] || ENV["SLUG"]
+    abort "Usage: rails frank:refresh[SLUG]" unless slug
+
+    inv = Investigation.find_by!(slug: slug)
+    puts "Refreshing #{inv.slug} (#{inv.root_article&.title.to_s.truncate(60)}) from stored content..."
+
+    Investigations::RefreshFromSnapshots.call(investigation: inv)
+
+    inv.reload
+    puts "  Status: #{inv.status}"
+    puts "  Claims: #{inv.claim_assessments.count}"
+    puts "  Event context: #{inv.event_context.present? ? 'present' : 'absent'}"
   end
 end

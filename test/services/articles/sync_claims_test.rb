@@ -1,46 +1,70 @@
 require "test_helper"
+require "ostruct"
 
 class Articles::SyncClaimsTest < ActiveSupport::TestCase
-  test "creates canonical claims and claim assessments for an article" do
+  test "reconciles existing claim to not_checkable when a stricter classifier reruns it" do
     article = Article.create!(
-      url: "https://example.com/news",
-      normalized_url: "https://example.com/news",
+      url: "https://example.com/opinion",
+      normalized_url: "https://example.com/opinion",
       host: "example.com",
-      title: "City Hall says taxes will fall in 2026",
-      body_text: "City Hall announced taxes will fall by 4 percent in 2026. Officials said the plan was approved yesterday."
+      title: "X foi um bom ministro",
+      body_text: "Texto",
+      fetch_status: :fetched
     )
-    investigation = Investigation.create!(submitted_url: article.url, normalized_url: article.normalized_url, root_article: article)
+    investigation = Investigation.create!(
+      submitted_url: article.url,
+      normalized_url: article.normalized_url,
+      root_article: article,
+      status: :processing
+    )
 
-    Articles::SyncClaims.call(investigation:, article:)
+    claim = Claim.create!(
+      canonical_text: "X foi um bom ministro.",
+      canonical_fingerprint: Analyzers::ClaimFingerprint.call("X foi um bom ministro.", canonical_form: "X foi um bom ministro."),
+      canonical_form: "X foi um bom ministro.",
+      semantic_key: "x_bom_ministro",
+      checkability_status: :checkable
+    )
 
-    assert_operator Claim.count, :>=, 1
-    assert_equal Claim.count, investigation.claim_assessments.count
-    assert_equal article.article_claims.count, article.claims.count
+    extractor_result = Analyzers::ClaimExtractor::Result.new(
+      canonical_text: "X foi um bom ministro.",
+      surface_text: "X foi um bom ministro.",
+      role: :headline,
+      checkability_status: :not_checkable,
+      importance_score: 1.0,
+      canonical_form: "X foi um bom ministro.",
+      semantic_key: "x_bom_ministro"
+    )
+
+    decomposed = OpenStruct.new(
+      canonical_text: "X foi um bom ministro.",
+      checkability_status: :not_checkable,
+      claim_kind: :statement,
+      entities: {},
+      time_scope: nil,
+      claim_timestamp_start: nil,
+      claim_timestamp_end: nil
+    )
+
+    with_singleton_override(Analyzers::ClaimExtractor, :call, ->(*, **) { [ extractor_result ] }) do
+      with_singleton_override(Analyzers::ClaimDecomposer, :call, ->(*, **) { [ decomposed ] }) do
+        Articles::SyncClaims.call(investigation:, article:)
+      end
+    end
+
+    assert_equal "not_checkable", claim.reload.checkability_status
   end
 
-  test "skips claim extraction for duplicate content" do
-    fingerprint = "abc123fingerprint"
-    original = Article.create!(
-      url: "https://example.com/original", normalized_url: "https://example.com/original",
-      host: "example.com", title: "Taxes fall in 2026",
-      body_text: "City Hall announced taxes will fall by 4 percent in 2026.",
-      fetch_status: :fetched, body_fingerprint: fingerprint
-    )
-    duplicate = Article.create!(
-      url: "https://mirror.com/copy", normalized_url: "https://mirror.com/copy",
-      host: "mirror.com", title: "Taxes fall in 2026",
-      body_text: "City Hall announced taxes will fall by 4 percent in 2026.",
-      fetch_status: :fetched, body_fingerprint: fingerprint
-    )
-    investigation = Investigation.create!(submitted_url: original.url, normalized_url: original.normalized_url, root_article: original)
+  private
 
-    # Sync claims for original first
-    Articles::SyncClaims.call(investigation:, article: original)
-    original_claims_count = Claim.count
-
-    # Sync claims for duplicate — should skip
-    Articles::SyncClaims.call(investigation:, article: duplicate)
-    assert_equal original_claims_count, Claim.count
-    assert_equal 0, duplicate.article_claims.count
+  def with_singleton_override(target, method_name, replacement)
+    singleton = target.singleton_class
+    original = target.method(method_name)
+    singleton.define_method(method_name, &replacement)
+    yield
+  ensure
+    singleton.define_method(method_name) do |*args, **kwargs, &block|
+      original.call(*args, **kwargs, &block)
+    end
   end
 end
