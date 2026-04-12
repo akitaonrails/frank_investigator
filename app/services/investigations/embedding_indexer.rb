@@ -29,6 +29,7 @@ module Investigations
         document.call,
         model: model_id,
         provider: provider.presence,
+        assume_model_exists: provider.present?,
         dimensions:
       )
       vector = Array(embedding.vectors).map(&:to_f)
