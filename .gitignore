@@ -45,6 +45,11 @@
 /.kamal/secrets*
 !/.kamal/secrets.example
 
+# Ignore local AI/tooling workspaces.
+/.ai-jail
+/.claude
+/.lobster
+
 
 /app/assets/builds/*
 !/app/assets/builds/.keep

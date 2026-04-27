@@ -45,6 +45,9 @@
 
 # Ignore development files
 /.devcontainer
+/.ai-jail
+/.claude
+/.lobster
 
 # Ignore Docker-related files
 /.dockerignore
