@@ -2,7 +2,7 @@ module Monitoring
   class SmokeCheck
     Result = Struct.new(:check_name, :status, :message, :duration_ms, keyword_init: true)
 
-    CHECKS = %i[chromium_available content_extraction_shape llm_availability].freeze
+    CHECKS = %i[chromium_available content_extraction_shape llm_availability sqlite_stack].freeze
 
     def self.run_all
       new.run_all
@@ -75,6 +75,30 @@ module Monitoring
       end
 
       Result.new(check_name: "llm_availability", status: :ok, message: "#{provider}: #{models.size} model(s) configured: #{models.join(', ')}")
+    end
+
+    def sqlite_stack
+      connection = ApplicationRecord.connection
+      runtime_version = connection.select_value("SELECT sqlite_version()")
+      gem_version = Gem.loaded_specs.fetch("sqlite3").version.to_s
+
+      if SqliteVec.enabled?
+        vec_status = SqliteVec.ready? ? "ready" : "unavailable"
+        status = SqliteVec.ready? ? :ok : :degraded
+        return Result.new(
+          check_name: "sqlite_stack",
+          status: status,
+          message: "sqlite3 gem #{gem_version}, SQLite runtime #{runtime_version}, sqlite-vec #{vec_status}"
+        )
+      end
+
+      Result.new(
+        check_name: "sqlite_stack",
+        status: :ok,
+        message: "sqlite3 gem #{gem_version}, SQLite runtime #{runtime_version}, sqlite-vec disabled"
+      )
+    rescue KeyError => e
+      Result.new(check_name: "sqlite_stack", status: :fail, message: "sqlite3 gem not loaded: #{e.message}")
     end
   end
 end

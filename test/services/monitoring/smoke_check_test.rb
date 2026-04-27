@@ -3,7 +3,7 @@ require "test_helper"
 class Monitoring::SmokeCheckTest < ActiveSupport::TestCase
   test "run_all returns results for all checks" do
     results = Monitoring::SmokeCheck.run_all
-    assert_equal 3, results.size
+    assert_equal 4, results.size
     results.each do |result|
       assert_includes %i[ok fail degraded skip error], result.status
       assert result.check_name.present?
@@ -47,6 +47,15 @@ class Monitoring::SmokeCheckTest < ActiveSupport::TestCase
       assert_kind_of Integer, result.duration_ms
       assert_operator result.duration_ms, :>=, 0
     end
+  end
+
+  test "sqlite_stack reports gem and runtime versions" do
+    results = Monitoring::SmokeCheck.run_all
+    sqlite_result = results.find { |r| r.check_name == "sqlite_stack" }
+
+    assert_includes %i[ok degraded], sqlite_result.status
+    assert_includes sqlite_result.message, "sqlite3 gem"
+    assert_includes sqlite_result.message, "SQLite runtime"
   end
 
   test "smoke check job runs without error" do
