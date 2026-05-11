@@ -23,6 +23,10 @@ production:
       threads: <%= ENV.fetch("FETCH_JOB_THREADS", 1) %>
       processes: <%= ENV.fetch("FETCH_JOB_CONCURRENCY", 1) %>
       polling_interval: 0.1
+    - queues: realtime
+      threads: <%= ENV.fetch("REALTIME_JOB_THREADS", 1) %>
+      processes: <%= ENV.fetch("REALTIME_JOB_CONCURRENCY", 1) %>
+      polling_interval: 0.1
     - queues:
         - default
         - solid_queue_recurring

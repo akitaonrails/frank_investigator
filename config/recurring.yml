@@ -42,3 +42,9 @@ production:
   recover_stale_pipelines:
     command: "Pipeline::ResumeInterrupted.call"
     schedule: every 5 minutes
+  purge_stale_broadcasts:
+    command: "QueueMaintenance::PurgeStaleBroadcasts.call"
+    schedule: every 5 minutes
+  purge_stale_recurring_jobs:
+    command: "QueueMaintenance::PurgeStaleRecurringJobs.call"
+    schedule: every 15 minutes
