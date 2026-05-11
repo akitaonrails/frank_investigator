@@ -15,10 +15,10 @@ class Llm::RubyLlmClientTest < ActiveSupport::TestCase
 
     # The llm_call_with_retry method should raise after getting empty response twice
     # We test the guard in ask_model by verifying the error message pattern
-    assert_raises(RuntimeError, /Empty LLM response/) do
-      # Simulate what happens when response.content is blank
+    error = assert_raises(RuntimeError) do
       raise "Empty LLM response from test-model"
     end
+    assert_match(/Empty LLM response/, error.message)
   end
 
   test "unwrap_json strips markdown code block wrapper" do

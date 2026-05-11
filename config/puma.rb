@@ -29,7 +29,9 @@ threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
-port ENV.fetch("PORT", 3000)
+# Bind explicitly to IPv4 so the Kamal proxy can reach the container regardless
+# of the host's IPv6 support — Puma 8 defaults to `[::]` when no bind is set.
+port ENV.fetch("PORT", 3000), "0.0.0.0"
 
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
