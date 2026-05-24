@@ -1,6 +1,6 @@
 # Frank Investigator
 
-Frank Investigator is a Rails 8.1 news fact-checking pipeline that assesses claims extracted from news articles through evidence graphs, source authority analysis, and multi-model LLM consensus.
+Frank Investigator is a Rails 8.1 fact-checking pipeline for news articles. It assesses the claims in an article using an evidence graph, source authority analysis, and multi-model LLM consensus.
 
 Submit a public article URL. Frank Investigator normalizes it, fetches the page with headless Chromium, extracts canonical claims, follows in-body citations, retrieves corroborating evidence, and produces a structured verdict for each claim with full provenance.
 
@@ -41,7 +41,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 - Analyzes contextual gaps: what the article omits that would change the reader's conclusion
 - Searches for counter-evidence addressing each identified gap
 - Detects coordinated narrative campaigns: finds related coverage, compares narrative fingerprints, flags convergent framing and convergent omissions across outlets
-- Links related investigations more aggressively when the same subject is covered through opposed policy or fiscal framing
+- Links related investigations even when the same subject is covered through opposed policy or fiscal framing
 - Uses hybrid related-investigation retrieval: sqlite-vec embeddings retrieve candidates, then subject/topic guardrails decide what is truly related
 - Scores emotional manipulation: emotional temperature vs evidence density, calibrated so passionate journalism backed by evidence is not penalized
 - Generates an executive summary from 15 pipeline steps with calibrated scoring that distinguishes normal editorial imperfections from deliberate manipulation
@@ -99,7 +99,7 @@ The app deploys via [Kamal](https://kamal-deploy.org/) to any server with Docker
 
 ### First-time setup
 
-Export these environment variables in your shell before deploying. Kamal reads them via `.kamal/secrets` — no manual editing of secret files needed.
+Export these environment variables in your shell before deploying. Kamal reads them via `.kamal/secrets`, so you don't edit any secret files by hand.
 
 ```bash
 export KAMAL_REGISTRY_USERNAME=your-github-username
@@ -168,7 +168,7 @@ Use `frank:refresh` when claim extraction, source-role classification, or parser
 ### How it works
 
 - `config/deploy.yml` defines the Kamal service (server, image, volumes, env)
-- `.kamal/secrets` pulls secrets from local env vars — no raw credentials in git
+- `.kamal/secrets` pulls secrets from local env vars, so no raw credentials land in git
 - kamal-proxy handles SSL via Let's Encrypt and routes by hostname
 - `frank_investigator_storage` Docker volume persists SQLite databases
 - Production runs separate `web` and `worker` containers for this app only
@@ -202,7 +202,7 @@ Prefer Kamal for production unless you intentionally need the compose-based path
 
 All user-facing text is internationalized via Rails i18n. Currently supported locales:
 
-- **English** (`en`) — default
+- **English** (`en`), the default
 - **Brazilian Portuguese** (`pt-BR`)
 
 Set `FRANK_INVESTIGATOR_LOCALE` to switch. LLM analysis results (reason summaries, fallacy explanations) are generated in the configured locale while structured fields remain in English for consistency.
