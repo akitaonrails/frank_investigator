@@ -13,7 +13,7 @@ Rails.application.routes.draw do
 
   # REST API — bearer token auth via FRANK_AUTH_SECRET
   namespace :api do
-    resources :investigations, only: [ :create ]
+    resources :investigations, only: [ :index, :create ]
   end
 
   # Public report pages — read-only, no auth required

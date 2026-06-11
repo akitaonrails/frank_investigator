@@ -87,6 +87,32 @@ FRANK_INVESTIGATOR_EMBEDDING_DIMENSIONS=1536
 QUARANTINED_MODELS=                        # Comma-separated models to skip
 ```
 
+## API
+
+All API endpoints authenticate with a bearer token matching `FRANK_AUTH_SECRET`.
+
+```bash
+# Submit an article for investigation
+curl -X POST https://<host>/api/investigations \
+  -H "Authorization: Bearer $FRANK_AUTH_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example.com/article"}'
+
+# List the 10 most recent investigations
+curl https://<host>/api/investigations \
+  -H "Authorization: Bearer $FRANK_AUTH_SECRET"
+
+# Search the 10 most recent by original or honest headline
+curl "https://<host>/api/investigations?q=reforma" \
+  -H "Authorization: Bearer $FRANK_AUTH_SECRET"
+```
+
+Each list item returns `slug`, `status` (processing/completed/etc.), `datetime`,
+`completed_at`, `outlet`, `original_title`, `honest_title`, `summary`,
+`investigation_url`, and `original_url`. The `q` parameter matches a
+case-insensitive substring against both the original article headline and the
+generated honest headline.
+
 ## Testing
 
 ```bash
