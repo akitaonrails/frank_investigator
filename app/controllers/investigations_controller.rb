@@ -150,6 +150,8 @@ class InvestigationsController < ApplicationController
       authority_laundering: @investigation.authority_laundering,
       event_context: @investigation.event_context,
       honest_headline: @investigation.honest_headline,
+      auto_submitted_from_id: @investigation.auto_submitted_from_id,
+      last_enrichment_refresh_at: @investigation.last_enrichment_refresh_at,
       claims: @checkable_claims.map { |a| claim_assessment_json(a) },
       uncheckable_claims: @uncheckable_claims.map { |a| uncheckable_claim_json(a) },
       sources: @links.map { |link| source_link_json(link) },

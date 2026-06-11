@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_12_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -209,6 +209,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_190000) do
   create_table "investigations", force: :cascade do |t|
     t.datetime "analysis_completed_at"
     t.json "authority_laundering"
+    t.integer "auto_submitted_from_id"
     t.string "checkability_status", default: "pending", null: false
     t.json "contextual_gaps"
     t.json "coordinated_narrative"
@@ -217,6 +218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_190000) do
     t.json "event_context"
     t.decimal "headline_bait_score", precision: 5, scale: 2, default: "0.0", null: false
     t.text "honest_headline"
+    t.datetime "last_enrichment_refresh_at"
     t.json "llm_summary"
     t.string "normalized_url", null: false
     t.decimal "overall_confidence_score", precision: 5, scale: 2, default: "0.0", null: false
@@ -231,6 +233,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_190000) do
     t.text "summary"
     t.json "temporal_manipulation"
     t.datetime "updated_at", null: false
+    t.index ["auto_submitted_from_id"], name: "index_investigations_on_auto_submitted_from_id"
     t.index ["checkability_status"], name: "index_investigations_on_checkability_status"
     t.index ["normalized_url"], name: "index_investigations_on_normalized_url", unique: true
     t.index ["root_article_id"], name: "index_investigations_on_root_article_id"

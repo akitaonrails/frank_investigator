@@ -41,6 +41,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 - Analyzes contextual gaps: what the article omits that would change the reader's conclusion
 - Searches for counter-evidence addressing each identified gap
 - Detects coordinated narrative campaigns: finds related coverage, compares narrative fingerprints, flags convergent framing and convergent omissions across outlets
+- Auto-submits up to 5 related articles from different outlets per investigation, and feeds each child's analysis back into the parent's `event_context` and `honest_headline` so the parent report grows richer as siblings complete
 - Links related investigations even when the same subject is covered through opposed policy or fiscal framing
 - Uses hybrid related-investigation retrieval: sqlite-vec embeddings retrieve candidates, then subject/topic guardrails decide what is truly related
 - Scores emotional manipulation: emotional temperature vs evidence density, calibrated so passionate journalism backed by evidence is not penalized

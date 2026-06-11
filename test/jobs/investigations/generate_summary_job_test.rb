@@ -58,4 +58,50 @@ class Investigations::GenerateSummaryJobTest < ActiveSupport::TestCase
     step = investigation.pipeline_steps.find_by(name: "generate_summary")
     assert_equal "completed", step.status
   end
+
+  test "enqueues RefreshParentEnrichmentJob when the investigation has a parent" do
+    parent_article = Article.create!(
+      url: "https://parent.example/seed", normalized_url: "https://parent.example/seed",
+      host: "parent.example", fetch_status: :fetched,
+      body_text: "Parent body.", title: "Parent"
+    )
+    parent = Investigation.create!(
+      submitted_url: parent_article.url, normalized_url: parent_article.normalized_url,
+      root_article: parent_article, status: :completed, analysis_completed_at: 1.hour.ago
+    )
+
+    child_article = Article.create!(
+      url: "https://child.example/article", normalized_url: "https://child.example/article",
+      host: "child.example", fetch_status: :fetched,
+      body_text: "Child body content.", title: "Child"
+    )
+    child = Investigation.create!(
+      submitted_url: child_article.url, normalized_url: child_article.normalized_url,
+      root_article: child_article, status: :processing,
+      auto_submitted_from_id: parent.id
+    )
+    Claim.create!(canonical_text: "Child claim", canonical_fingerprint: "child_#{SecureRandom.hex(4)}", checkability_status: :checkable).tap do |c|
+      ClaimAssessment.create!(investigation: child, claim: c, verdict: :supported, confidence_score: 0.7, checkability_status: :checkable)
+    end
+
+    assert_enqueued_with(job: Investigations::RefreshParentEnrichmentJob, args: [ parent.id ]) do
+      Investigations::GenerateSummaryJob.perform_now(child.id)
+    end
+  end
+
+  test "does not enqueue RefreshParentEnrichmentJob when there is no parent" do
+    article = Article.create!(
+      url: "https://lonely.example/article", normalized_url: "https://lonely.example/article",
+      host: "lonely.example", fetch_status: :fetched,
+      body_text: "Body.", title: "Lonely"
+    )
+    investigation = Investigation.create!(
+      submitted_url: article.url, normalized_url: article.normalized_url,
+      root_article: article, status: :processing
+    )
+
+    assert_no_enqueued_jobs(only: Investigations::RefreshParentEnrichmentJob) do
+      Investigations::GenerateSummaryJob.perform_now(investigation.id)
+    end
+  end
 end

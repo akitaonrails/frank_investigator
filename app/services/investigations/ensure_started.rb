@@ -1,11 +1,12 @@
 module Investigations
   class EnsureStarted
-    def self.call(submitted_url:)
-      new(submitted_url:).call
+    def self.call(submitted_url:, auto_submitted_from: nil)
+      new(submitted_url:, auto_submitted_from:).call
     end
 
-    def initialize(submitted_url:)
+    def initialize(submitted_url:, auto_submitted_from: nil)
       @submitted_url = submitted_url
+      @auto_submitted_from_id = auto_submitted_from.respond_to?(:id) ? auto_submitted_from.id : auto_submitted_from
     end
 
     def call
@@ -17,9 +18,16 @@ module Investigations
         Investigation.find_or_create_by!(normalized_url:) do |record|
           record.submitted_url = @submitted_url
           record.root_article = article
+          record.auto_submitted_from_id = @auto_submitted_from_id
         end.tap do |record|
           if record.root_article_id.nil? || record.submitted_url != @submitted_url
             record.update!(submitted_url: @submitted_url, root_article: article)
+          end
+          # Backfill the lineage on a previously-known investigation that was
+          # later discovered as a child via auto-submission. Only set, never
+          # overwrite an existing parent — first parent wins.
+          if @auto_submitted_from_id && record.auto_submitted_from_id.nil?
+            record.update!(auto_submitted_from_id: @auto_submitted_from_id)
           end
         end
       end

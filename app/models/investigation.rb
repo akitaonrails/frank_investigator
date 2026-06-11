@@ -25,6 +25,16 @@ class Investigation < ApplicationRecord
 
   belongs_to :root_article, class_name: "Article", optional: true
 
+  # Self-reference: this investigation was auto-submitted by another after
+  # cross-reference detected related coverage. Used by RefreshParentEnrichmentJob
+  # to feed child analysis back into the parent's event_context and honest_headline.
+  belongs_to :auto_submitted_from, class_name: "Investigation", optional: true
+  has_many :auto_submitted_children,
+           class_name: "Investigation",
+           foreign_key: :auto_submitted_from_id,
+           dependent: :nullify,
+           inverse_of: :auto_submitted_from
+
   has_many :pipeline_steps, dependent: :destroy
   has_many :claim_assessments, dependent: :destroy
   has_many :claims, through: :claim_assessments

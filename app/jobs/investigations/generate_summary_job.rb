@@ -32,6 +32,14 @@ module Investigations
       if @investigation
         # Cross-reference is non-blocking enrichment — fire and forget
         Investigations::CrossReferenceJob.perform_later(@investigation.id) if @step_succeeded
+        # If this investigation was auto-submitted as a child of another, feed
+        # the parent's enrichment so its event_context and honest_headline
+        # reflect this new sibling. Idempotent + lock-serialized inside the job.
+        if @step_succeeded && @investigation.auto_submitted_from_id.present?
+          Investigations::RefreshParentEnrichmentJob.perform_later(
+            @investigation.auto_submitted_from_id
+          )
+        end
         Investigations::RefreshStatus.call(@investigation)
       end
     end
