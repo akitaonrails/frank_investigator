@@ -2,140 +2,68 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DEPLOY_ENV="$SCRIPT_DIR/config/deploy.env"
+KAMAL="$SCRIPT_DIR/bin/kamal"
 
-if [ ! -f "$DEPLOY_ENV" ]; then
-  echo "Missing config/deploy.env — copy config/deploy.env.example and fill in values."
-  exit 1
-fi
-
-# shellcheck source=/dev/null
-source "$DEPLOY_ENV"
-
-IMAGE_TAG="${REGISTRY_HOST}:${REGISTRY_PORT}/akitaonrails/frank_investigator:latest"
-PULL_TAG="${REGISTRY_PULL_HOST}:${REGISTRY_PORT}/akitaonrails/frank_investigator:latest"
-SSH_CMD="ssh -F /dev/null -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -p ${DEPLOY_SSH_PORT} ${DEPLOY_USER}@${DEPLOY_HOST}"
-SCP_CMD="scp -F /dev/null -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P ${DEPLOY_SSH_PORT}"
-ENV_FILE="${APP_DATA_DIR}/.env.production"
-DC="docker compose --env-file $ENV_FILE -f $COMPOSE_FILE"
+# Production deploys use Kamal over SSH to the host in config/deploy.yml.
+# Keep this wrapper so muscle-memory commands like `bin/deploy` and
+# `bin/deploy status` cannot accidentally hit the old compose/LAN path.
+export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -F ~/.ssh/config}"
 
 COMMAND="${1:-deploy}"
-
-case "$COMMAND" in
-  setup)
-    echo "==> Setting up production server..."
-
-    $SSH_CMD bash -s <<SETUP
-set -euo pipefail
-mkdir -p "$APP_DATA_DIR/storage"
-mkdir -p "$(dirname "$COMPOSE_FILE")"
-
-if [ ! -f "$ENV_FILE" ]; then
-  cat > "$ENV_FILE" <<'ENVBLOCK'
-# --- Compose variable substitution (used by docker-compose.production.yml) ---
-REGISTRY_HOST=localhost
-REGISTRY_PORT=3007
-APP_DATA_DIR=/home/akitaonrails/frank_investigator
-APP_PORT=3666
-
-# --- App runtime environment (passed into the containers) ---
-
-# Required
-OPENROUTER_API_KEY=your-openrouter-api-key
-RAILS_MASTER_KEY=change-me
-
-# Locale
-FRANK_INVESTIGATOR_LOCALE=pt-BR
-
-# Optional tuning
-CHROMIUM_PATH=/usr/bin/chromium
-LLM_TIMEOUT_SECONDS=120
-FRANK_INVESTIGATOR_MAX_LINK_DEPTH=1
-FRANK_INVESTIGATOR_OPENROUTER_MODELS=google/gemini-2.0-flash-001,meta-llama/llama-4-maverick,qwen/qwen-2.5-72b-instruct
-WEB_CONCURRENCY=0
-RAILS_MAX_THREADS=3
-FETCH_JOB_THREADS=1
-FETCH_JOB_CONCURRENCY=1
-DEFAULT_JOB_THREADS=2
-DEFAULT_JOB_CONCURRENCY=1
-ENVBLOCK
-  echo "  Created $ENV_FILE — edit it with real values."
-else
-  echo "  $ENV_FILE already exists, skipping."
+if [ "$#" -gt 0 ]; then
+  shift
 fi
 
-# Clean up old separate compose env file if it exists
-rm -f "${COMPOSE_FILE%.yml}.env"
-SETUP
-
-    echo "==> Uploading docker-compose file..."
-    $SCP_CMD "$SCRIPT_DIR/docker-compose.production.yml" \
-      "${DEPLOY_USER}@${DEPLOY_HOST}:${COMPOSE_FILE}"
-
-    echo "==> Setup complete."
-    echo "    1. Edit $ENV_FILE on the server with real values."
-    echo "    2. Run: bin/deploy"
-    ;;
-
+case "$COMMAND" in
   deploy)
-    echo "==> Building image..."
-    docker build -t "$IMAGE_TAG" "$SCRIPT_DIR"
-
-    echo "==> Pushing to registry..."
-    docker push "$IMAGE_TAG"
-
-    echo "==> Uploading compose file..."
-    $SCP_CMD "$SCRIPT_DIR/docker-compose.production.yml" \
-      "${DEPLOY_USER}@${DEPLOY_HOST}:${COMPOSE_FILE}"
-
-    echo "==> Pulling on server and restarting frank_investigator web + worker..."
-    $SSH_CMD bash -s <<DEPLOY
-set -euo pipefail
-docker pull "$PULL_TAG"
-$DC down --remove-orphans 2>/dev/null || true
-$DC up -d
-docker image prune -f 2>/dev/null || true
-DEPLOY
-
-    echo "==> Deploy complete."
+    exec "$KAMAL" deploy "$@"
     ;;
-
+  setup)
+    exec "$KAMAL" setup "$@"
+    ;;
   logs)
-    $SSH_CMD "$DC logs -f --tail=100"
+    exec "$KAMAL" logs "$@"
     ;;
-
+  worker-logs|worker_logs)
+    exec "$KAMAL" worker_logs "$@"
+    ;;
   status)
-    $SSH_CMD "$DC ps"
+    exec "$KAMAL" app details "$@"
     ;;
-
-  stop)
-    $SSH_CMD "$DC down"
-    echo "==> Stopped."
-    ;;
-
   shell)
-    $SSH_CMD -t "$DC exec web bash"
+    exec "$KAMAL" shell "$@"
     ;;
-
-  worker-shell)
-    $SSH_CMD -t "$DC exec worker bash"
+  worker-shell|worker_shell)
+    exec "$KAMAL" worker_shell "$@"
     ;;
-
   console)
-    $SSH_CMD -t "$DC exec web bin/rails console"
+    exec "$KAMAL" console "$@"
     ;;
+  stop)
+    exec "$KAMAL" app stop "$@"
+    ;;
+  kamal)
+    exec "$KAMAL" "$@"
+    ;;
+  help|-h|--help)
+    cat <<'HELP'
+Usage: bin/deploy [deploy|setup|logs|worker-logs|status|shell|worker-shell|console|stop]
 
+Kamal-backed production wrapper:
+  deploy        Build, push to GHCR, and deploy web + worker (default)
+  setup         Run Kamal setup
+  logs          Tail web logs
+  worker-logs   Tail worker logs
+  status        Show Kamal app container status
+  shell         Open bash in the running web container
+  worker-shell  Open bash in the running worker container
+  console       Open Rails console in the web container
+  stop          Stop Kamal app containers
+
+Use `bin/deploy kamal ...` or `bin/kamal ...` for any raw Kamal command.
+HELP
+    ;;
   *)
-    echo "Usage: bin/deploy [setup|deploy|logs|status|stop|shell|worker-shell|console]"
-    echo ""
-    echo "  setup    - Idempotent server setup (directories, env files, compose file)"
-    echo "  deploy   - Build, push, pull, restart frank_investigator web + worker (default)"
-    echo "  logs     - Tail production logs"
-    echo "  status   - Show container status"
-    echo "  stop     - Stop containers"
-    echo "  shell    - Open bash in the running web container"
-    echo "  worker-shell - Open bash in the running worker container"
-    echo "  console  - Open Rails console in the running web container"
-    exit 1
+    exec "$KAMAL" "$COMMAND" "$@"
     ;;
 esac

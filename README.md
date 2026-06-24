@@ -156,7 +156,7 @@ Point your DNS (A record) to the server IP for the hostname configured in `confi
 ### Deploy
 
 ```bash
-bin/kamal deploy
+bin/deploy       # wrapper around bin/kamal deploy
 ```
 
 After the first deploy that includes vector search, backfill embeddings for existing completed investigations so cross-reference can use the full corpus instead of only newly completed reports:
@@ -171,6 +171,13 @@ If OpenRouter is still failing in production, switch embeddings to `FRANK_INVEST
 ### Other commands
 
 ```bash
+bin/deploy status       # Show container status
+bin/deploy logs         # Tail web logs
+bin/deploy worker-logs  # Tail worker logs
+bin/deploy console      # Open Rails console in the web container
+bin/deploy shell        # Open bash in the web container
+bin/deploy worker-shell # Open bash in the worker container
+
 bin/kamal console       # Open Rails console in the web container
 bin/kamal shell         # Open bash in the web container
 bin/kamal logs          # Tail web logs
@@ -215,15 +222,15 @@ Use `frank:refresh` when claim extraction, source-role classification, or parser
 - Both `web` and `worker` mount the same persistent `/rails/storage` path, so SQLite databases remain outside container lifecycle.
 - The shared `/opt/makita/content` bind mount is still passed into both containers at `/content`.
 
-## Legacy Compose Helper
+## Legacy Compose Files
 
-The repo still includes `docker-compose.production.yml` and `bin/deploy` as a legacy non-Kamal path. They mirror the same split runtime:
+The repo still includes `docker-compose.production.yml` and `config/deploy.env.example` as legacy non-Kamal references. The old compose deployment mirrored the same split runtime:
 
 - `web` serves Rails/Thruster only
 - `worker` runs Solid Queue only
 - both share the same persistent storage and content mounts
 
-Prefer Kamal for production unless you intentionally need the compose-based path.
+Production deploys should use Kamal. `bin/deploy` is a safe wrapper around `bin/kamal deploy` so it cannot accidentally target stale compose/LAN settings.
 
 ## Internationalization
 
