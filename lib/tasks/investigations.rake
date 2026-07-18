@@ -1,3 +1,5 @@
+require "shellwords"
+
 namespace :frank do
   desc "Re-run analysis pipeline for an investigation (by slug)"
   task :reanalyze, [ :slug ] => :environment do |_t, args|
@@ -145,5 +147,44 @@ namespace :frank do
     puts "  Status: #{inv.status}"
     puts "  Claims: #{inv.claim_assessments.count}"
     puts "  Event context: #{inv.event_context.present? ? 'present' : 'absent'}"
+  end
+
+  desc "Repair or seed a grouped submission (dry-run unless APPLY=1)"
+  task repair_group: :environment do
+    main_slug = ENV["MAIN_SLUG"].to_s.strip
+    abort "MAIN_SLUG, NEWS_SLUGS and EVIDENCE_URLS must be explicitly supplied" unless ENV.key?("MAIN_SLUG") && ENV.key?("NEWS_SLUGS") && ENV.key?("EVIDENCE_URLS")
+    news_slugs = ENV.fetch("NEWS_SLUGS").split(",").map(&:strip).reject(&:blank?)
+    evidence_urls = ENV.fetch("EVIDENCE_URLS").split(",").map(&:strip).reject(&:blank?)
+    abort "MAIN_SLUG is required" if main_slug.blank?
+    abort "NEWS_SLUGS and EVIDENCE_URLS may not both be empty" if news_slugs.empty? && evidence_urls.empty?
+
+    main = Investigation.find_by(slug: main_slug) || abort("Main investigation not found: #{main_slug}")
+    abort "NEWS_SLUGS contains duplicate slugs" unless news_slugs.uniq.size == news_slugs.size
+    news = news_slugs.map { |slug| Investigation.find_by(slug: slug) || abort("News investigation not found: #{slug}") }
+    abort "NEWS_SLUGS must not include MAIN_SLUG" if news.any? { |member| member.id == main.id }
+    normalized_evidence = evidence_urls.map { |url| Investigations::UrlNormalizer.call(url) }
+    abort "EVIDENCE_URLS contains duplicate normalized URLs" unless normalized_evidence.uniq.size == normalized_evidence.size
+    apply = ENV["APPLY"] == "1"
+    expected_digest = ENV["EXPECTED_DIGEST"]
+    abort "EXPECTED_DIGEST is required when APPLY=1; run the dry projection first" if apply && expected_digest.blank?
+    decision_at = ENV["DECISION_AT"].presence
+    abort "DECISION_AT is required when APPLY=1; use the dry projection decision_at" if apply && decision_at.blank?
+    repair = Investigations::RepairGroup.call(main:, news:, evidence_urls:, apply:, expected_digest:, decision_at: (Time.iso8601(decision_at) if decision_at))
+    puts JSON.pretty_generate(repair)
+    unless apply
+      command = {
+        "MAIN_SLUG" => main_slug,
+        "NEWS_SLUGS" => news_slugs.join(","),
+        "EVIDENCE_URLS" => evidence_urls.join(","),
+        "APPLY" => "1",
+        "DECISION_AT" => repair.decision_at.iso8601(6),
+        "EXPECTED_DIGEST" => repair.action_digest
+      }.map { |key, value| "#{key}=#{Shellwords.shellescape(value)}" }.join(" ")
+      puts "Dry run only; no records, jobs, or fetch resets were created. Apply this exact projection: #{command} bin/rails frank:repair_group"
+    end
+  rescue Investigations::RepairGroup::ConflictError, Investigations::GroupSubmissionPreflight::ConflictError,
+    Investigations::SubmitGroup::ConflictError, Investigations::UrlNormalizer::InvalidUrlError,
+    Investigations::UrlClassifier::RejectedUrlError, ArgumentError => e
+    abort "Rejected repair: #{e.message}"
   end
 end

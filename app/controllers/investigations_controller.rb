@@ -1,7 +1,7 @@
 class InvestigationsController < ApplicationController
   MAX_URL_LENGTH = 2048
 
-  before_action :authenticate_submitter!, only: :home
+  before_action :authenticate_submitter!, only: [ :home, :create ]
   rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
 
   def home
@@ -33,6 +33,27 @@ class InvestigationsController < ApplicationController
     render :home, status: :unprocessable_entity
   end
 
+  def create
+    main_url = params[:main_url].presence || params[:url]
+    if main_url.to_s.length > MAX_URL_LENGTH
+      preserve_submission_fields
+      @error_message = t("investigations.errors.url_too_long", max: MAX_URL_LENGTH)
+      return render :home, status: :unprocessable_entity
+    end
+
+    grouped = [ params[:news_urls], params[:evidence_urls] ].any? { |value| value.present? && Array(value).flatten.any? { |item| item.to_s.split(/\r?\n/).any?(&:present?) } }
+    investigation = if grouped
+      Investigations::SubmitGroup.call(main_url:, news_urls: params[:news_urls], evidence_urls: params[:evidence_urls]).main_investigation
+    else
+      Investigations::EnsureStarted.call(submitted_url: main_url)
+    end
+    redirect_to investigation_path(investigation), status: :see_other
+  rescue Investigations::UrlNormalizer::InvalidUrlError, Investigations::UrlClassifier::RejectedUrlError, Investigations::SubmitGroup::ConflictError, Investigations::GroupSubmissionPreflight::ConflictError, ArgumentError
+    preserve_submission_fields
+    @error_message = t("investigations.errors.group_submission_invalid")
+    render :home, status: :unprocessable_entity
+  end
+
   def show
     @investigation = Investigation.find_by!(slug: params[:id])
 
@@ -60,9 +81,18 @@ class InvestigationsController < ApplicationController
         end
       end
       format.json do
-        if finished
-          expires_in 5.minutes, public: false
-          render json: investigation_json
+        readiness = readiness_json
+        if @investigation.failed?
+          render json: investigation_json, status: :ok
+        elsif finished
+          if readiness[:ready]
+            expires_in 5.minutes, public: false
+            render json: investigation_json
+          else
+            response.headers["Retry-After"] = "5"
+            response.headers["Cache-Control"] = "no-store"
+            render json: investigation_json, status: :accepted
+          end
         else
           response.headers["Retry-After"] = "5"
           render json: investigation_pending_json, status: :accepted
@@ -103,6 +133,12 @@ class InvestigationsController < ApplicationController
 
   private
 
+  def preserve_submission_fields
+    @submitted_url = params[:main_url].presence || params[:url]
+    @submitted_news_urls = Array(params[:news_urls]).join("\n")
+    @submitted_evidence_urls = Array(params[:evidence_urls]).join("\n")
+  end
+
   def investigation_pending_json
     completed_steps = @pipeline_steps.select(&:completed?).size
     total_steps = @pipeline_steps.size
@@ -110,7 +146,7 @@ class InvestigationsController < ApplicationController
       id: @investigation.id,
       url: @investigation.normalized_url,
       status: @investigation.status,
-      ready: false,
+      **readiness_json,
       poll_url: investigation_url(@investigation, format: :json),
       retry_after: 5,
       progress: {
@@ -130,7 +166,7 @@ class InvestigationsController < ApplicationController
       slug: @investigation.slug,
       url: @investigation.normalized_url,
       status: @investigation.status,
-      ready: true,
+      **readiness_json,
       report_url: investigation_url(@investigation),
       checkability_status: @investigation.checkability_status,
       headline_bait_score: @investigation.headline_bait_score,
@@ -158,6 +194,10 @@ class InvestigationsController < ApplicationController
       pipeline: @pipeline_steps.map { |step| pipeline_step_json(step) },
       failure: @failure_info
     }
+  end
+
+  def readiness_json
+    @readiness_json ||= Investigations::ReadinessPresenter.call(@investigation)
   end
 
   def root_article_json

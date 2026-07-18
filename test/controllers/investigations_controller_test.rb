@@ -1,6 +1,41 @@
 require "test_helper"
 
 class InvestigationsControllerTest < ActionDispatch::IntegrationTest
+  test "standalone create accepts omitted empty and blank optional arrays exactly once" do
+    url = "https://example.com/phase2e-standalone"
+    [ {}, { news_urls: [] }, { evidence_urls: [] }, { news_urls: [ "\n  " ], evidence_urls: [ "" ] } ].each do |optional|
+      post submit_investigation_path, params: optional.merge(main_url: url)
+      assert_response :see_other
+    end
+
+    investigation = Investigation.find_by!(normalized_url: url)
+    assert_equal 1, Investigation.where(normalized_url: url).count
+    assert_nil investigation.investigation_group_id
+    assert_equal 1, Article.where(normalized_url: url).count
+    assert_not_nil investigation.kickoff_due_at
+  end
+
+  test "standalone create accepts a 2048-character URL and rejects a 2049-character URL without writes or jobs" do
+    accepted = "https://example.com/" + ("a" * (2048 - "https://example.com/".length))
+    assert_equal 2048, accepted.length
+    assert_enqueued_with(job: Investigations::KickoffJob) do
+      post submit_investigation_path, params: { main_url: accepted }
+    end
+    assert_response :see_other
+
+    clear_enqueued_jobs
+    rejected = "#{accepted}a"
+    assert_no_difference [ "Investigation.count", "Article.count" ] do
+      assert_no_enqueued_jobs do
+        post submit_investigation_path, params: { main_url: rejected, news_urls: [ "https://news.example/preserved" ], evidence_urls: [ "https://www.govinfo.gov/preserved" ] }
+      end
+    end
+    assert_response :unprocessable_entity
+    assert_includes response.body, rejected
+    assert_includes response.body, "https://news.example/preserved"
+    assert_includes response.body, "https://www.govinfo.gov/preserved"
+  end
+
   test "renders home page" do
     get root_path
     assert_response :success
@@ -68,6 +103,68 @@ class InvestigationsControllerTest < ActionDispatch::IntegrationTest
     get investigation_path(investigation)
     assert_response :success
     assert_includes response.body, I18n.t("investigations.show.investigation_failed")
+  end
+
+  test "failed JSON report is terminal and does not request polling" do
+    root = Article.create!(url: "https://ct.com/terminal", normalized_url: "https://ct.com/terminal", host: "ct.com")
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root, status: :failed)
+
+    get investigation_path(investigation, format: :json)
+
+    assert_response :success
+    assert_nil response.headers["Retry-After"]
+    assert_equal false, response.parsed_body["pipeline_ready"]
+    assert_equal false, response.parsed_body["ready"]
+  end
+
+  test "completed grouped report is no-store while stale and cacheable when current" do
+    root = Article.create!(url: "https://ct.com/group-stale", normalized_url: "https://ct.com/group-stale", host: "ct.com", fetch_status: :fetched)
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root, status: :completed, evidence_revision_assessed: 0)
+    group = InvestigationGroup.create!(main_investigation: investigation, evidence_revision: 1)
+    investigation.update!(investigation_group: group, group_membership_kind: :manual)
+    evidence_article = Article.create!(url: "https://agency.example/stale", normalized_url: "https://agency.example/stale", host: "agency.example", fetch_status: :fetched)
+    group.evidence_sources.create!(article: evidence_article, submitted_url: evidence_article.url, status: :pending)
+
+    get investigation_path(investigation, format: :json)
+    assert_response :accepted
+    assert_equal "5", response.headers["Retry-After"]
+    assert_includes response.headers["Cache-Control"], "no-store"
+
+    group.evidence_sources.first.update!(status: :ready, ready_at: Time.current)
+    investigation.update!(evidence_revision_assessed: 1)
+    get investigation_path(investigation, format: :json)
+    assert_response :success
+    assert_equal true, response.parsed_body["pipeline_ready"]
+    assert_equal true, response.parsed_body["evidence_current"]
+    assert_equal true, response.parsed_body["ready"]
+  end
+
+  test "historically completed partial pipeline remains ready" do
+    root = Article.create!(url: "https://ct.com/historical", normalized_url: "https://ct.com/historical", host: "ct.com", fetch_status: :fetched)
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root, status: :completed)
+    investigation.pipeline_steps.create!(name: "fetch_root_article", status: :completed)
+
+    get investigation_path(investigation, format: :json)
+    assert_response :success
+    assert_equal true, response.parsed_body["pipeline_ready"]
+  end
+
+  test "grouped web validation preserves all fields in Portuguese" do
+    previous_locale = I18n.locale
+    I18n.locale = :"pt-BR"
+    post submit_investigation_path, params: {
+      main_url: "https://example.com/main",
+      news_urls: [ "https://example.com/one\nnot a url" ],
+      evidence_urls: [ "https://agency.example/record\nhttps://agency.example/second" ]
+    }
+
+    assert_response :unprocessable_entity
+    assert_includes response.body, "https://example.com/main"
+    assert_includes response.body, "https://example.com/one\nnot a url"
+    assert_includes response.body, "https://agency.example/record\nhttps://agency.example/second"
+    assert_includes response.body, I18n.t("investigations.errors.group_submission_invalid")
+  ensure
+    I18n.locale = previous_locale
   end
 
   test "show page returns 404 for missing investigation" do

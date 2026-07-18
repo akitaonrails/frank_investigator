@@ -11,6 +11,7 @@ module Investigations
 
     def call
       normalized_url = UrlNormalizer.call(@submitted_url)
+      UrlClassifier.call(normalized_url)
 
       investigation = ApplicationRecord.transaction do
         article = find_or_create_article!(normalized_url)
@@ -29,16 +30,32 @@ module Investigations
           if @auto_submitted_from_id && record.auto_submitted_from_id.nil?
             record.update!(auto_submitted_from_id: @auto_submitted_from_id)
           end
+          KickoffDelivery.schedule_in_transaction!(record)
         end
       end
 
-      if investigation.queued? && investigation.pipeline_steps.none?
-        Investigations::KickoffJob.perform_later(investigation.id)
-      end
+      # An outer caller may still roll its transaction back.  Enqueue only once
+      # every enclosing transaction has committed so an adapter never receives
+      # work for a rolled-back durable intent.
+      ActiveRecord.after_all_transactions_commit { dispatch_kickoff(investigation) }
       investigation
     end
 
+    # Shared by grouped submission and link persistence. Keeping creation here
+    # preserves the existing classifier and Article uniqueness behavior.
+    def self.find_or_create_article!(normalized_url)
+      new(submitted_url: normalized_url).send(:find_or_create_article!, normalized_url)
+    end
+
     private
+
+    def dispatch_kickoff(investigation)
+      token = KickoffDelivery.claim!(investigation) || return
+      Investigations::KickoffJob.perform_later(investigation.id, token)
+    rescue StandardError
+      KickoffDelivery.release!(investigation, token) if token
+      raise
+    end
 
     def find_or_create_article!(normalized_url)
       Article.find_or_create_by!(normalized_url:) do |record|

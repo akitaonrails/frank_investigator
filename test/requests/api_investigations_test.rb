@@ -56,6 +56,55 @@ class Api::InvestigationsTest < ActionDispatch::IntegrationTest
     assert_equal 1, slugs.size
   end
 
+  test "authenticated standalone shapes remain one ungrouped investigation with one durable kickoff intent" do
+    url = "https://example.com/api-phase2e-standalone"
+    [ {}, { news_urls: [] }, { evidence_urls: [] }, { news_urls: [ "\n  " ], evidence_urls: [ "\r\n" ] } ].each do |optional|
+      post api_investigations_path, params: optional.merge(main_url: url), headers: auth_header, as: :json
+      assert_response :created
+    end
+
+    investigation = Investigation.find_by!(normalized_url: url)
+    assert_equal 1, Investigation.where(normalized_url: url).count
+    assert_equal 1, Article.where(normalized_url: url).count
+    assert_nil investigation.investigation_group_id
+    assert_equal 0, InvestigationGroupEvidenceSource.joins(:investigation_group).where(investigation_groups: { main_investigation_id: investigation.id }).count
+    assert_not_nil investigation.kickoff_due_at
+    assert_nil investigation.kickoff_delivered_at
+  end
+
+  test "authenticated grouped creation persists the preflight canonical URLs" do
+    post api_investigations_path, params: {
+      main_url: "HTTPS://EXAMPLE.COM:443/api-group-main?utm_source=test#main",
+      news_urls: [ "https://NEWS.example:443/api-group-news?fbclid=tracking#news" ],
+      evidence_urls: [ "https://www.govinfo.gov:443/api-group-evidence?utm_campaign=test#evidence" ]
+    }, headers: auth_header, as: :json
+
+    assert_response :created
+    main = Investigation.find_by!(normalized_url: "https://example.com/api-group-main")
+    group = main.owned_group
+    assert_not_nil group
+    assert_equal [ "https://example.com/api-group-main", "https://news.example/api-group-news" ], group.investigations.order(:normalized_url).pluck(:normalized_url)
+    assert_equal [ "https://www.govinfo.gov/api-group-evidence" ], group.evidence_sources.joins(:article).pluck("articles.normalized_url")
+  end
+
+  test "legacy API submission exposes the existing group with the same readiness payload as public show" do
+    url = "https://example.com/api-existing-group"
+    article = Article.create!(url:, normalized_url: url, host: "example.com", fetch_status: :fetched)
+    investigation = Investigation.create!(submitted_url: url, normalized_url: url, root_article: article, status: :completed)
+    group = InvestigationGroup.create!(main_investigation: investigation)
+    investigation.update!(investigation_group: group, group_membership_kind: :manual)
+
+    post api_investigations_path, params: { url: }, headers: auth_header, as: :json
+    assert_response :created
+    api_payload = response.parsed_body.slice("pipeline_ready", "evidence_current", "ready", "group")
+    assert api_payload["group"].present?
+
+    get investigation_path(investigation, format: :json)
+    assert_response :success
+    public_payload = response.parsed_body.slice("pipeline_ready", "evidence_current", "ready", "group")
+    assert_equal public_payload, api_payload
+  end
+
   # ── index ──
 
   test "index rejects requests without auth token" do

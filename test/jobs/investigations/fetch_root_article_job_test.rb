@@ -98,4 +98,46 @@ class Investigations::FetchRootArticleJobTest < ActiveJob::TestCase
       Investigations::FetchRootArticleJob.perform_now(investigation.id)
     end
   end
+
+  test "stale Chromium failure accepts a newer fetched generation without failing the step" do
+    article = Article.create!(url: "https://example.com/race", normalized_url: "https://example.com/race", host: "example.com")
+    investigation = Investigation.create!(submitted_url: article.url, normalized_url: article.normalized_url, root_article: article)
+    GenerationRaceFetcher.on_call = lambda do |url|
+      record = Article.find_by!(normalized_url: url)
+      record.update!(fetch_status: :fetched, body_text: "newer successful body", title: "Newer", fetched_at: Time.current, content_generation: record.content_generation + 1)
+      raise Fetchers::ChromiumFetcher::FetchError, "old browser failed"
+    end
+    Rails.application.config.x.frank_investigator.fetcher_class = "GenerationRaceFetcher"
+
+    Investigations::FetchRootArticleJob.perform_now(investigation.id)
+
+    assert_equal "completed", investigation.pipeline_steps.find_by!(name: "fetch_root_article").status
+    assert_equal "newer successful body", article.reload.body_text
+    assert_equal "fetched", article.fetch_status
+  ensure
+    GenerationRaceFetcher.on_call = nil
+  end
+
+  test "stale successful HTML accepts a newer root generation and continues pipeline fanout" do
+    article = Article.create!(url: "https://example.com/success-race", normalized_url: "https://example.com/success-race", host: "example.com")
+    investigation = Investigation.create!(submitted_url: article.url, normalized_url: article.normalized_url, root_article: article)
+    GenerationRaceFetcher.on_call = lambda do |url|
+      record = Article.find_by!(normalized_url: url)
+      record.update!(fetch_status: :fetched, body_text: "newer root body", title: "Newer", fetched_at: Time.current, content_generation: record.content_generation + 1)
+      Fetchers::ChromiumFetcher::Snapshot.new(html: "<html><body><article><p>#{'stale body ' * 40}</p></article></body></html>", title: "Old")
+    end
+    Rails.application.config.x.frank_investigator.fetcher_class = "GenerationRaceFetcher"
+    assert_enqueued_with(job: Investigations::ExtractClaimsJob, args: [ investigation.id ]) { Investigations::FetchRootArticleJob.perform_now(investigation.id) }
+    assert_equal "completed", investigation.pipeline_steps.find_by!(name: "fetch_root_article").status
+    assert_equal "newer root body", article.reload.body_text
+  ensure
+    GenerationRaceFetcher.on_call = nil
+  end
+end
+
+class GenerationRaceFetcher
+  class << self
+    attr_accessor :on_call
+    def call(url) = on_call.call(url)
+  end
 end

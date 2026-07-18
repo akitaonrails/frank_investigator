@@ -49,30 +49,33 @@ module Analyzers
       Return strict JSON matching the schema.
     PROMPT
 
-    def self.call(investigation:)
-      new(investigation:).call
+    # This is deliberately a computation service. Callers own publication so a
+    # slow LLM response can never overwrite a newer enrichment generation.
+    def self.call(investigation:, investigations: nil)
+      new(investigation:, investigations:).call
     end
 
-    def initialize(investigation:)
+    def initialize(investigation:, investigations: nil)
       @investigation = investigation
+      @investigations = investigations
     end
 
     def call
-      related = find_related_investigations
+      related = @investigations ? @investigations.reject { |inv| inv.id == @investigation.id } : find_related_investigations
       return nil if related.empty?
 
-      all_investigations = [ @investigation ] + related
+      all_investigations = @investigations || [ @investigation ] + related
       composite = build_composite(all_investigations)
       return nil unless composite
 
-      # Store event context on ALL related investigations (including self)
       event_data = {
         composite_timeline: composite[:composite_timeline],
         critical_omissions: Array(composite[:critical_omissions]),
         narrative_assessment: composite[:narrative_assessment],
         related_investigations: all_investigations.map { |inv|
-          coverage = Array(composite[:coverage_map]).find { |c| c[:host] == inv.root_article&.host } || {}
+          coverage = Array(composite[:coverage_map]).find { |c| c[:investigation_id].to_i == inv.id } || {}
           {
+            investigation_id: inv.id,
             slug: inv.slug,
             host: inv.root_article&.host,
             title: inv.root_article&.title&.truncate(80),
@@ -84,20 +87,23 @@ module Analyzers
         updated_at: Time.current.iso8601
       }
 
-      all_investigations.each do |inv|
-        inv.update_column(:event_context, event_data)
-      end
-
       event_data
     end
 
     private
 
     def find_related_investigations
+      group = @investigation.investigation_group
+      forced = if group
+        group.investigations.where(status: "completed", group_membership_kind: "manual")
+          .where.not(id: @investigation.id).includes(:root_article, :claim_assessments).to_a
+      else
+        []
+      end
       primary_subjects = extract_primary_subjects_from(@investigation)
       anchor_subjects = extract_anchor_subjects_from(@investigation)
       fallback_entities = extract_entities
-      return [] if primary_subjects.empty? && anchor_subjects.empty? && fallback_entities.empty?
+      return forced if primary_subjects.empty? && anchor_subjects.empty? && fallback_entities.empty?
 
       heuristic_candidates = Investigation.where(status: "completed")
         .where.not(id: @investigation.id)
@@ -131,10 +137,10 @@ module Analyzers
         [ inv, score + vector_boost_for(inv.id, vector_ranks) ]
       end.compact
 
-      related
+      (forced + related
         .sort_by { |(_inv, score)| -score }
         .map(&:first)
-        .first(MAX_RELATED)
+        .first(MAX_RELATED)).uniq
     end
 
     def merge_candidates(vector_candidates, heuristic_candidates)
@@ -325,11 +331,13 @@ module Analyzers
 
       prompt_data = investigations.map do |inv|
         {
+          investigation_id: inv.id,
+          slug: inv.slug,
           host: inv.root_article&.host,
           title: inv.root_article&.title,
           claims: inv.claim_assessments.includes(:claim).map { |ca|
             { text: ca.claim.canonical_text, verdict: ca.verdict, confidence: ca.confidence_score.to_f }
-          },
+          }.sort_by { |claim| [ claim[:text].to_s, claim[:verdict].to_s, claim[:confidence] ] },
           contextual_gaps: Array(inv.contextual_gaps&.dig("gaps")).map { |g| g["question"] },
           coordination_findings: {
             convergent_framing: Array(inv.coordinated_narrative&.dig("convergent_framing")),
@@ -384,11 +392,13 @@ module Analyzers
                 type: "object",
                 additionalProperties: false,
                 properties: {
+                  investigation_id: { type: "integer" },
+                  slug: { type: "string" },
                   host: { type: "string" },
                   facts_included: { type: "array", items: { type: "string" } },
                   facts_omitted: { type: "array", items: { type: "string" } }
                 },
-                required: %w[host facts_included facts_omitted]
+                required: %w[investigation_id slug host facts_included facts_omitted]
               }
             },
             narrative_assessment: { type: "string" },
@@ -425,6 +435,8 @@ module Analyzers
         coverage_map: investigations.map { |inv|
           facts = facts_by_investigation.fetch(inv)
           {
+            investigation_id: inv.id,
+            slug: inv.slug,
             host: inv.root_article&.host,
             facts_included: facts,
             facts_omitted: critical_omissions - facts

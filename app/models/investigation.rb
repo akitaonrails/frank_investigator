@@ -24,6 +24,8 @@ class Investigation < ApplicationRecord
   }, default: :pending, validate: true
 
   belongs_to :root_article, class_name: "Article", optional: true
+  belongs_to :investigation_group, optional: true
+  has_one :owned_group, class_name: "InvestigationGroup", foreign_key: :main_investigation_id, dependent: :destroy, inverse_of: :main_investigation
 
   # Self-reference: this investigation was auto-submitted by another after
   # cross-reference detected related coverage. Used by RefreshParentEnrichmentJob
@@ -40,8 +42,11 @@ class Investigation < ApplicationRecord
   has_many :claims, through: :claim_assessments
   has_one :investigation_embedding, dependent: :destroy
 
+  enum :group_membership_kind, { manual: "manual", auto: "auto" }, prefix: true, validate: { allow_nil: true }
+
   validates :submitted_url, :normalized_url, presence: true
   validates :normalized_url, uniqueness: true
+  validate :group_membership_is_complete
 
   before_create :generate_slug
 
@@ -54,6 +59,14 @@ class Investigation < ApplicationRecord
   end
 
   private
+
+  def group_membership_is_complete
+    if investigation_group_id.present? && group_membership_kind.blank?
+      errors.add(:group_membership_kind, "is required for grouped investigations")
+    elsif investigation_group_id.blank? && group_membership_kind.present?
+      errors.add(:group_membership_kind, "requires a group")
+    end
+  end
 
   def generate_slug
     self.slug ||= SecureRandom.hex(5)

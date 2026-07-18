@@ -67,4 +67,23 @@ class Analyzers::ClaimAssessorReuseTest < ActiveSupport::TestCase
     # Should NOT reuse, should compute fresh (will be needs_more_evidence since no evidence)
     refute_includes result.reason_summary.to_s, "prior investigation"
   end
+
+  test "assesses current explicit evidence instead of reusing a prior verdict" do
+    claim = Claim.create!(canonical_text: "The agency published the 2025 report", canonical_fingerprint: "reuse_current_evidence", checkability_status: :checkable)
+    prior_root = Article.create!(url: "https://prior.example/report", normalized_url: "https://prior.example/report", host: "prior.example", fetch_status: :fetched)
+    prior_inv = Investigation.create!(submitted_url: prior_root.url, normalized_url: prior_root.normalized_url, root_article: prior_root)
+    ClaimAssessment.create!(investigation: prior_inv, claim:, verdict: :supported, confidence_score: 0.91, checkability_status: :checkable, reason_summary: "Old evidence supported this.")
+
+    root = Article.create!(url: "https://current.example/root", normalized_url: "https://current.example/root", host: "current.example", fetch_status: :fetched)
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root)
+    evidence = Article.create!(url: "https://agency.gov/correction", normalized_url: "https://agency.gov/correction", host: "agency.gov", fetch_status: :fetched, title: "Agency correction", body_text: "The agency did not publish the 2025 report.", authority_tier: :primary, authority_score: 0.95)
+    entries = [ Analyzers::EvidencePacketBuilder::Entry.new(article: evidence, stance: :disputes, relevance_score: 0.95, authority_score: 0.95, authority_tier: "primary", source_kind: "government_record", source_role: "official_position", independence_group: "agency.gov", headline_divergence: 0.0) ]
+    Llm::FakeClient.next_result = Llm::FakeClient::Result.new(verdict: "disputed", confidence_score: 0.93, reason_summary: "The new agency correction directly disputes publication.")
+
+    result = Analyzers::ClaimAssessor.new(investigation:, claim:).call_with_llm_result(entries, nil)
+
+    assert_equal :disputed, result.verdict
+    assert_includes result.reason_summary, "new agency correction"
+    refute_includes result.reason_summary, "prior investigation"
+  end
 end

@@ -59,7 +59,7 @@ module Investigations
           next
         end
 
-        Investigations::EnsureStarted.call(
+        child = Investigations::EnsureStarted.call(
           submitted_url: normalized,
           auto_submitted_from: investigation.id
         )

@@ -44,7 +44,7 @@ module Investigations
         checkability_status:,
         overall_confidence_score: average_confidence,
         summary: summary_text,
-        analysis_completed_at: status == :completed ? Time.current : nil
+        analysis_completed_at: status == :completed ? (@investigation.analysis_completed_at || Time.current) : nil
       )
     end
 

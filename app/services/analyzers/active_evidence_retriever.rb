@@ -92,6 +92,9 @@ module Analyzers
       return article if article.fetched?
 
       begin
+        # Bind this fetch attempt to the content we observed before network IO.
+        # A concurrent successful fetch advances this generation.
+        fetch_generation = article.content_generation
         fetcher = fetcher_class.constantize.new
         snapshot = fetcher.call(normalized_url)
         Articles::PersistFetchedContent.call(
@@ -103,9 +106,19 @@ module Analyzers
         article.reload
       rescue StandardError => e
         Rails.logger.warn("Active retrieval fetch failed for #{normalized_url}: #{e.message}")
-        article.update!(fetch_status: :failed) unless article.fetched?
+        mark_failed_if_current_generation(article, fetch_generation)
         nil
       end
+    end
+
+    def mark_failed_if_current_generation(article, generation)
+      return unless generation
+
+      # CAS prevents an old failed browser request from replacing newer fetched
+      # content. Do not lock around the network request or content processing.
+      Article.where(id: article.id, content_generation: generation)
+        .where.not(fetch_status: :fetched)
+        .update_all(fetch_status: :failed)
     end
 
     def link_to_claim(article)

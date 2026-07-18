@@ -48,12 +48,14 @@ module Analyzers
       Return strict JSON matching the schema.
     PROMPT
 
-    def self.call(investigation:)
-      new(investigation:).call
+    def self.call(investigation:, summary_data: nil, event_context: nil)
+      new(investigation:, summary_data:, event_context:).call
     end
 
-    def initialize(investigation:)
+    def initialize(investigation:, summary_data: nil, event_context: nil)
       @investigation = investigation
+      @summary_data = summary_data
+      @event_context = event_context
     end
 
     def call
@@ -95,12 +97,12 @@ module Analyzers
     def build_prompt(article)
       claims = @investigation.claim_assessments.includes(:claim).map do |ca|
         { claim: ca.claim.canonical_text, verdict: ca.verdict }
-      end
+      end.sort_by { |claim| [ claim[:claim].to_s, claim[:verdict].to_s ] }
 
       gaps = Array(@investigation.contextual_gaps&.dig("gaps")).first(3).map { |g| g["question"] }
       coordination = @investigation.coordinated_narrative || {}
-      summary = @investigation.llm_summary || {}
-      event = @investigation.event_context || {}
+      summary = (@summary_data || @investigation.llm_summary || {}).to_h.with_indifferent_access
+      event = (@event_context || @investigation.event_context || {}).to_h.with_indifferent_access
 
       {
         original_headline: article.title,
@@ -110,8 +112,8 @@ module Analyzers
         contextual_gaps: gaps,
         convergent_framing: Array(coordination["convergent_framing"]).first(3),
         convergent_omissions: Array(coordination["convergent_omissions"]).first(3),
-        summary_quality: summary["overall_quality"],
-        summary_weaknesses: Array(summary["weaknesses"]).first(3),
+        summary_quality: summary[:overall_quality],
+        summary_weaknesses: Array(summary[:weaknesses]).first(3),
         event_context: {
           composite_timeline: event["composite_timeline"].to_s.truncate(500),
           critical_omissions: Array(event["critical_omissions"]).first(3)

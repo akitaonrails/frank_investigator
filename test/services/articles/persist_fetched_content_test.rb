@@ -77,4 +77,20 @@ class Articles::PersistFetchedContentTest < ActiveSupport::TestCase
     assert_equal "rejected", article.fetch_status
     assert_equal "not_article", article.rejection_reason
   end
+
+  test "accepts substantive official non-news HTML only in evidence mode" do
+    html = <<~HTML
+      <html><head><title>Official statement</title></head><body><main><h1>Official statement</h1>
+      <p>#{"The official record documents the policy and its legal basis in detail. " * 8}</p>
+      </main></body></html>
+    HTML
+    normal = Article.create!(url: "https://www.whitehouse.gov/briefing-room/statement", normalized_url: "https://www.whitehouse.gov/briefing-room/statement", host: "www.whitehouse.gov")
+    evidence = Article.create!(url: "https://www.whitehouse.gov/briefing-room/evidence", normalized_url: "https://www.whitehouse.gov/briefing-room/evidence", host: "www.whitehouse.gov")
+
+    normal_staged = Articles::PersistFetchedContent.prepare(article: normal, html:, fetched_title: "Official statement", current_depth: 0)
+    evidence_staged = Articles::PersistFetchedContent.prepare(article: evidence, html:, fetched_title: "Official statement", current_depth: 0, evidence: true)
+
+    assert_predicate normal_staged, :rejected?
+    refute_predicate evidence_staged, :rejected?
+  end
 end

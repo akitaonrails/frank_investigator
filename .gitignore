@@ -49,6 +49,7 @@
 /.ai-jail
 /.claude
 /.lobster
+/.slim/deepwork/
 
 
 /app/assets/builds/*

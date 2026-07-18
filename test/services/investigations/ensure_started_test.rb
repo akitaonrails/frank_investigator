@@ -24,6 +24,19 @@ class Investigations::EnsureStartedTest < ActiveSupport::TestCase
     end
   end
 
+  test "persists durable kickoff intent before a post-commit enqueue failure" do
+    original = Investigations::KickoffJob.method(:perform_later)
+    Investigations::KickoffJob.define_singleton_method(:perform_later) { |*| raise "adapter unavailable" }
+    assert_raises(RuntimeError) { Investigations::EnsureStarted.call(submitted_url: "https://example.com/durable-kickoff") }
+
+    investigation = Investigation.find_by!(normalized_url: "https://example.com/durable-kickoff")
+    assert investigation.queued?
+    assert_not_nil investigation.kickoff_due_at
+    assert_nil investigation.kickoff_delivery_token
+  ensure
+    Investigations::KickoffJob.define_singleton_method(:perform_later, original) if original
+  end
+
   test "does not enqueue kickoff again for an investigation already in progress" do
     article = Article.create!(url: "https://example.com/in-progress", normalized_url: "https://example.com/in-progress", host: "example.com")
     investigation = Investigation.create!(

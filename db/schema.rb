@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_17_000000) do
   create_table "article_claims", force: :cascade do |t|
     t.integer "article_id", null: false
     t.integer "claim_id", null: false
@@ -50,6 +50,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
     t.string "body_fingerprint"
     t.text "body_text"
     t.string "content_fingerprint"
+    t.integer "content_generation", default: 0, null: false
     t.datetime "created_at", null: false
     t.text "excerpt"
     t.string "fetch_status", default: "pending", null: false
@@ -206,6 +207,58 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
     t.index ["status"], name: "index_investigation_embeddings_on_status"
   end
 
+  create_table "investigation_group_evidence_sources", force: :cascade do |t|
+    t.integer "article_id", null: false
+    t.integer "attempts_count", default: 0, null: false
+    t.string "content_fingerprint"
+    t.datetime "created_at", null: false
+    t.string "fetch_attempts_generation"
+    t.datetime "fetch_delivery_expires_at"
+    t.string "fetch_delivery_token"
+    t.datetime "fetch_lease_expires_at"
+    t.datetime "fetch_retry_due_at"
+    t.string "fetch_token"
+    t.integer "investigation_group_id", null: false
+    t.string "last_error_class"
+    t.text "last_error_message"
+    t.datetime "ready_at"
+    t.string "status", default: "pending", null: false
+    t.string "submitted_url", null: false
+    t.datetime "terminal_at"
+    t.datetime "updated_at", null: false
+    t.index ["article_id"], name: "index_investigation_group_evidence_sources_on_article_id"
+    t.index ["fetch_retry_due_at"], name: "idx_on_fetch_retry_due_at_d0b7867ea8"
+    t.index ["investigation_group_id", "article_id"], name: "idx_group_evidence_source_unique", unique: true
+    t.index ["investigation_group_id"], name: "idx_on_investigation_group_id_31e6a65623"
+  end
+
+  create_table "investigation_groups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "enriched_revision", default: 0, null: false
+    t.string "enrichment_applied_fingerprint"
+    t.integer "enrichment_attempts", default: 0, null: false
+    t.datetime "enrichment_delivery_expires_at"
+    t.string "enrichment_delivery_token"
+    t.text "enrichment_error"
+    t.string "enrichment_fingerprint"
+    t.datetime "enrichment_lease_expires_at"
+    t.datetime "enrichment_retry_due_at"
+    t.string "enrichment_target_fingerprint"
+    t.string "enrichment_token"
+    t.integer "evidence_revision", default: 0, null: false
+    t.integer "main_investigation_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["main_investigation_id"], name: "idx_investigation_groups_main_unique", unique: true
+  end
+
+  create_table "investigation_submission_locks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.datetime "updated_at", null: false
+    t.integer "version", default: 0, null: false
+    t.index ["key"], name: "index_investigation_submission_locks_on_key", unique: true
+  end
+
   create_table "investigations", force: :cascade do |t|
     t.datetime "analysis_completed_at"
     t.json "authority_laundering"
@@ -216,12 +269,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
     t.datetime "created_at", null: false
     t.json "emotional_manipulation"
     t.json "event_context"
+    t.integer "evidence_reconciliation_attempts_revision"
+    t.datetime "evidence_reconciliation_retry_delivery_expires_at"
+    t.string "evidence_reconciliation_retry_delivery_token"
+    t.datetime "evidence_reconciliation_retry_due_at"
+    t.integer "evidence_revision_assessed", default: 0, null: false
+    t.string "group_membership_kind"
     t.decimal "headline_bait_score", precision: 5, scale: 2, default: "0.0", null: false
     t.text "honest_headline"
+    t.integer "investigation_group_id"
+    t.datetime "kickoff_delivered_at"
+    t.datetime "kickoff_delivery_expires_at"
+    t.string "kickoff_delivery_token"
+    t.datetime "kickoff_due_at"
     t.datetime "last_enrichment_refresh_at"
+    t.string "legacy_enrichment_applied_fingerprint"
+    t.integer "legacy_enrichment_attempts", default: 0, null: false
+    t.datetime "legacy_enrichment_delivery_expires_at"
+    t.string "legacy_enrichment_delivery_token"
+    t.text "legacy_enrichment_error"
+    t.datetime "legacy_enrichment_lease_expires_at"
+    t.datetime "legacy_enrichment_retry_due_at"
+    t.string "legacy_enrichment_target_fingerprint"
+    t.string "legacy_enrichment_token"
     t.json "llm_summary"
     t.string "normalized_url", null: false
     t.decimal "overall_confidence_score", precision: 5, scale: 2, default: "0.0", null: false
+    t.integer "reconciliation_attempts", default: 0, null: false
+    t.integer "reconciliation_enrichment_delivered_revision"
+    t.datetime "reconciliation_enrichment_delivery_expires_at"
+    t.string "reconciliation_enrichment_delivery_token"
+    t.integer "reconciliation_enrichment_pending_revision"
+    t.text "reconciliation_error"
+    t.datetime "reconciliation_lease_expires_at"
+    t.integer "reconciliation_revision"
+    t.string "reconciliation_token"
     t.json "rhetorical_analysis"
     t.integer "root_article_id"
     t.json "selective_quotation"
@@ -235,6 +317,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
     t.datetime "updated_at", null: false
     t.index ["auto_submitted_from_id"], name: "index_investigations_on_auto_submitted_from_id"
     t.index ["checkability_status"], name: "index_investigations_on_checkability_status"
+    t.index ["investigation_group_id"], name: "index_investigations_on_investigation_group_id"
+    t.index ["kickoff_due_at"], name: "index_investigations_on_kickoff_due_at"
     t.index ["normalized_url"], name: "index_investigations_on_normalized_url", unique: true
     t.index ["root_article_id"], name: "index_investigations_on_root_article_id"
     t.index ["slug"], name: "index_investigations_on_slug", unique: true
@@ -455,7 +539,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_11_173728) do
   add_foreign_key "evidence_items", "claim_assessments"
   add_foreign_key "html_snapshots", "articles"
   add_foreign_key "investigation_embeddings", "investigations"
+  add_foreign_key "investigation_group_evidence_sources", "articles"
+  add_foreign_key "investigation_group_evidence_sources", "investigation_groups"
+  add_foreign_key "investigation_groups", "investigations", column: "main_investigation_id"
   add_foreign_key "investigations", "articles", column: "root_article_id"
+  add_foreign_key "investigations", "investigation_groups"
   add_foreign_key "llm_interactions", "claim_assessments"
   add_foreign_key "llm_interactions", "investigations"
   add_foreign_key "pipeline_steps", "investigations"

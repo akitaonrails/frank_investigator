@@ -29,7 +29,7 @@ module Analyzers
       keyword_init: true
     )
 
-    # 16 fallacy types informed by classical rhetoric and Schopenhauer's 38 Stratagems
+    # 17 fallacy types informed by classical rhetoric and Schopenhauer's 38 Stratagems
     # ("The Art of Being Right", 1831).
     #
     # Coverage of Schopenhauer's stratagems:
@@ -59,6 +59,7 @@ module Analyzers
       paradox_framing
       false_admission
       faulty_proof_exploitation
+      delegitimizing_reframing
     ].freeze
 
     SYSTEM_PROMPT_TEMPLATE = <<~PROMPT.freeze
@@ -171,6 +172,14 @@ module Analyzers
       you are unsure about. Every excerpt must be traceable to the provided input.
 
       Return strict JSON matching the schema.
+      delegitimizing_reframing: Using a dismissive label such as "conspiracy theory"
+      as adjudication to discredit an identifiable official or authoritative statement
+      or position, without separately evaluating its underlying factual claim. An
+      official_position source is evidence of what that authority said, NOT proof that
+      the statement is true. Do not treat government or political assertions as
+      automatically factual. Do NOT flag reporting that attributes the assertion and
+      separately provides independent verification, contradiction, court or statistical
+      evidence, or explicitly concludes that the matter remains unresolved.
     PROMPT
 
     def self.call(investigation:)
@@ -196,7 +205,7 @@ module Analyzers
 
     def assessed_claims
       @assessed_claims ||= @investigation.claim_assessments
-        .includes(:claim)
+        .includes(:claim, evidence_items: :article)
         .where.not(verdict: "pending")
         .order(confidence_score: :desc)
     end
@@ -242,7 +251,18 @@ module Analyzers
           verdict: assessment.verdict,
           confidence: assessment.confidence_score.to_f,
           authority_score: assessment.authority_score.to_f,
-          has_primary_evidence: assessment.evidence_items.any? { |e| e.article&.authority_tier == "primary" }
+          has_primary_evidence: assessment.evidence_items.any? { |e| e.article&.authority_tier == "primary" },
+          evidence_sources: assessment.evidence_items.filter_map { |e|
+            article = e.article
+            next unless article
+
+            {
+              source_role: article.source_role,
+              authority_tier: article.authority_tier,
+              stance: e.stance,
+              source_type: e.source_type
+            }
+          }.uniq
         }
       end
 

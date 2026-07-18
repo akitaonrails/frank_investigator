@@ -1,5 +1,7 @@
 # Frank Investigator
 
+> **Grouped repair:** `bin/rails frank:repair_group` is dry-run by default. It prints an immutable projection and a copy-safe apply command containing `MAIN_SLUG`, `NEWS_SLUGS`, `EVIDENCE_URLS`, `APPLY=1`, `DECISION_AT`, and `EXPECTED_DIGEST`. Apply rejects a `DECISION_AT` more than five seconds in the future.
+
 Frank Investigator is a Rails 8.1 fact-checking pipeline for news articles. It assesses the claims in an article using an evidence graph, source authority analysis, and multi-model LLM consensus.
 
 Submit a public article URL. Frank Investigator normalizes it, fetches the page with headless Chromium, extracts canonical claims, follows in-body citations, retrieves corroborating evidence, and produces a structured verdict for each claim with full provenance.
@@ -21,6 +23,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 ## What It Does
 
 - Fetches articles via headless Chromium with stealth hardening and adaptive timeouts
+- Supports grouped submissions with manual peer reports and durable evidence sources
 - Extracts main content with noise filtering (ads, sidebars, comment sections, trending lists)
 - Handles PDF, DOCX, XLSX, and CSV document evidence
 - Extracts and deduplicates claims using fingerprint, semantic key, and similarity matching
@@ -32,7 +35,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 - Detects source corrections and flags stale assessments
 - Provides full verdict history with evidence provenance snapshots
 - Analyzes headline-body divergence and headline citation amplification
-- Detects 16 rhetorical fallacies including 6 derived from Schopenhauer's 38 Stratagems (19 of 38 covered)
+- Detects 17 rhetorical fallacies including 6 derived from Schopenhauer's 38 Stratagems (19 of 38 covered)
 - Detects source misrepresentation: when an article claims a source says X but it actually says Y
 - Detects temporal manipulation: old data presented as current, selective timeframes, timeline mixing
 - Detects statistical deception: cherry-picked baselines, misleading percentages, missing denominators
@@ -98,6 +101,13 @@ curl -X POST https://<host>/api/investigations \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/article"}'
 
+# Submit a grouped investigation. news_urls become manual peer reports;
+# evidence_urls are fetched as durable evidence only, never investigations.
+curl -X POST https://<host>/api/investigations \
+  -H "Authorization: Bearer $FRANK_AUTH_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"main_url":"https://example.com/article","news_urls":["https://example.net/coverage"],"evidence_urls":["https://agency.gov/record"]}'
+
 # List the 10 most recent investigations
 curl https://<host>/api/investigations \
   -H "Authorization: Bearer $FRANK_AUTH_SECRET"
@@ -112,6 +122,16 @@ Each list item returns `slug`, `status` (processing/completed/etc.), `datetime`,
 `investigation_url`, and `original_url`. The `q` parameter matches a
 case-insensitive substring against both the original article headline and the
 generated honest headline.
+
+Submission and report JSON expose `pipeline_ready`, `evidence_current`, and
+`ready`. `ready` is true only when both the analysis pipeline and grouped
+evidence reconciliation are current. A report with completed analysis but
+pending or stale group evidence returns HTTP 202 (and `ready: false`); a fully
+current report returns HTTP 200. Group payloads include member and evidence
+states so terminal evidence failures remain observable.
+Failed reports are terminal HTTP 200 responses and do not ask clients to poll.
+Rejected or failed evidence is settled only when it is terminal and has no
+active or scheduled retry; retryable failures keep the group unready.
 
 ## Testing
 

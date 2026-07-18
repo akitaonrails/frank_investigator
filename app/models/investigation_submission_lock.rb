@@ -1,0 +1,2 @@
+class InvestigationSubmissionLock < ApplicationRecord
+end

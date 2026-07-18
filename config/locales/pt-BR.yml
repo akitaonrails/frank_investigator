@@ -79,7 +79,8 @@ pt-BR:
       authority_heading: "Lavagem de autoridade"
       authority_body: "Analisa a cadeia de citações para detectar inflação vertical de autoridade — quando uma fonte de baixa autoridade (blog, rede social) é citada por veículos progressivamente maiores sem adição de evidência nova, fazendo-a parecer autoritativa. Rastreia a cadeia desde a origem até o artigo analisado."
       rhetorical_heading: "Análise retórica"
-      rhetorical_body: "Detecta 16 falácias lógicas na estrutura argumentativa do artigo, incluindo falácias clássicas e seis padrões derivados dos 38 Estratagemas de Schopenhauer ('A Arte de Ter Razão', 1831). Os 38 estratagemas catalogam táticas de debate para vencer argumentos independentemente da verdade — muitos se aplicam diretamente a como artigos de notícias enquadram narrativas. Dos 38, 19 são cobertos por este sistema (6 como tipos dedicados, 13 via outros analisadores); os 19 restantes são táticas específicas de debate (interrupção, bombardeio de perguntas, provocação) que não se aplicam confiavelmente a notícias escritas. Os 16 tipos detectados são: isca e desvio, apelo à autoridade, espantalho, falsa causa, anedota sobre dados, linguagem carregada, falso dilema, ladeira escorregadia, ad hominem, seleção enviesada, equivocação (#2 — mesmo termo com significados diferentes), rotulação depreciativa (#32 — rótulos depreciativos), conclusão distorcida (#9 — dados corretos, conclusão errada), enquadramento paradoxal (#13 — tornar a discordância absurda), admissão falsa (#11 — alegação silenciosamente vira fato) e exploração de prova falha (#37 — atacar um argumento fraco para descartar uma posição inteira)."
+      delegitimizing_reframing_body: "O analisador também detecta o reenquadramento deslegitimador, um sinal de qualidade do enquadramento: identifica quando um rótulo depreciativo, como 'teoria da conspiração', substitui a avaliação da alegação factual de uma autoridade identificável. Não é uma conclusão de que uma alegação oficial seja verdadeira; uma posição oficial estabelece o que uma autoridade disse, enquanto a alegação subjacente ainda exige evidência independente."
+      rhetorical_body: "Detecta 17 falácias lógicas na estrutura argumentativa do artigo, incluindo falácias clássicas, reenquadramento deslegitimador e seis padrões derivados dos 38 Estratagemas de Schopenhauer ('A Arte de Ter Razão', 1831). Os 38 estratagemas catalogam táticas de debate para vencer argumentos independentemente da verdade — muitos se aplicam diretamente a como artigos de notícias enquadram narrativas. Dos 38, 19 são cobertos por este sistema (6 como tipos dedicados, 13 via outros analisadores); os 19 restantes são táticas específicas de debate (interrupção, bombardeio de perguntas, provocação) que não se aplicam confiavelmente a notícias escritas. Os 17 tipos detectados são: isca e desvio, apelo à autoridade, espantalho, falsa causa, anedota sobre dados, linguagem carregada, falso dilema, ladeira escorregadia, ad hominem, seleção enviesada, reenquadramento deslegitimador, equivocação (#2 — mesmo termo com significados diferentes), rotulação depreciativa (#32 — rótulos depreciativos), conclusão distorcida (#9 — dados corretos, conclusão errada), enquadramento paradoxal (#13 — tornar a discordância absurda), admissão falsa (#11 — alegação silenciosamente vira fato) e exploração de prova falha (#37 — atacar um argumento fraco para descartar uma posição inteira)."
       contextual_gaps_heading: "Análise de lacunas contextuais"
       contextual_gaps_body: "Identifica o que o artigo não aborda — questões que um leitor bem informado faria. Detecta descompasso de escopo, contra-evidências ausentes, lacunas teórico-práticas, cegueira distributiva, lacunas na cadeia causal, amnésia histórica, enquadramento de reversão, lacunas de repasse de benefícios e atribuição seletiva. Para cada lacuna, o sistema busca contra-evidências na web."
       quality_heading: "Classificações de qualidade"
@@ -97,7 +98,16 @@ pt-BR:
       eyebrow: "Frank Investigator"
       heading: "Investigue uma notícia por meio de alegações, fontes vinculadas e lacunas de evidência."
       hero_copy: "Envie a URL de um artigo público. O Frank Investigator vai normalizar, buscar o artigo, catalogar citações no corpo do texto, extrair alegações canônicas e separar o que é verificável do que ainda precisa de evidência."
-      placeholder: "https://algumjornal.com.br/artigos/1"
+      main_story_label: "Notícia principal"
+      main_story_help: "Obrigatório. Comece pelo artigo que você quer investigar."
+      main_story_placeholder: "https://veiculo.exemplo/noticia"
+      optional_sources_legend: "Contexto opcional"
+      additional_stories_label: "Notícias adicionais"
+      additional_stories_help: "Uma URL por linha. Cada uma vira sua própria investigação e é comparada com a notícia principal."
+      evidence_sources_label: "Fontes de evidência"
+      evidence_sources_help: "Uma URL por linha. Adicione registros oficiais, estudos, documentos ou páginas factuais. Elas apoiam a revisão das evidências e não viram investigações de notícias separadas."
+      multiple_urls_placeholder: "https://exemplo.org/fonte"
+      submission_note: "Links de acesso público funcionam melhor."
       submit: "Investigar"
 
     show:
@@ -303,6 +313,18 @@ pt-BR:
 
     errors:
       url_too_long: "A URL é muito longa (máximo de %{max} caracteres)"
+      group_submission_invalid: "Não foi possível enviar a investigação agrupada. Verifique as URLs e tente novamente."
+
+  api:
+    investigations:
+      errors:
+        url_must_be_string: "A URL deve ser uma string"
+        url_required: "A URL é obrigatória"
+        url_too_long: "A URL é muito longa (máximo de %{max} caracteres)"
+        url_array_required: "%{field} deve ser uma lista de strings de URL"
+        invalid_url: "A URL é inválida"
+        url_rejected: "Esta URL não pode ser investigada"
+        group_submission_invalid: "Não foi possível enviar a investigação agrupada. Verifique as URLs e tente novamente."
 
   authority_laundering:
     chain_explanation:
@@ -570,3 +592,4 @@ pt-BR:
       paradox_framing: "Enquadramento paradoxal"
       false_admission: "Admissão falsa"
       faulty_proof_exploitation: "Exploração de prova falha"
+      delegitimizing_reframing: "Reenquadramento deslegitimador"

@@ -15,6 +15,9 @@ module Investigations
     ensure
       if @investigation
         Investigations::AssessClaimsJob.perform_later(@investigation.id) if @step_succeeded
+        if @step_succeeded && @investigation.investigation_group_id && @investigation.group_membership_kind_manual?
+          ReconcileGroupEvidenceJob.perform_later(@investigation.id)
+        end
         Investigations::RefreshStatus.call(@investigation)
       end
     end

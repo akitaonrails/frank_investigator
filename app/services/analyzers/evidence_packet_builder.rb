@@ -62,11 +62,17 @@ module Analyzers
       return article.headline_divergence_score.to_f if article.headline_divergence_score.present?
       return 0.0 if article.title.blank? || article.body_text.blank?
 
+      content_generation = article.content_generation
       result = HeadlineBaitAnalyzer.call(title: article.title, body_text: article.body_text)
       score = result.score / 100.0 # Normalize from 0-100 to 0-1
 
-      # Cache for future use
-      article.update_column(:headline_divergence_score, score) if article.persisted?
+      # Cache only the body generation that was analyzed. Persisting fetched
+      # content clears this score and advances the generation, so a stale
+      # analysis cannot repopulate a new body's cache.
+      if article.persisted?
+        Article.where(id: article.id, content_generation:, headline_divergence_score: nil)
+          .update_all(headline_divergence_score: score)
+      end
       score
     end
 
@@ -79,7 +85,15 @@ module Analyzers
     end
 
     def supporting_articles
-      @claim.articles.fetched.where.not(id: @investigation.root_article_id).distinct.authoritative_first
+      linked = @claim.articles.fetched.where.not(id: @investigation.root_article_id)
+      explicit = if @investigation.investigation_group_id && @investigation.group_membership_kind_manual?
+        Article.joins(:investigation_group_evidence_sources)
+          .where(investigation_group_evidence_sources: { investigation_group_id: @investigation.investigation_group_id, status: "ready" })
+          .fetched
+      else
+        Article.none
+      end
+      Article.where(id: linked.select(:id)).or(Article.where(id: explicit.select(:id))).distinct.authoritative_first
     end
   end
 end

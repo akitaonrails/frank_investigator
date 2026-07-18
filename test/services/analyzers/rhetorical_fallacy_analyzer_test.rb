@@ -131,6 +131,67 @@ class RhetoricalFallacyAnalyzerTest < ActiveSupport::TestCase
     assert_includes types, "loaded_language"
     assert_includes types, "ad_hominem"
     assert_includes types, "cherry_picking"
+    assert_includes types, "delegitimizing_reframing"
+  end
+
+  test "response schema and parsing support delegitimizing reframing" do
+    analyzer = Analyzers::RhetoricalFallacyAnalyzer.new(investigation: @investigation)
+    schema = analyzer.send(:response_schema)
+    type_enum = schema.dig(:schema, :properties, :fallacies, :items, :properties, :type, :enum)
+    assert_includes type_enum, "delegitimizing_reframing"
+
+    result = analyzer.send(:parse_response, {
+      "fallacies" => [ {
+        "type" => "delegitimizing_reframing",
+        "severity" => "medium",
+        "excerpt" => "The minister's statement was dismissed as a conspiracy theory.",
+        "explanation" => "The label substitutes for an evaluation of the stated evidence.",
+        "undermined_claim_index" => 0
+      } ],
+      "narrative_bias_score" => 0.4,
+      "summary" => "The article treats a label as adjudication."
+    })
+
+    assert_equal "delegitimizing_reframing", result.fallacies.first.type
+    assert_equal @claim.canonical_text, result.fallacies.first.undermined_claim
+  end
+
+  test "prompt carries evidence source-role metadata" do
+    evidence_article = Article.create!(
+      url: "https://agency.gov/statement",
+      normalized_url: "https://agency.gov/statement-#{SecureRandom.hex(4)}",
+      host: "agency.gov",
+      title: "Agency statement",
+      fetch_status: :fetched,
+      source_role: :official_position,
+      authority_tier: :primary
+    )
+    EvidenceItem.create!(
+      claim_assessment: @assessment,
+      article: evidence_article,
+      source_url: evidence_article.url,
+      stance: :supports
+    )
+
+    analyzer = Analyzers::RhetoricalFallacyAnalyzer.new(investigation: @investigation)
+    prompt = JSON.parse(analyzer.send(:build_prompt, @article))
+
+    assert_equal "official_position", prompt.dig("assessed_claims", 0, "evidence_sources", 0, "source_role")
+    assert_includes Analyzers::RhetoricalFallacyAnalyzer::SYSTEM_PROMPT_TEMPLATE, "NOT proof that"
+  end
+
+  test "degraded mode does not flag attributed criticism with independent rebuttal" do
+    @article.update!(body_text:
+      "The columnist called the minister's proposal a conspiracy theory. A court filing " \
+      "and independently audited statistics were then reviewed; both contradicted parts " \
+      "of the proposal, while the report said the remaining question was unresolved."
+    )
+
+    without_llm do
+      result = Analyzers::RhetoricalFallacyAnalyzer.call(investigation: @investigation)
+      refute_includes result.fallacies.map(&:type), "delegitimizing_reframing"
+      assert_empty result.fallacies
+    end
   end
 
   private

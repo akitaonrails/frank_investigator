@@ -72,4 +72,50 @@ class Investigations::FetchLinkedArticleJobTest < ActiveJob::TestCase
     # Linked articles should NOT have claims extracted — they serve as evidence only
     assert_not linked.article_claims.exists?
   end
+
+  test "stale linked Chromium failure keeps a newer fetched article" do
+    root = Article.create!(url: "https://example.com/race-root", normalized_url: "https://example.com/race-root", host: "example.com", fetch_status: :fetched)
+    linked = Article.create!(url: "https://example.com/race-linked", normalized_url: "https://example.com/race-linked", host: "example.com")
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root)
+    link = ArticleLink.create!(source_article: root, target_article: linked, href: linked.url)
+    GenerationRaceFetcher.on_call = lambda do |url|
+      record = Article.find_by!(normalized_url: url)
+      record.update!(fetch_status: :fetched, body_text: "newer linked body", title: "Newer", fetched_at: Time.current, content_generation: record.content_generation + 1)
+      raise Fetchers::ChromiumFetcher::FetchError, "old browser failed"
+    end
+    Rails.application.config.x.frank_investigator.fetcher_class = "GenerationRaceFetcher"
+
+    Investigations::FetchLinkedArticleJob.perform_now(investigation.id, link.id)
+
+    assert_equal "crawled", link.reload.follow_status
+    assert_equal "newer linked body", linked.reload.body_text
+    assert_equal "fetched", linked.fetch_status
+  ensure
+    GenerationRaceFetcher.on_call = nil
+  end
+
+  test "stale successful HTML accepts a newer linked generation and continues assessment" do
+    root = Article.create!(url: "https://example.com/success-root", normalized_url: "https://example.com/success-root", host: "example.com", fetch_status: :fetched)
+    linked = Article.create!(url: "https://example.com/success-linked", normalized_url: "https://example.com/success-linked", host: "example.com")
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root)
+    link = ArticleLink.create!(source_article: root, target_article: linked, href: linked.url)
+    GenerationRaceFetcher.on_call = lambda do |url|
+      record = Article.find_by!(normalized_url: url)
+      record.update!(fetch_status: :fetched, body_text: "newer linked body", title: "Newer", fetched_at: Time.current, content_generation: record.content_generation + 1)
+      Fetchers::ChromiumFetcher::Snapshot.new(html: "<html><body><article><p>#{'stale body ' * 40}</p></article></body></html>", title: "Old")
+    end
+    Rails.application.config.x.frank_investigator.fetcher_class = "GenerationRaceFetcher"
+    assert_enqueued_with(job: Investigations::AssessClaimsJob, args: [ investigation.id ]) { Investigations::FetchLinkedArticleJob.perform_now(investigation.id, link.id) }
+    assert_equal "crawled", link.reload.follow_status
+    assert_equal "newer linked body", linked.reload.body_text
+  ensure
+    GenerationRaceFetcher.on_call = nil
+  end
+end
+
+class GenerationRaceFetcher
+  class << self
+    attr_accessor :on_call
+    def call(url) = on_call.call(url)
+  end
 end

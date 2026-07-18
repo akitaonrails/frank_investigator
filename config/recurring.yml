@@ -42,6 +42,10 @@ production:
   recover_stale_pipelines:
     command: "Pipeline::ResumeInterrupted.call"
     schedule: every 5 minutes
+  recover_expired_group_leases:
+    class: Investigations::RecoverExpiredGroupLeasesJob
+    queue: default
+    schedule: every 5 minutes
   purge_stale_broadcasts:
     command: "QueueMaintenance::PurgeStaleBroadcasts.call"
     schedule: every 5 minutes

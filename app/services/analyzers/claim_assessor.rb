@@ -42,11 +42,13 @@ module Analyzers
         )
       end
 
-      # Check for prior assessments of this claim in other investigations
-      prior = find_prior_assessment
+      entries = evidence_entries
+      # A prior verdict is only safe to reuse when this investigation has no
+      # evidence of its own. Current explicit evidence must be assessed on its
+      # merits rather than being hidden by a matching claim from another report.
+      prior = find_prior_assessment if entries.empty?
       return prior if prior
 
-      entries = evidence_entries
       scores = compute_scores(entries)
       heuristic_verdict = verdict_for(**scores)
       heuristic_confidence = confidence_for(**scores)
@@ -59,7 +61,7 @@ module Analyzers
     def call_with_llm_result(entries, llm_result)
       return call if @claim.not_checkable?
 
-      prior = find_prior_assessment
+      prior = find_prior_assessment if entries.empty?
       return prior if prior
 
       scores = compute_scores(entries)

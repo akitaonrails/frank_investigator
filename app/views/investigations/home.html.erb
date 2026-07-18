@@ -1,22 +1,62 @@
 <% content_for :title, t(".title") %>
 
 <main class="w-full max-w-[1120px] mx-auto px-4 py-8">
-  <section class="max-w-2xl mx-auto mt-[12vh] p-8 md:p-12">
+  <section class="max-w-3xl mx-auto mt-[8vh] p-7 md:p-12">
     <p class="mb-4 text-muted text-xs font-semibold tracking-[0.18em] uppercase"><%= t(".eyebrow") %></p>
     <h1 class="mb-4 font-serif text-[clamp(2.4rem,5vw,3.8rem)] leading-[1.05] font-extrabold tracking-tight"><%= t(".heading") %></h1>
     <p class="text-muted text-lg leading-relaxed max-w-xl"><%= t(".hero_copy") %></p>
 
-    <%= form_with url: root_path, method: :get, class: "flex flex-wrap gap-3 mt-8", local: true do |form| %>
-      <%= form.url_field :url,
+    <%= form_with url: submit_investigation_path, method: :post, class: "mt-9", local: true do |form| %>
+      <div>
+        <%= form.label :main_url, t(".main_story_label"), class: "block text-sm font-bold text-ink" %>
+        <p id="main-url-help" class="mt-1.5 text-sm leading-relaxed text-muted"><%= t(".main_story_help") %></p>
+        <%= form.url_field :main_url,
           value: @submitted_url,
-          placeholder: t(".placeholder"),
+          placeholder: t(".main_story_placeholder"),
           required: true,
-          class: "flex-1 basis-[420px] min-h-14 px-5 py-3.5 border border-line rounded-2xl bg-white text-ink text-base shadow-sm focus:outline-none focus:ring-2 focus:ring-ink/10 transition-shadow" %>
-      <%= form.submit t(".submit"), class: "min-h-14 px-7 py-3.5 border-0 rounded-2xl bg-ink text-white cursor-pointer font-semibold text-base hover:bg-ink/90 transition-colors shadow-sm" %>
+          autocomplete: "url",
+          aria: { describedby: "main-url-help" },
+          class: "mt-3 block w-full min-h-14 px-5 py-3.5 border border-line rounded-2xl bg-white text-ink text-base shadow-sm placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-ink/20 focus:border-ink/40 transition-shadow" %>
+      </div>
+
+      <fieldset class="mt-8 border-t border-line pt-7">
+        <legend class="pr-3 text-sm font-bold text-ink"><%= t(".optional_sources_legend") %></legend>
+        <div class="mt-5 grid gap-6 md:grid-cols-2">
+          <div>
+            <%= form.label :news_urls, t(".additional_stories_label"), class: "block text-sm font-semibold text-ink" %>
+            <p id="news-urls-help" class="mt-1.5 text-sm leading-relaxed text-muted"><%= t(".additional_stories_help") %></p>
+            <%= form.text_area :news_urls,
+              name: "news_urls[]", value: @submitted_news_urls,
+              rows: 5,
+              placeholder: t(".multiple_urls_placeholder"),
+              autocomplete: "off",
+              spellcheck: false,
+              aria: { describedby: "news-urls-help" },
+              class: "mt-3 block w-full resize-y rounded-2xl border border-line bg-white px-4 py-3 text-sm leading-relaxed text-ink shadow-sm placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-ink/20 focus:border-ink/40 transition-shadow" %>
+          </div>
+          <div>
+            <%= form.label :evidence_urls, t(".evidence_sources_label"), class: "block text-sm font-semibold text-ink" %>
+            <p id="evidence-urls-help" class="mt-1.5 text-sm leading-relaxed text-muted"><%= t(".evidence_sources_help") %></p>
+            <%= form.text_area :evidence_urls,
+              name: "evidence_urls[]", value: @submitted_evidence_urls,
+              rows: 5,
+              placeholder: t(".multiple_urls_placeholder"),
+              autocomplete: "off",
+              spellcheck: false,
+              aria: { describedby: "evidence-urls-help" },
+              class: "mt-3 block w-full resize-y rounded-2xl border border-line bg-white px-4 py-3 text-sm leading-relaxed text-ink shadow-sm placeholder:text-muted/70 focus:outline-none focus:ring-2 focus:ring-ink/20 focus:border-ink/40 transition-shadow" %>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-muted"><%= t(".submission_note") %></p>
+        <%= form.submit t(".submit"), class: "min-h-14 w-full shrink-0 px-7 py-3.5 border-0 rounded-2xl bg-ink text-white cursor-pointer font-semibold text-base hover:bg-ink/90 focus:outline-none focus:ring-2 focus:ring-ink/30 focus:ring-offset-2 transition-colors shadow-sm sm:w-auto" %>
+      </div>
     <% end %>
 
     <% if @error_message.present? %>
-      <p class="mt-4 text-verdict-red text-sm"><%= @error_message %></p>
+      <p class="mt-5 rounded-xl border border-verdict-red/20 bg-verdict-red/5 px-4 py-3 text-sm leading-relaxed text-verdict-red" role="alert"><%= @error_message %></p>
     <% end %>
   </section>
 </main>

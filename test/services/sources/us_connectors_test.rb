@@ -65,6 +65,7 @@ class Sources::UsConnectorsTest < ActiveSupport::TestCase
 
     assert_equal "us_government", result.metadata_json["connector"]
     assert_equal "official_position", result.metadata_json["source_role"]
+    assert_equal :secondary, result.authority_tier
     assert_operator result.authority_score, :<=, 0.75
   end
 

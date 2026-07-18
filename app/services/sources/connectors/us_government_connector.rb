@@ -8,7 +8,7 @@ module Sources
         Result.new(
           published_at: generic_published_at,
           source_kind: source_kind,
-          authority_tier: :primary,
+          authority_tier: authority_tier,
           authority_score: authority_score,
           metadata_json: {
             "connector" => "us_government",
@@ -40,6 +40,10 @@ module Sources
         return 0.99 if govinfo_host?
         return 0.98 if congress_host?
         0.97
+      end
+
+      def authority_tier
+        whitehouse_host? ? :secondary : :primary
       end
 
       def document_reference

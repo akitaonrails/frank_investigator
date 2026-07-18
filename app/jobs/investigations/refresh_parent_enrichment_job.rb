@@ -1,21 +1,6 @@
 module Investigations
-  # When an auto-submitted child investigation finishes, feed its analysis
-  # back into the parent investigation's enrichment-stage outputs:
-  #
-  #   1. CrossInvestigationEnricher re-computes the parent's event_context
-  #      (composite timeline + critical omissions) now that the child's
-  #      event-context data exists in the corpus.
-  #   2. HonestHeadlineGenerator regenerates the parent's honest_headline
-  #      using the fresh event_context, which the prompt treats as the
-  #      single MOST IMPORTANT input.
-  #
-  # The parent's claim-level analyses are not touched — only the synthesis
-  # layer that depends on cross-investigation context changes.
-  #
-  # Race safety: parents are locked pessimistically so multiple child
-  # completions for the same parent serialize without losing writes.
-  # Idempotency: last_enrichment_refresh_at is stamped after every successful
-  # refresh; subsequent calls with no newer children become no-ops.
+  # Computes enrichment outside transactions, then publishes only if the
+  # lease's token and deterministic input generation still match.
   class RefreshParentEnrichmentJob < ApplicationJob
     queue_as :default
 
@@ -23,28 +8,40 @@ module Investigations
       parent = Investigation.find_by(id: parent_id)
       return unless parent&.completed?
 
-      Investigation.transaction do
-        parent.lock!
+      parent.investigation_group ? refresh_group(parent.investigation_group) : refresh_legacy(parent)
+    end
 
-        latest_child_at = parent.auto_submitted_children
-                                .where(status: "completed")
-                                .maximum(:analysis_completed_at)
-        return if latest_child_at.nil?
+    private
 
-        last_refresh = parent.last_enrichment_refresh_at
-        return if last_refresh.present? && last_refresh >= latest_child_at
+    def refresh_group(group)
+      claim = EnrichmentLease.group_claim(group)
+      return unless claim
 
-        Analyzers::CrossInvestigationEnricher.call(investigation: parent)
-
-        honest = Analyzers::HonestHeadlineGenerator.call(investigation: parent)
-        updates = { last_enrichment_refresh_at: Time.current }
-        updates[:honest_headline] = honest if honest.present?
-        parent.update_columns(updates)
+      context = Analyzers::CrossInvestigationEnricher.call(investigation: claim.members.first, investigations: claim.members)
+      raise "No cross-investigation context produced" unless context
+      headlines = claim.manual_members.to_h do |member|
+        [ member.id, Analyzers::HonestHeadlineGenerator.call(investigation: member, event_context: context) ]
       end
-
-      Rails.logger.info("[RefreshParent] Refreshed enrichment for parent #{parent.slug}")
+      result = EnrichmentLease.group_publish(group, claim, context, headlines)
+      self.class.perform_later(group.main_investigation_id) if result == :stale
     rescue StandardError => e
-      Rails.logger.warn("[RefreshParent] Failed for parent_id=#{parent_id}: #{e.class}: #{e.message}")
+      EnrichmentLease.group_fail(group, claim, e) if claim
+      Rails.logger.warn("[RefreshParent] group failed for #{group.id}: #{e.class}: #{e.message}")
+    end
+
+    def refresh_legacy(parent)
+      claim = EnrichmentLease.legacy_claim(parent)
+      return unless claim
+
+      # The exact parent/child snapshot is part of the claim. Never permit
+      # global heuristic candidates to enter an un-fingerprinted generation.
+      context = Analyzers::CrossInvestigationEnricher.call(investigation: parent, investigations: claim.members)
+      headline = Analyzers::HonestHeadlineGenerator.call(investigation: parent, event_context: context)
+      result = EnrichmentLease.legacy_publish(parent, claim, context, headline)
+      self.class.perform_later(parent.id) if result == :stale
+    rescue StandardError => e
+      EnrichmentLease.legacy_fail(parent, claim, e) if claim
+      Rails.logger.warn("[RefreshParent] legacy failed for #{parent.id}: #{e.class}: #{e.message}")
     end
   end
 end

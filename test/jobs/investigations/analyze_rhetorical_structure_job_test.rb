@@ -41,4 +41,49 @@ class Investigations::AnalyzeRhetoricalStructureJobTest < ActiveSupport::TestCas
     step = investigation.pipeline_steps.find_by(name: "analyze_rhetorical_structure")
     assert_equal "completed", step.status
   end
+
+  test "reconciliation publishes rhetorical output only while its lease remains active" do
+    root = Article.create!(url: "https://rhet-race.test/article", normalized_url: "https://rhet-race.test/article",
+      host: "rhet-race.test", fetch_status: :fetched, body_text: "Officials called it a conspiracy theory.", title: "Dismissal")
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root,
+      rhetorical_analysis: { "stable" => true })
+    group = InvestigationGroup.create!(main_investigation: investigation, evidence_revision: 1)
+    investigation.update!(investigation_group: group, group_membership_kind: :manual)
+    lease = Investigations::ReconciliationLease.claim(investigation)
+    analyzer = Analyzers::RhetoricalFallacyAnalyzer.method(:call)
+    takeover = nil
+
+    Analyzers::RhetoricalFallacyAnalyzer.define_singleton_method(:call) do |investigation:|
+      investigation.update_columns(reconciliation_lease_expires_at: 1.second.ago)
+      takeover = Investigations::ReconciliationLease.claim(investigation.reload)
+      Analyzers::RhetoricalFallacyAnalyzer::Result.new(fallacies: [], narrative_bias_score: 0.0, summary: "new")
+    end
+
+    assert_raises(Investigations::ReconciliationLease::Lost) do
+      Investigations::AnalyzeRhetoricalStructureJob.perform_now(investigation.id,
+        reconciliation_token: lease.token, reconciliation_revision: lease.revision)
+    end
+    assert takeover
+    assert_equal({ "stable" => true }, investigation.reload.rhetorical_analysis)
+    assert_nil investigation.pipeline_steps.find_by(name: "analyze_rhetorical_structure")
+  ensure
+    Analyzers::RhetoricalFallacyAnalyzer.define_singleton_method(:call, analyzer) if analyzer
+  end
+
+  test "a running rhetorical stage is not successful during reconciliation" do
+    root = Article.create!(url: "https://rhet-running.test/article", normalized_url: "https://rhet-running.test/article",
+      host: "rhet-running.test", fetch_status: :fetched, body_text: "Text", title: "Running")
+    investigation = Investigation.create!(submitted_url: root.url, normalized_url: root.normalized_url, root_article: root)
+    group = InvestigationGroup.create!(main_investigation: investigation, evidence_revision: 1)
+    investigation.update!(investigation_group: group, group_membership_kind: :manual)
+    investigation.pipeline_steps.create!(name: "analyze_rhetorical_structure", status: :running, started_at: Time.current)
+    lease = Investigations::ReconciliationLease.claim(investigation)
+
+    outcome = Investigations::AnalyzeRhetoricalStructureJob.perform_now(investigation.id,
+      reconciliation_token: lease.token, reconciliation_revision: lease.revision)
+
+    refute outcome.executed
+    refute outcome.succeeded
+    assert_equal 0, investigation.reload.evidence_revision_assessed
+  end
 end

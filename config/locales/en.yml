@@ -79,7 +79,8 @@ en:
       authority_heading: "Authority laundering"
       authority_body: "Analyzes the citation chain to detect vertical authority inflation — when a low-authority source (blog, social media) gets cited by progressively larger outlets without new evidence being added, making it appear authoritative. Traces the chain from origin to the article being analyzed."
       rhetorical_heading: "Rhetorical analysis"
-      rhetorical_body: "Detects 16 logical fallacies in the article's argumentative structure, including classical fallacies and six patterns derived from Schopenhauer's 38 Stratagems ('The Art of Being Right', 1831). The 38 stratagems catalogue debate tactics for winning arguments regardless of truth — many apply directly to how news articles frame narratives. Of the 38, 19 are covered by this system (6 as dedicated fallacy types, 13 via other analyzers); the remaining 19 are debate-specific tactics (interruption, question barrage, provocation) that don't reliably apply to written news. The 16 detected types are: bait-and-pivot, appeal to authority, strawman, false cause, anecdote over data, loaded language, false dilemma, slippery slope, ad hominem, cherry picking, equivocation (#2 — same term with different meanings), odious categorization (#32 — dismissive labels), twisted conclusion (#9 — correct data, wrong conclusion), paradox framing (#13 — making dissent absurd), false admission (#11 — allegation silently becomes fact), and faulty proof exploitation (#37 — attacking one weak argument to dismiss an entire position)."
+      delegitimizing_reframing_body: "The analyzer additionally detects delegitimizing reframing, a framing-quality flag: it identifies when a dismissive label, such as 'conspiracy theory', substitutes for evaluating an identifiable authority's factual claim. It is not a finding that an official claim is true; an official position establishes what an authority said, while the underlying claim still requires independent evidence."
+      rhetorical_body: "Detects 17 logical fallacies in the article's argumentative structure, including classical fallacies, delegitimizing reframing, and six patterns derived from Schopenhauer's 38 Stratagems ('The Art of Being Right', 1831). The 38 stratagems catalogue debate tactics for winning arguments regardless of truth — many apply directly to how news articles frame narratives. Of the 38, 19 are covered by this system (6 as dedicated fallacy types, 13 via other analyzers); the remaining 19 are debate-specific tactics (interruption, question barrage, provocation) that don't reliably apply to written news. The 17 detected types are: bait-and-pivot, appeal to authority, strawman, false cause, anecdote over data, loaded language, false dilemma, slippery slope, ad hominem, cherry picking, delegitimizing reframing, equivocation (#2 — same term with different meanings), odious categorization (#32 — dismissive labels), twisted conclusion (#9 — correct data, wrong conclusion), paradox framing (#13 — making dissent absurd), false admission (#11 — allegation silently becomes fact), and faulty proof exploitation (#37 — attacking one weak argument to dismiss an entire position)."
       contextual_gaps_heading: "Contextual gap analysis"
       contextual_gaps_body: "Identifies what the article doesn't address — questions a well-informed reader would ask. Detects scope mismatches, missing counter-evidence, theoretical vs practical gaps, distributional blindness, causal chain gaps, historical amnesia, reversal framing, benefit pass-through gaps, and selective attribution. For each gap, the system searches the web for counter-evidence."
       quality_heading: "Quality ratings"
@@ -97,7 +98,16 @@ en:
       eyebrow: "Frank Investigator"
       heading: "Investigate a news article through claims, linked sources, and evidence gaps."
       hero_copy: "Submit a public article URL. Frank Investigator will normalize it, fetch the article, catalog in-body citations, extract canonical claims, and separate what is checkable from what still needs evidence."
-      placeholder: "https://somenews.com/articles/1"
+      main_story_label: "Main news story"
+      main_story_help: "Required. Start with the article you want to investigate."
+      main_story_placeholder: "https://newsroom.example/story"
+      optional_sources_legend: "Optional context"
+      additional_stories_label: "Additional news stories"
+      additional_stories_help: "One URL per line. Each becomes its own investigation and is cross-compared with the main story."
+      evidence_sources_label: "Evidence sources"
+      evidence_sources_help: "One URL per line. Add official records, studies, documents, or factual source pages. They support the evidence review and do not become separate news investigations."
+      multiple_urls_placeholder: "https://example.org/source"
+      submission_note: "Publicly accessible links work best."
       submit: "Investigate"
 
     show:
@@ -303,6 +313,18 @@ en:
 
     errors:
       url_too_long: "URL is too long (maximum %{max} characters)"
+      group_submission_invalid: "The grouped investigation could not be submitted. Check the URLs and try again."
+
+  api:
+    investigations:
+      errors:
+        url_must_be_string: "url must be a string"
+        url_required: "url is required"
+        url_too_long: "url too long (max %{max})"
+        url_array_required: "%{field} must be an array of URL strings"
+        invalid_url: "The URL is invalid"
+        url_rejected: "This URL cannot be investigated"
+        group_submission_invalid: "The grouped investigation could not be submitted. Check the URLs and try again."
 
   authority_laundering:
     chain_explanation:
@@ -570,3 +592,4 @@ en:
       paradox_framing: "Paradox framing"
       false_admission: "False admission"
       faulty_proof_exploitation: "Faulty proof exploitation"
+      delegitimizing_reframing: "Delegitimizing reframing"

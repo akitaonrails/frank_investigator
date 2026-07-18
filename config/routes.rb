@@ -28,5 +28,6 @@ Rails.application.routes.draw do
   get "methodology" => "pages#methodology", as: :methodology
 
   # Submission form — basic auth via FRANK_AUTH_SECRET
+  post "/", to: "investigations#create", as: :submit_investigation
   root "investigations#home"
 end

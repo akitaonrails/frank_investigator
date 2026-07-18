@@ -395,4 +395,24 @@ class Analyzers::CrossInvestigationEnricherTest < ActiveSupport::TestCase
     assert_includes composite[:coverage_map].map { |c| c[:host] }, "example.com"
     assert_includes composite[:critical_omissions], "Haddad deixou o ministério."
   end
+
+  test "heuristic coverage keeps same-host investigations separate by stable id and slug" do
+    investigations = 2.times.map do |index|
+      article = Article.create!(url: "https://same-host.example/#{index}", normalized_url: "https://same-host.example/#{index}",
+        host: "same-host.example", title: "Coverage #{index}", body_text: "Body", fetch_status: :fetched)
+      investigation = Investigation.create!(submitted_url: article.url, normalized_url: article.normalized_url,
+        root_article: article, status: :completed, slug: "same-host-#{index}")
+      claim = Claim.create!(canonical_text: "Distinct fact #{index}", canonical_fingerprint: "same-host-fact-#{index}", checkability_status: :checkable)
+      ClaimAssessment.create!(investigation:, claim:, verdict: :supported, checkability_status: :checkable)
+      investigation
+    end
+
+    enricher = Analyzers::CrossInvestigationEnricher.new(investigation: investigations.first)
+    enricher.define_singleton_method(:llm_available?) { false }
+    composite = enricher.send(:build_composite, investigations)
+
+    assert_equal investigations.map(&:id).sort, composite[:coverage_map].map { |coverage| coverage[:investigation_id] }.sort
+    assert_equal investigations.map(&:slug).sort, composite[:coverage_map].map { |coverage| coverage[:slug] }.sort
+    assert_equal [ "same-host.example" ], composite[:coverage_map].map { |coverage| coverage[:host] }.uniq
+  end
 end

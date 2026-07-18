@@ -10,7 +10,14 @@ module Investigations
       return unless @investigation.completed?
 
       Investigations::EmbeddingIndexer.call(investigation: @investigation)
-      Analyzers::CrossInvestigationEnricher.call(investigation: @investigation)
+      # Grouped members and auto-parents have a durable generation protocol;
+      # this job must never bypass its CAS publication.
+      if @investigation.investigation_group_id.present? || @investigation.auto_submitted_children.where(status: "completed").exists?
+        RefreshParentEnrichmentJob.perform_later(@investigation.investigation_group&.main_investigation_id || @investigation.id)
+      # Standalone investigations own their local, non-shared context.
+      elsif (context = Analyzers::CrossInvestigationEnricher.call(investigation: @investigation))
+        @investigation.update_column(:event_context, context)
+      end
       Rails.logger.info("[CrossReference] Enriched investigation #{@investigation.slug}")
 
       # Auto-submit related articles for full investigation

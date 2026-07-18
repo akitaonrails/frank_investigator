@@ -33,31 +33,48 @@ module Api
     end
 
     def create
-      url = params[:url].to_s.strip
+      raw_url = params[:main_url].presence || params[:url]
+      return api_error(:url_must_be_string) unless raw_url.is_a?(String)
+      url = raw_url.strip
 
       if url.blank?
-        return render json: { error: "url is required" }, status: :unprocessable_entity
+        return api_error(:url_required)
       end
 
       if url.length > 2048
-        return render json: { error: "url too long (max 2048)" }, status: :unprocessable_entity
+        return api_error(:url_too_long, max: 2048)
       end
 
-      normalized_url = Investigations::UrlNormalizer.call(url)
-      Investigations::UrlClassifier.call(normalized_url)
+      [ :news_urls, :evidence_urls ].each do |key|
+        next unless params.key?(key)
+        unless params[key].is_a?(Array) && params[key].all? { |item| item.is_a?(String) }
+          return api_error(:url_array_required, field: key)
+        end
+      end
 
-      investigation = Investigations::EnsureStarted.call(submitted_url: normalized_url)
+      grouped_input = params.key?(:news_urls) || params.key?(:evidence_urls)
+      preflight = grouped_input ? Investigations::GroupSubmissionPreflight.call(main_url: url, news_urls: params[:news_urls], evidence_urls: params[:evidence_urls]) : nil
+      submission = preflight&.grouped? && Investigations::SubmitGroup.call(
+        main_url: preflight.main_url,
+        news_urls: preflight.news_urls,
+        evidence_urls: preflight.evidence_urls,
+        preflight:
+      )
+      investigation = submission ? submission.main_investigation : Investigations::EnsureStarted.call(submitted_url: url)
 
       render json: {
         slug: investigation.slug,
         status: investigation.status,
         url: investigation.normalized_url,
-        report_url: investigation_url(investigation)
+        report_url: investigation_url(investigation),
+        **Investigations::ReadinessPresenter.call(investigation)
       }, status: :created
-    rescue Investigations::UrlNormalizer::InvalidUrlError => e
-      render json: { error: e.message }, status: :unprocessable_entity
-    rescue Investigations::UrlClassifier::RejectedUrlError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+    rescue Investigations::UrlNormalizer::InvalidUrlError
+      api_error(:invalid_url)
+    rescue Investigations::UrlClassifier::RejectedUrlError
+      api_error(:url_rejected)
+    rescue Investigations::SubmitGroup::ConflictError, Investigations::GroupSubmissionPreflight::ConflictError, ArgumentError
+      api_error(:group_submission_invalid)
     end
 
     private
@@ -76,6 +93,10 @@ module Api
         investigation_url: investigation_url(investigation),
         original_url: article&.url
       }
+    end
+
+    def api_error(key, **options)
+      render json: { error: I18n.t("api.investigations.errors.#{key}", **options) }, status: :unprocessable_entity
     end
 
     # The human-readable conclusion if the LLM summary ran, falling back to the

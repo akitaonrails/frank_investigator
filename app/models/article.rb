@@ -44,6 +44,7 @@ class Article < ApplicationRecord
   has_many :sourced_links, class_name: "ArticleLink", foreign_key: :source_article_id, inverse_of: :source_article, dependent: :destroy
   has_many :targeted_links, class_name: "ArticleLink", foreign_key: :target_article_id, inverse_of: :target_article, dependent: :destroy
   has_many :evidence_items, dependent: :nullify
+  has_many :investigation_group_evidence_sources, dependent: :destroy
 
   scope :fetched, -> { where(fetch_status: "fetched") }
   scope :authoritative_first, -> { order(authority_score: :desc, fetched_at: :desc) }

@@ -95,4 +95,32 @@ class Analyzers::ActiveEvidenceRetrieverTest < ActiveSupport::TestCase
 
     assert linked_urls.include?(existing_url), "Should track existing linked URLs"
   end
+
+  test "stale fetch failure cannot replace a newer fetched generation" do
+    url = "https://race.example/evidence"
+    article = Article.create!(url:, normalized_url: url, host: "race.example", fetch_status: :pending)
+    ActiveEvidenceGenerationRaceFetcher.on_call = lambda do |fetch_url|
+      record = Article.find_by!(normalized_url: fetch_url)
+      record.update!(fetch_status: :fetched, title: "New evidence", body_text: "Newer fetched content", fetched_at: Time.current, content_generation: record.content_generation + 1)
+      raise "stale browser failure"
+    end
+    Rails.application.config.x.frank_investigator.fetcher_class = "ActiveEvidenceGenerationRaceFetcher"
+
+    retriever = Analyzers::ActiveEvidenceRetriever.new(investigation: @investigation, claim: @claim)
+    assert_nil retriever.send(:fetch_and_persist, url, "Old evidence")
+
+    assert_equal "fetched", article.reload.fetch_status
+    assert_equal "Newer fetched content", article.body_text
+  ensure
+    ActiveEvidenceGenerationRaceFetcher.on_call = nil
+  end
+end
+
+class ActiveEvidenceGenerationRaceFetcher
+  class << self
+    attr_accessor :on_call
+
+    def new = self
+    def call(url) = on_call.call(url)
+  end
 end

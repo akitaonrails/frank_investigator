@@ -20,13 +20,29 @@ module Investigations
         if article.fresh?
           Rails.logger.info("[FetchLinkedArticle] Article #{article.normalized_url} is fresh, skipping re-fetch")
         else
-          snapshot = fetcher.call(article.normalized_url)
-          Articles::PersistFetchedContent.call(
-            article:,
-            html: snapshot.html,
-            fetched_title: snapshot.title,
-            current_depth: article_link.depth
-          )
+          article.reload
+          @fetch_generation = article.content_generation
+          replaced_generation = false
+          begin
+            snapshot = fetcher.call(article.normalized_url)
+          rescue Fetchers::ChromiumFetcher::FetchError
+            article.reload
+            replaced_generation = article.fetched? && article.content_generation > @fetch_generation
+            raise unless replaced_generation
+          end
+          unless replaced_generation
+            begin
+              Articles::PersistFetchedContent.call(
+                article:,
+                html: snapshot.html,
+                fetched_title: snapshot.title,
+                current_depth: article_link.depth
+              )
+            rescue Articles::PersistFetchedContent::StaleGeneration
+              article.reload
+              raise unless article.fetched? && article.content_generation > @fetch_generation
+            end
+          end
           Fetchers::HostCircuitBreaker.record_success!(article.host)
         end
 
@@ -39,7 +55,7 @@ module Investigations
     rescue Fetchers::ChromiumFetcher::FetchError => error
       Fetchers::HostCircuitBreaker.record_failure!(article_link&.target_article&.host)
       article_link&.update!(follow_status: :failed)
-      article_link&.target_article&.update!(fetch_status: :failed)
+      mark_failed_if_current_generation(article_link&.target_article)
       raise error
     ensure
       Investigations::RefreshStatus.call(investigation) if investigation
@@ -53,6 +69,11 @@ module Investigations
 
     def max_depth
       Rails.application.config.x.frank_investigator.max_link_depth
+    end
+
+    def mark_failed_if_current_generation(article)
+      return unless article && @fetch_generation
+      Article.where(id: article.id, content_generation: @fetch_generation).update_all(fetch_status: :failed)
     end
   end
 end

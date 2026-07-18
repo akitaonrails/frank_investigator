@@ -57,6 +57,26 @@ class HeadlineDivergenceTest < ActiveSupport::TestCase
     unpenalized = builder.send(:apply_headline_penalty, 0.70, 0.20)
     assert_equal 0.70, unpenalized
   end
+
+  test "stale divergence analysis cannot cache a score after content generation changes" do
+    article = Article.create!(
+      url: "https://race.example/headline", normalized_url: "https://race.example/headline",
+      host: "race.example", fetch_status: :fetched, title: "Old headline confirmed",
+      body_text: "The old body allegedly could not be independently verified."
+    )
+    builder = Analyzers::EvidencePacketBuilder.new(investigation: Investigation.new, claim: Claim.new)
+    original = Analyzers::HeadlineBaitAnalyzer.method(:call)
+    Analyzers::HeadlineBaitAnalyzer.define_singleton_method(:call) do |title:, body_text:|
+      article.update!(title: "New headline", body_text: "New body", headline_divergence_score: nil, content_generation: article.content_generation + 1)
+      original.call(title:, body_text:)
+    end
+
+    builder.send(:headline_divergence_for, article)
+
+    assert_nil article.reload.headline_divergence_score
+  ensure
+    Analyzers::HeadlineBaitAnalyzer.define_singleton_method(:call, original) if original
+  end
 end
 
 class HeadlineCitationDetectorTest < ActiveSupport::TestCase
