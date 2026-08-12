@@ -46,7 +46,7 @@ gem "ruby-vips", "~> 2.0", require: false
 
 group :development, :test do
   # Use the locally available ImageMagick processor when libvips is absent.
-  gem "mini_magick", "~> 5.0"
+  gem "mini_magick", "~> 5.3"
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
