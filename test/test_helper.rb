@@ -15,6 +15,7 @@ ENV.delete("JOBS_AUTH_PASSWORD")  # Reset to default "admin" for error_reports t
 require_relative "../config/environment"
 require "rails/test_help"
 require_relative "support/llm_stubs"
+require_relative "support/dns_stubs"
 
 # WebMock: block external HTTP by default, allow localhost for internal services
 WebMock.disable_net_connect!(allow_localhost: true)

@@ -65,8 +65,10 @@ module Investigations
       raise ArgumentError, "too many evidence URLs (max #{MAX_EVIDENCE_URLS})" if evidence_urls.size > MAX_EVIDENCE_URLS
       raise ConflictError, "a URL cannot be both news and evidence" if (([ main_url ] + news_urls) & evidence_urls).any?
 
-      @members = desired_urls.map { |url| Investigation.find_by(normalized_url: url) }
-      @evidence = evidence_urls.map { |url| Article.find_by(normalized_url: url) }
+      members_by_url = Investigation.where(normalized_url: desired_urls).index_by(&:normalized_url)
+      evidence_by_url = Article.where(normalized_url: evidence_urls).index_by(&:normalized_url)
+      @members = desired_urls.map { |url| members_by_url[url] }
+      @evidence = evidence_urls.map { |url| evidence_by_url[url] }
       if @repair && members.any?(&:nil?)
         raise ConflictError, "repair only reuses existing investigations: #{desired_urls.zip(members).select { |_url, record| record.nil? }.map(&:first).join(', ')}"
       end
@@ -81,7 +83,11 @@ module Investigations
     def grouped? = news_urls.any? || evidence_urls.any?
     def repair? = @repair
     def desired_urls = [ main_url ] + news_urls
-    def snapshot_valid? = self.class.call(main_url:, news_urls:, evidence_urls:, repair: @repair).fingerprint == fingerprint
+    def snapshot_valid?
+      self.class.call(main_url:, news_urls:, evidence_urls:, repair: @repair).fingerprint == fingerprint
+    rescue ConflictError
+      false
+    end
 
     private
 

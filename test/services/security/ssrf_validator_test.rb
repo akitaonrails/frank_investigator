@@ -11,6 +11,30 @@ class Security::SsrfValidatorTest < ActiveSupport::TestCase
     end
   end
 
+  test "blocks hostnames that resolve to loopback addresses" do
+    DnsStubs.with_addresses("LOOPBACK.example", [ "127.0.0.1" ]) do
+      assert_raises(Security::SsrfValidator::SsrfError) do
+        Security::SsrfValidator.validate!("https://loopback.example/admin")
+      end
+    end
+  end
+
+  test "blocks hostnames that resolve to private addresses" do
+    DnsStubs.with_addresses("private.example", [ "10.0.0.1" ]) do
+      assert_raises(Security::SsrfValidator::SsrfError) do
+        Security::SsrfValidator.validate!("https://private.example/admin")
+      end
+    end
+  end
+
+  test "blocks hostnames that resolve to link-local addresses" do
+    DnsStubs.with_addresses("link-local.example", [ "169.254.169.254" ]) do
+      assert_raises(Security::SsrfValidator::SsrfError) do
+        Security::SsrfValidator.validate!("https://link-local.example/latest/meta-data/")
+      end
+    end
+  end
+
   test "blocks numeric IP addresses" do
     assert_raises(Security::SsrfValidator::SsrfError) do
       Security::SsrfValidator.validate!("https://192.168.1.1/secret")

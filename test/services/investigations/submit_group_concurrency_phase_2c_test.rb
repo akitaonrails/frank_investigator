@@ -25,6 +25,37 @@ class Investigations::SubmitGroupConcurrencyPhase2cTest < ActiveSupport::TestCas
     assert_equal [ main, news ].sort, results.first.group.investigations.order(:normalized_url).pluck(:normalized_url)
   end
 
+  test "stale conflicting preflight retries under lock before rebuilt conflict remains terminal" do
+    main, news_a, news_b = urls("stale-conflict", 3)
+    stale_plan = Investigations::GroupSubmissionPreflight.call(main_url: main, news_urls: [ news_a ])
+    winner = Investigations::SubmitGroup.call(main_url: main, news_urls: [ news_b ])
+    calls = 0
+
+    with_preflight_call_counter(-> { calls += 1 }) do
+      assert_raises(Investigations::SubmitGroup::ConflictError) do
+        Investigations::SubmitGroup.call(main_url: main, news_urls: [ news_a ], preflight: stale_plan)
+      end
+    end
+
+    assert_equal 2, calls
+    assert_equal [ main, news_b ].sort, winner.group.investigations.order(:normalized_url).pluck(:normalized_url)
+    assert_equal 1, InvestigationGroup.count
+  end
+
+  test "transient under-lock preflight conflict retries an identical plan to a result" do
+    main, news = urls("transient-preflight", 2)
+    stale_plan = Investigations::GroupSubmissionPreflight.call(main_url: main, news_urls: [ news ])
+    calls = 0
+
+    with_preflight_call_counter(-> { calls += 1 }, fail_first: true) do
+      result = Investigations::SubmitGroup.call(main_url: main, news_urls: [ news ], preflight: stale_plan)
+      assert_kind_of Investigations::SubmitGroup::Result, result
+      assert_equal [ main, news ].sort, result.group.investigations.order(:normalized_url).pluck(:normalized_url)
+    end
+
+    assert_equal 3, calls
+  end
+
   test "conflicting same-main plans yield one exact winner and no union" do
     main, news_a, news_b = urls("conflict-main", 3)
     results = concurrently([ main, [ news_a ] ], [ main, [ news_b ] ])
@@ -139,6 +170,21 @@ class Investigations::SubmitGroupConcurrencyPhase2cTest < ActiveSupport::TestCas
     yield
   ensure
     Investigations::SubmitGroup.define_method(:acquire_submission_locks!, original) if original
+  end
+
+  def with_preflight_call_counter(counter, fail_first: false)
+    original = Investigations::GroupSubmissionPreflight.method(:call)
+    calls = 0
+    Investigations::GroupSubmissionPreflight.define_singleton_method(:call) do |**kwargs|
+      calls += 1
+      counter.call
+      raise Investigations::GroupSubmissionPreflight::ConflictError, "transient preflight conflict" if fail_first && calls == 1
+
+      original.call(**kwargs)
+    end
+    yield
+  ensure
+    Investigations::GroupSubmissionPreflight.define_singleton_method(:call, original) if original
   end
 
   def cleanup_phase_urls
