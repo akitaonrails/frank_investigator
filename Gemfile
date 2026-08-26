@@ -78,4 +78,4 @@ end
 
 gem "tailwindcss-rails", "~> 4.6"
 
-gem "ferrum", "~> 0.17.1"
+gem "ferrum", "~> 0.18.0"
