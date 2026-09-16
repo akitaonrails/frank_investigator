@@ -222,8 +222,8 @@ module Llm
         response_json: payload,
         status: :completed,
         latency_ms: elapsed_ms,
-        prompt_tokens: response.respond_to?(:input_tokens) ? response.input_tokens : nil,
-        completion_tokens: response.respond_to?(:output_tokens) ? response.output_tokens : nil
+        prompt_tokens: response.respond_to?(:tokens) ? response.tokens&.input : nil,
+        completion_tokens: response.respond_to?(:tokens) ? response.tokens&.output : nil
       )
     rescue StandardError => e
       Rails.logger.warn("Failed to update LLM interaction record: #{e.message}")
