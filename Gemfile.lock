@@ -347,7 +347,7 @@ GEM
     ruby-vips (2.3.0)
       ffi (~> 1.12)
       logger
-    ruby_llm (2.0.0.rc4)
+    ruby_llm (2.0.0)
       base64
       event_stream_parser (~> 1)
       faraday (>= 1.10.0)
@@ -470,7 +470,7 @@ DEPENDENCIES
   rails (~> 8.1.2)
   rubocop-rails-omakase
   ruby-vips (~> 2.0)
-  ruby_llm (= 2.0.0.rc4)
+  ruby_llm (= 2.0.0)
   selenium-webdriver
   simplecov
   solid_cable
@@ -609,7 +609,7 @@ CHECKSUMS
   rubocop-rails-omakase (1.1.0) sha256=2af73ac8ee5852de2919abbd2618af9c15c19b512c4cfc1f9a5d3b6ef009109d
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby-vips (2.3.0) sha256=e685ec02c13969912debbd98019e50492e12989282da5f37d05f5471442f5374
-  ruby_llm (2.0.0.rc4) sha256=7e93c98aa7c274c0af7542127998d28f92405d5e59d62175cf4b717129fbc394
+  ruby_llm (2.0.0) sha256=b3ea5978f544c1c1edf74636fe4ac1d24129127deb44e4c4e7c58df11a4b9e3b
   rubyzip (3.6.0) sha256=268994d44d62282d1cfd99bf10eae48d7267199158ad7ea3e1fee2da9458b695
   schematist (1.1.0) sha256=905d8f0286830926e77e0d631bee325ee741c4b99640bc99735593b40ba73e7b
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
