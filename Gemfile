@@ -73,7 +73,7 @@ group :test do
   # Code coverage [https://github.com/simplecov-ruby/simplecov]
   gem "simplecov", require: false
   # Stub HTTP requests to LLM APIs and web search
-  gem "webmock", "~> 3.26"
+  gem "webmock", "~> 3.29"
 end
 
 gem "tailwindcss-rails", "~> 4.6"
