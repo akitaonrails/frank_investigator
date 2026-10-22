@@ -1,0 +1,37 @@
+# Auto-merge Dependabot PRs that contain no major or pre-release version
+# jumps. Minor/patch updates (normally the weekly grouped PR) merge once CI
+# is green; majors keep the manual pr-bump review flow.
+#
+# Requires the repository setting "Allow auto-merge" to be enabled:
+# Settings -> General -> Pull Requests -> Allow auto-merge.
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # update-type is the highest update scope in the PR (comma-separated
+      # for grouped PRs), so excluding majors and pre-releases covers every
+      # dependency it contains.
+      - name: Enable auto-merge
+        if: >
+          steps.metadata.outputs.update-type != '' &&
+          !contains(steps.metadata.outputs.update-type, 'semver-major') &&
+          !contains(steps.metadata.outputs.update-type, 'semver-pre')
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
