@@ -1,5 +1,9 @@
 name: CI
 
+# ubuntu-latest migrated to Ubuntu 26.04, where ruby/setup-ruby only builds the
+# newest patch release per series; Ruby 4.0.1 (pinned in .ruby-version and the
+# Dockerfile) is unavailable there. Pin the runner image to keep CI on the same
+# Ruby the production image ships.
 on:
   pull_request:
   push:
@@ -7,7 +11,7 @@ on:
 
 jobs:
   scan_ruby:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -25,7 +29,7 @@ jobs:
         run: bin/bundler-audit
 
   scan_js:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -40,7 +44,7 @@ jobs:
         run: bin/importmap audit
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -66,7 +70,7 @@ jobs:
         run: bin/rubocop -f github
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
