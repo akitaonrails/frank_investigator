@@ -73,6 +73,7 @@ Required environment variables:
 ```bash
 OPENROUTER_API_KEY=your_key_here           # Required when FRANK_INVESTIGATOR_LLM_PROVIDER=openrouter
 OPENAI_API_KEY=your_key_here               # Required when FRANK_INVESTIGATOR_LLM_PROVIDER=openai, and for direct OpenAI embeddings
+CHEAPER_INFERENCE_API_KEY=your_key_here    # Required when FRANK_INVESTIGATOR_LLM_PROVIDER=cheaperinference
 ```
 
 Optional configuration:
@@ -81,7 +82,7 @@ Optional configuration:
 FRANK_INVESTIGATOR_LOCALE=pt-BR            # en or pt-BR (default: pt-BR)
 FRANK_INVESTIGATOR_MAX_LINK_DEPTH=1        # How deep to follow links (default: 1)
 FRANK_INVESTIGATOR_ARTICLE_FRESHNESS_TTL=3600  # Cache TTL in seconds (default: 3600)
-FRANK_INVESTIGATOR_LLM_PROVIDER=openrouter      # or openai
+FRANK_INVESTIGATOR_LLM_PROVIDER=openrouter      # or openai, or cheaperinference (default model: gpt-5.4-mini)
 FRANK_INVESTIGATOR_LLM_MODELS=openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro
 FRANK_INVESTIGATOR_VECTOR_SEARCH_ENABLED=true
 FRANK_INVESTIGATOR_EMBEDDING_PROVIDER=openrouter   # or openai
