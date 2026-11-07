@@ -166,6 +166,14 @@ Secret hygiene:
 - The repo only tracks example files such as `.kamal/secrets.example` and `config/deploy.env.example`.
 - Keep real runtime secrets in ignored local files or your shell environment, not in tracked YAML, compose files, or docs.
 
+To route chat analysis through a provider other than the deployed default, set
+`FRANK_INVESTIGATOR_LLM_PROVIDER` in `config/deploy.yml` under `env.clear`, add
+that provider's key to `.kamal/secrets`, and list the key name under
+`env.secret` in `config/deploy.yml`. Kamal fails a deploy when a key declared in
+`env.secret` is absent from `.kamal/secrets`, so add both together. The
+`cheaperinference` provider uses `CHEAPER_INFERENCE_API_KEY`; enabling it also
+requires a model from its public list (default `gpt-5.4-mini`).
+
 Then bootstrap the server:
 
 ```bash
