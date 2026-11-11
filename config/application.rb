@@ -47,7 +47,7 @@ module FrankInvestigator
     )
     default_llm_models = case config.x.frank_investigator.llm_provider
     when "openai"
-      "gpt-5-mini"
+      "gpt-5.6-terra"
     when "cheaperinference"
       "gpt-5.4-mini"
     else

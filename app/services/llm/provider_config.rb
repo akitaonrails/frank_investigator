@@ -3,7 +3,7 @@ module Llm
     extend self
 
     OPENROUTER_DEFAULT_MODELS = "openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro".freeze
-    OPENAI_DEFAULT_MODELS = "gpt-5-mini".freeze
+    OPENAI_DEFAULT_MODELS = "gpt-5.6-terra".freeze
     CHEAPER_INFERENCE_DEFAULT_MODELS = "gpt-5.4-mini".freeze
     CHEAPER_INFERENCE_API_BASE = "https://api.cheaperinference.com/v1".freeze
     KNOWN_PROVIDERS = %w[openrouter openai cheaperinference].freeze
