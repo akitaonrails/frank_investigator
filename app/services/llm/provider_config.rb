@@ -3,7 +3,7 @@ module Llm
     extend self
 
     OPENROUTER_DEFAULT_MODELS = "openai/gpt-5-mini,anthropic/claude-sonnet-4-6,google/gemini-2.5-pro".freeze
-    OPENAI_DEFAULT_MODELS = "gpt-5.6-terra".freeze
+    OPENAI_DEFAULT_MODELS = "gpt-6.1-terra".freeze
     CHEAPER_INFERENCE_DEFAULT_MODELS = "gpt-5.4-mini".freeze
     CHEAPER_INFERENCE_API_BASE = "https://api.cheaperinference.com/v1".freeze
     KNOWN_PROVIDERS = %w[openrouter openai cheaperinference].freeze
@@ -19,6 +19,10 @@ module Llm
 
     def models
       Array(Rails.configuration.x.frank_investigator.llm_models).reject(&:blank?)
+    end
+
+    def primary_model
+      models.first || default_models_for(provider).split(",").first
     end
 
     def available?

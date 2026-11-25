@@ -53,7 +53,7 @@ module Analyzers
     end
 
     def primary_model
-      Llm::ProviderConfig.models.first || "gpt-5-mini"
+      Llm::ProviderConfig.primary_model
     end
 
     def llm_chat(model: primary_model)

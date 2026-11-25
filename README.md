@@ -91,6 +91,14 @@ FRANK_INVESTIGATOR_EMBEDDING_DIMENSIONS=1536
 QUARANTINED_MODELS=                        # Comma-separated models to skip
 ```
 
+With `FRANK_INVESTIGATOR_LLM_PROVIDER=openai`, the default model is
+`gpt-6.1-terra`. OpenAI [retires `gpt-5-mini` on December 11, 2026](https://developers.openai.com/api/docs/deprecations).
+Existing `FRANK_INVESTIGATOR_LLM_MODELS` overrides are preserved, so update any
+explicit `gpt-5-mini` or `gpt-5-mini-2025-08-07` entries to `gpt-6.1-terra`, or
+unset the override to use the new default. Direct OpenAI requests use Chat
+Completions with JSON schema structured output and no tool calls or explicit
+sampling options, which [GPT-6.1 Terra supports](https://developers.openai.com/api/docs/models/gpt-6.1-terra).
+
 ## API
 
 All API endpoints authenticate with a bearer token matching `FRANK_AUTH_SECRET`.
@@ -154,7 +162,7 @@ export KAMAL_REGISTRY_USERNAME=your-github-username
 export KAMAL_REGISTRY_PASSWORD=ghp_your_github_pat    # PAT with write:packages scope
 export OPENAI_API_KEY=sk-proj-...
 export FRANK_INVESTIGATOR_LLM_PROVIDER=openai
-export FRANK_INVESTIGATOR_LLM_MODELS=gpt-5-mini
+export FRANK_INVESTIGATOR_LLM_MODELS=gpt-6.1-terra
 export FRANK_AUTH_SECRET=$(openssl rand -hex 32)
 export JOBS_AUTH_PASSWORD=$(openssl rand -hex 16)
 export GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX               # Optional

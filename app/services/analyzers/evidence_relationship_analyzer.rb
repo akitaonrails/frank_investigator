@@ -400,7 +400,7 @@ module Analyzers
     end
 
     def self.contradiction_model_class
-      Array(Rails.application.config.x.frank_investigator.llm_models).first || "gpt-5-mini"
+      Llm::ProviderConfig.primary_model
     end
 
     def self.parse_contradiction_response_class(payload)
