@@ -16,7 +16,7 @@ gem "turbo-rails"
 gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
-gem "ruby_llm", "2.2.2"
+gem "ruby_llm", "2.2.3"
 gem "rack-attack"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
@@ -73,9 +73,9 @@ group :test do
   # Code coverage [https://github.com/simplecov-ruby/simplecov]
   gem "simplecov", require: false
   # Stub HTTP requests to LLM APIs and web search
-  gem "webmock", "~> 3.29"
+  gem "webmock", "~> 3.38"
 end
 
 gem "tailwindcss-rails", "~> 4.7"
 
-gem "ferrum", "~> 0.20.1"
+gem "ferrum", "~> 0.20.2"
