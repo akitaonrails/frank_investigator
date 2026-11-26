@@ -1,7 +1,7 @@
 name: CI
 
 # ubuntu-latest migrated to Ubuntu 26.04, where ruby/setup-ruby only builds the
-# newest patch release per series; Ruby 4.0.1 (pinned in .ruby-version and the
+# newest patch release per series; Ruby 4.0.10 (pinned in .ruby-version and the
 # Dockerfile) is unavailable there. Pin the runner image to keep CI on the same
 # Ruby the production image ships.
 on:

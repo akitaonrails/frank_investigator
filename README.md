@@ -53,7 +53,7 @@ A fact does not become false because a million sources repeat a falsehood, and a
 
 ## Stack
 
-- Ruby 4.0.1 / Rails 8.1
+- Ruby 4.0.10 / Rails 8.1
 - SQLite3 (WAL mode, tuned pragmas)
 - Solid Queue (background jobs), Solid Cable (WebSockets), Solid Cache
 - Headless Chromium (page fetching)
