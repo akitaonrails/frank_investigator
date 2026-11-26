@@ -22,6 +22,28 @@ class Llm::ProviderConfigTest < ActiveSupport::TestCase
     ENV["OPENROUTER_API_KEY"] = original_openrouter
   end
 
+  test "analyzer model fallbacks use the selected provider and preserve explicit models" do
+    original_provider = Rails.configuration.x.frank_investigator.llm_provider
+    original_models = Rails.configuration.x.frank_investigator.llm_models
+    analyzer = Class.new { include Analyzers::LlmHelpers }.new
+
+    { "openai" => "gpt-6.1-terra", "openrouter" => "openai/gpt-5-mini", "cheaperinference" => "gpt-5.4-mini" }.each do |provider, expected|
+      Rails.configuration.x.frank_investigator.llm_provider = provider
+      Rails.configuration.x.frank_investigator.llm_models = [ nil, "" ]
+
+      assert_equal expected, analyzer.send(:primary_model)
+      assert_equal expected, Analyzers::EvidenceRelationshipAnalyzer.contradiction_model_class
+      assert_not Llm::ProviderConfig.available?
+
+      Rails.configuration.x.frank_investigator.llm_models = [ "", "custom-model", "another-model" ]
+      assert_equal "custom-model", analyzer.send(:primary_model)
+      assert_equal "custom-model", Analyzers::EvidenceRelationshipAnalyzer.contradiction_model_class
+    end
+  ensure
+    Rails.configuration.x.frank_investigator.llm_provider = original_provider
+    Rails.configuration.x.frank_investigator.llm_models = original_models
+  end
+
   test "uses cheaper inference key and api base when llm provider is cheaperinference" do
     original_provider = Rails.configuration.x.frank_investigator.llm_provider
     original_models = Rails.configuration.x.frank_investigator.llm_models
